@@ -1,0 +1,14 @@
+#pragma kernel CSMain
+
+Texture2D<float4> texSrc;
+RWTexture2D<float4> texOut;
+
+int height;
+int width;
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    int2 coords = int2(id.x, height - id.y);
+    texOut[id.xy] = texSrc[coords];
+}

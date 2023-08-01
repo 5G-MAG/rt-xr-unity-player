@@ -1,0 +1,6 @@
+[submodule "Packages/rt.xr.maf"]
+	path = Packages/rt.xr.maf
+	url = https://github.com/5G-MAG/rt-xr-maf-plugin.git
+[submodule "Packages/com.atteneder.gltfast"]
+	path = Packages/com.atteneder.gltfast
+	url = https://github.com/5G-MAG/rt-xr-gITFast.git

@@ -1,0 +1,32 @@
+#pragma kernel CSMain
+
+SamplerState linearClampSampler;
+Texture2D<float> yPlane;
+Texture2D<float> uPlane;
+Texture2D<float> vPlane;
+
+RWTexture2D<float4> result;
+
+int height;
+int width;
+
+const float4x4 YUV2RGB = float4x4(
+    1.1643828125, 0, 1.59602734375, -.87078515625,
+    1.1643828125, -.39176171875, -.81296875, .52959375,
+    1.1643828125, 2.017234375, 0, -1.081390625,
+    0, 0, 0, 1
+);
+
+[numthreads(8,8,1)]
+void CSMain (uint3 dispatchThreadID : SV_DispatchThreadID)
+{
+    float2 uv = float2(dispatchThreadID.xy) / float2(width, height);
+
+    uv = float2(uv.x, 1-uv.y);
+    
+    uint y = yPlane.SampleLevel(linearClampSampler, uv, 0);
+    uint u = uPlane.SampleLevel(linearClampSampler, uv, 0);
+    uint v = vPlane.SampleLevel(linearClampSampler, uv, 0);
+    
+    result[dispatchThreadID.xy] = mul(float4(y, u, v, 1), YUV2RGB);
+}
