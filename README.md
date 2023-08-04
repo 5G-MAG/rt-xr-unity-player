@@ -10,7 +10,8 @@ git submodule update --init --recursive
 ```
 
 **2. Fetch sample content**
-We are in the process of setting up a Github LFS, see
+
+We are in the process of setting up a Github LFS, see [here](https://github.com/5G-MAG/rt-xr-unity-player/issues/1).
 
 In the meantime please download the sample content from [here](https://owncloud.fokus.fraunhofer.de/index.php/s/D9t6UsxTNhdeZ2i) and put it into the `content` folder (you might need to create the folder first)
 
