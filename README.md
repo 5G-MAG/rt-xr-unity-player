@@ -5,7 +5,7 @@
 **1. clone the project and its submodules**
 ```
 mkdir gltfsceneviewer && cd gltfsceneviewer
-git clone https://gitlab.com/akgrown/gltfsceneviewer.git .
+git clone https://github.com/5G-MAG/rt-xr-unity-player.git .
 git submodule update --init --recursive
 ```
 
@@ -83,7 +83,7 @@ Unity offers a native audio spatializer SDK with a [simple spatializer implement
 ### **media pipelines and Media Access Functions**
 
 The media pipelines and MAF API are implemented as C++ with c# bindings. 
-These are bundled as a unity package pulled from a separate repository:[https://gitlab.com/akgrown/unity-maf-package](https://gitlab.com/akgrown/unity-maf-package), with precompiled binaries. To build your own media pipeline, see the [MAF library C++ source](https://gitlab.com/akgrown/maf-plugins). The sample media pipeline implements audio/video decoding using libav.
+These are bundled as a unity package pulled from a separate repository:[https://github.com/5G-MAG/rt-xr-maf-plugin](https://github.com/5G-MAG/rt-xr-maf-plugin), with precompiled binaries. To build your own media pipeline, see the [MAF library C++ source](https://github.com/5G-MAG/rt-xr-maf-native). The sample media pipeline implements audio/video decoding using libav.
 
 
 #### **dependency on libav**
@@ -104,7 +104,7 @@ On windows, open the 'Edit environment variables' settings dialog, double click 
 
 ### **GLTFast fork**
 
-The project requires a [custom fork of glTFast](https://gitlab.com/akgrown/glTFast) implementing MPEG scene description extensions.
+The project requires a [custom fork of glTFast](https://github.com/5G-MAG/rt-xr-gITFast) implementing MPEG scene description extensions.
 
 For development, the package is installed as a git submodule in the Package directory, making it an [embedded package](https://docs.unity3d.com/Manual/CustomPackages.html#EmbedMe) to the project.
 
