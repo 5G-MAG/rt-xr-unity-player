@@ -4,3 +4,4 @@
 [submodule "Packages/com.atteneder.gltfast"]
 	path = Packages/com.atteneder.gltfast
 	url = https://github.com/5G-MAG/rt-xr-gITFast.git
+	branch = dev/iso-23090-14
