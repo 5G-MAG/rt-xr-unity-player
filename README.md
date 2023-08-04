@@ -10,9 +10,9 @@ git submodule update --init --recursive
 ```
 
 **2. Fetch sample content**
-```
-git -C content lfs fetch --all
-```
+We are in the process of setting up a Github LFS, see
+
+In the meantime please download the sample content from [here](https://owncloud.fokus.fraunhofer.de/index.php/s/D9t6UsxTNhdeZ2i) and put it into the `content` folder (you might need to create the folder first)
 
 The default content is the video sequence and should be place in the same folder as the executable for it to be loaded properly.
 
