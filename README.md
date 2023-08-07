@@ -11,11 +11,13 @@ git submodule update --init --recursive
 
 **2. Fetch sample content**
 
-We are in the process of setting up a Github LFS, see [here](https://github.com/5G-MAG/rt-xr-unity-player/issues/1).
+In the root folder of the project create a folder `content` and enter the folder:
 
-In the meantime please download the sample content from [here](https://owncloud.fokus.fraunhofer.de/index.php/s/D9t6UsxTNhdeZ2i) and put it into the `content` folder (you might need to create the folder first)
+`mkdir content && cd content`
 
-The default content is the video sequence and should be place in the same folder as the executable for it to be loaded properly.
+Now fetch the content from our [rt-xr-content](https://github.com/5G-MAG/rt-xr-content) repository:
+
+`git clone https://github.com/5G-MAG/rt-xr-content`
 
 
 **3. Make sure libav's dynamic libraries are installed on your system**. 
