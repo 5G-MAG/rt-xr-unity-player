@@ -127,15 +127,17 @@ namespace rt.xr.unity
             return Handler.headerLength;
         }
 
-        unsafe public NativeArray<byte> GetNativeArray(Frame frame)
+        unsafe public NativeArray<byte> GetNativeArray(Frame frame, BufferInfoHeaderArray headers = null)
         {
             var data = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(frame.data.ToPointer(), (int)frame.length, Allocator.None);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref data, AtomicSafetyHandle.GetTempUnsafePtrSliceHandle());
 #endif
-            if (Handler.headerLength > 0)
+            if (headers != null)
             {
-                return data.GetSubArray(Handler.headerLength, (int)frame.length - Handler.headerLength);
+                int headerLength;
+                BufferInfoHeader.ComputeTotalHeadersLength(headers, out headerLength);
+                return data.GetSubArray(headerLength, (int)frame.length - headerLength);
             }
             return data;
         }

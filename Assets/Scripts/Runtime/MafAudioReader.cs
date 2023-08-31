@@ -43,8 +43,8 @@ namespace rt.xr.unity
         // MAF buffer
         public readonly MediaBufferHandler BufferHandler;
         public readonly BufferInfoArray BufferInfo;
-        private bool useAccessorHeaders = false;
-        private BufferInfoHeaderArray bufferHeaders;
+        private bool useAccessorHeaders = true;
+        private BufferInfoHeaderArray bufferHeaders = null;
 
         public readonly int ChannelCount;
         public readonly int SampleRate;
@@ -66,9 +66,8 @@ namespace rt.xr.unity
             ChannelCount = BufferInfo.Count; 
             SampleRate = sampleRate;
 
-            if (BufferHandler.GetHeaderLength() > 0)
+            if (useAccessorHeaders)
             {
-                useAccessorHeaders = true;
                 bufferHeaders = BufferInfoHeader.CreateAccessorsHeaders(handler.BufferInfo, true);
             }
 
@@ -151,7 +150,7 @@ namespace rt.xr.unity
                         break;
                     }
 
-                    var tmp = BufferHandler.GetNativeArray(frame);
+                    var tmp = BufferHandler.GetNativeArray(frame, bufferHeaders);
                     src = tmp.Reinterpret<float>(sizeof(byte)).GetSubArray(0, packedSampleCount);
                 }
 
