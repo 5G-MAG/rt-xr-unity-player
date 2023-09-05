@@ -1,5 +1,5 @@
 # https://game.ci/docs/github/activation
-name: windows-2019 activation file
+name: activation
 on:
   workflow_dispatch: {}
 jobs:
