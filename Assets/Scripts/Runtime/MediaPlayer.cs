@@ -447,8 +447,8 @@ namespace rt.xr.unity
                 {
                     if ((videoTextures != null) && videoTextures.ContainsKey(mb.bufferId))
                     {
-                        // Debug.Log(CurrentTime - audioSync.CurrentTime);
-                        if (mb.UpdatePresentationFrame(audioSync.CurrentTime) != null)
+                        double ts = audioSync != null ? audioSync.CurrentTime : CurrentTime;
+                        if (mb.UpdatePresentationFrame(ts) != null)
                         {
                             var data = mb.GetNativeArray(mb.PresentationFrame);
                             foreach (var vt in videoTextures[mb.bufferId])

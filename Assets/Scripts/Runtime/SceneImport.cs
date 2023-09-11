@@ -235,7 +235,12 @@ namespace rt.xr.unity
                 GLTFast.Schema.Buffer buff = buffers[i];
                 if (buff.extensions.MPEG_buffer_circular != null)
                 {
-                    if (buff.extensions.MPEG_buffer_circular.source == mediaIndex)
+                    if (buff.extensions.MPEG_buffer_circular.media < 0)
+                    {
+                        Debug.LogWarningFormat("Undefined media index on gltf buffer[%d].extension['MPEG_buffer_circular']  ", i);
+                        continue;
+                    }
+                    if (buff.extensions.MPEG_buffer_circular.media == mediaIndex)
                     {
                         m.buffers[i] = buff;
                     }
@@ -369,7 +374,7 @@ namespace rt.xr.unity
 
         public int GetBufferSourceMediaIndex(int bufferId)
         {
-            return GetSourceRoot().buffers[bufferId].extensions.MPEG_buffer_circular.source;
+            return GetSourceRoot().buffers[bufferId].extensions.MPEG_buffer_circular.media;
         }
 
     }

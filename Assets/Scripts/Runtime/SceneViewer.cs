@@ -145,6 +145,10 @@ namespace rt.xr.unity
 
         static void CreateAudioSources(SceneImport gltfImport, GameObjectInstantiator instantiator, List<MediaPlayer> mediaPlayers)
         {
+            if (instantiator.sceneInstance.audioSources is null)
+            {
+                return;
+            }
             foreach (SpatialAudioSource aSrc in instantiator.sceneInstance.audioSources)
             {
                 int mediaIdx = gltfImport.GetBufferSourceMediaIndex(aSrc.BufferId);
