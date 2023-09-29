@@ -103,9 +103,14 @@ namespace rt.xr.unity
         public List<MediaPipelineConfig> GetMediaPipelineConfigs()
         {
             Dictionary<int, maf.AttributeType> attribTypeMap = GetAccessorAttributeTypeMap();
-            Media[] medias = GetSourceRoot().extensions.MPEG_media.media;
-            var res = new List<MediaPipelineConfig>(medias.Length);
-            for (int i = 0; i < medias.Length; i++)
+            var ext = GetSourceRoot().extensions.MPEG_media;
+            if (ext.media == null)
+            {
+                return new List<MediaPipelineConfig>();
+            }
+            
+            var res = new List<MediaPipelineConfig>(ext.media.Length);
+            for (int i = 0; i < ext.media.Length; i++)
             {
                 res.Add(GetMediaPipelineConfig(i, attribTypeMap));
             }
