@@ -167,7 +167,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cea80562dd241d4fb1fd51e3b93a10f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  defaultGltfSouceUri: content/video/scene.gltf
+  defaultGltfSouceUri: rt-xr-content/video/scene.gltf
   memoryUsageRecorder: 0
 --- !u!1 &1548217747
 GameObject:
@@ -262,6 +262,9 @@ MonoBehaviour:
   BACKWARD: 274
   LEFT: 276
   RIGHT: 275
+  lookAroundSpeedFactor: 1
+  scrollSpeedFactor: 1
+  moveSpeedFactor: 1
 --- !u!114 &1548217753
 MonoBehaviour:
   m_ObjectHideFlags: 0
