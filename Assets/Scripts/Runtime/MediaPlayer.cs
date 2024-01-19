@@ -246,6 +246,15 @@ namespace rt.xr.unity
                 // FIXME: works only on windows for now, some environments may not allow DLL usage (eg. iOS).
                 if (String.IsNullOrEmpty(Environment.GetEnvironmentVariable("MAF_PLUGINS_DIR"))){
                     string dir = Path.GetFullPath("Packages/rt.xr.maf/x86_64-w64/bin");
+                    if (!Directory.Exists(dir))
+                    {
+
+                        if (Application.platform == RuntimePlatform.WindowsPlayer)
+                        {
+                            dir = Application.dataPath + "/Plugins/x86_64";
+                        }
+                        
+                    }
                     factory.loadPluginsDir(dir);
                 }
                 else
