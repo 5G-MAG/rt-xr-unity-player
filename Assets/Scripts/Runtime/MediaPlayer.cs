@@ -245,7 +245,7 @@ namespace rt.xr.unity
                 factory = new MediaPipelineFactory();
                 // FIXME: works only on windows for now, some environments may not allow DLL usage (eg. iOS).
                 if (String.IsNullOrEmpty(Environment.GetEnvironmentVariable("MAF_PLUGINS_DIR"))){
-                    string dir = Path.GetFullPath("Packages/rt.xr.maf/Plugins/win64/bin");
+                    string dir = Path.GetFullPath("Packages/rt.xr.maf/x86_64-w64/bin");
                     factory.loadPluginsDir(dir);
                 }
                 else
