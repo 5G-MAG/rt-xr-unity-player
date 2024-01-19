@@ -104,7 +104,7 @@ namespace rt.xr.unity
         {
             Dictionary<int, maf.AttributeType> attribTypeMap = GetAccessorAttributeTypeMap();
             var ext = GetSourceRoot().extensions.MPEG_media;
-            if (ext.media == null)
+            if (ext == null || ext.media == null)
             {
                 return new List<MediaPipelineConfig>();
             }
@@ -198,28 +198,31 @@ namespace rt.xr.unity
 
             // texture formats, shouldn't be signaled as "Attribute"
             GLTFast.Schema.Texture[] textures = root.textures;
-            for (int t = 0; t < textures.Length; t++)
+            if (textures != null)
             {
-                MpegTextureVideo tex = textures[t].extensions.MPEG_texture_video;
-                if (tex != null)
+                for (int t = 0; t < textures.Length; t++)
                 {
-                    if (tex.format == VideoBufferFormat.RGB)
+                    MpegTextureVideo tex = textures[t].extensions.MPEG_texture_video;
+                    if (tex != null)
                     {
-                        // accessor should supply vec3 unsigned bytes
-                        map[tex.accessor] = maf.AttributeType.TEXTURE_RGB;
+                        if (tex.format == VideoBufferFormat.RGB)
+                        {
+                            // accessor should supply vec3 unsigned bytes
+                            map[tex.accessor] = maf.AttributeType.TEXTURE_RGB;
+                        }
+                        else if (tex.format == VideoBufferFormat.G8_B8_R8_3PLANE_420_UNORM)
+                        {
+                            // accessor should supply scalar unsigned bytes
+                            map[tex.accessor] = maf.AttributeType.TEXTURE_GBR_3PLANE_420_UNORM;
+                        }
+                        /*
+                         * else
+                        {
+                            // the pipeline is expected to decode to the proper format without any hint
+                            map[tex.accessor] = maf.AttributeType.UNDEFINED;
+                        }
+                        */
                     }
-                    else if (tex.format == VideoBufferFormat.G8_B8_R8_3PLANE_420_UNORM)
-                    {
-                        // accessor should supply scalar unsigned bytes
-                        map[tex.accessor] = maf.AttributeType.TEXTURE_GBR_3PLANE_420_UNORM;
-                    }
-                    /*
-                     * else
-                    {
-                        // the pipeline is expected to decode to the proper format without any hint
-                        map[tex.accessor] = maf.AttributeType.UNDEFINED;
-                    }
-                    */
                 }
             }
 
@@ -364,15 +367,17 @@ namespace rt.xr.unity
             // move to instantiator ?
             GLTFast.Schema.Texture[] sourceTextures = GetSourceRoot().textures;
             var videoTextures = new List<VideoTexture>();
-            for (int t = 0; t < sourceTextures.Length; t++)
+            if (sourceTextures != null)
             {
-                if (sourceTextures[t].extensions.MPEG_texture_video != null)
+                for (int t = 0; t < sourceTextures.Length; t++)
                 {
-                    var vt = CreateVideoTexture(t);
-                    videoTextures.Add(vt);
+                    if (sourceTextures[t].extensions.MPEG_texture_video != null)
+                    {
+                        var vt = CreateVideoTexture(t);
+                        videoTextures.Add(vt);
+                    }
                 }
             }
-
             return videoTextures;
         }
 
