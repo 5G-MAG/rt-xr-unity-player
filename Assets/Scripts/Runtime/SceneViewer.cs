@@ -41,7 +41,7 @@ namespace rt.xr.unity
         int minFps = int.MaxValue;
         int maxFps = int.MinValue;
 
-        bool autoplay = true;
+        bool autoplay = false;
 
         int sceneIndex = 0;
         SceneImport? gltf;
