@@ -41,7 +41,8 @@ namespace rt.xr.unity
         int minFps = int.MaxValue;
         int maxFps = int.MinValue;
 
-        bool autoplay = false;
+        bool autoplayMedia = false;
+        public bool autoplayAnimation = true;
 
         int sceneIndex = 0;
         SceneImport? gltf;
@@ -94,7 +95,7 @@ namespace rt.xr.unity
             }
 
             bounds = Utils.ComputeSceneBounds();
-            Utils.LookAt(main, bounds, transform.forward);            
+            Utils.LookAt(main, bounds, transform.forward);
         }
 
         public Camera GetMainCamera()
@@ -187,9 +188,16 @@ namespace rt.xr.unity
                 }
 
                 var instantiator = new GameObjectInstantiator(gltf, transform);
+                await gltf.InstantiateSceneAsync(instantiator, sceneIndex);
+                if (autoplayAnimation)
+                {
+                    var legacyAnimation = instantiator.sceneInstance.legacyAnimation;
+                    if (legacyAnimation != null)
+                    {
+                        legacyAnimation.Play();
+                    }
+                }
 
-                await gltf.InstantiateSceneAsync(instantiator, sceneIndex); 
-                
                 mediaPlayers = CreateMediaPlayers(gltf, baseUri);
                 CreateVideoTextures(gltf, mediaPlayers);
                 CreateAudioSources(gltf, instantiator, mediaPlayers);
@@ -266,13 +274,13 @@ namespace rt.xr.unity
                     disposeMemoryRecorder();
             }
 
-            if (autoplay && (mediaPlayers != null))
+            if (autoplayMedia && (mediaPlayers != null))
             {
                 foreach (var mp in mediaPlayers)
                 {
                     mp.Play();
                 }
-                autoplay = false;
+                autoplayMedia = false;
             }
 
             if (Input.GetKeyDown(KeyCode.Tab))
