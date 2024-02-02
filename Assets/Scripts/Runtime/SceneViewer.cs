@@ -42,7 +42,6 @@ namespace rt.xr.unity
         int minFps = int.MaxValue;
         int maxFps = int.MinValue;
 
-        bool autoplayMedia = false;
         public bool autoplayAnimation = true;
         bool showLog = false;
 
@@ -298,13 +297,15 @@ namespace rt.xr.unity
                     disposeMemoryRecorder();
             }
 
-            if (autoplayMedia && (mediaPlayers != null))
+            if (mediaPlayers != null)
             {
                 foreach (var mp in mediaPlayers)
                 {
-                    mp.Play();
+                    if (mp.autoPlay)
+                    {
+                        mp.Play();
+                    }
                 }
-                autoplayMedia = false;
             }
 
             if (Input.GetKeyDown(KeyCode.Tab))
