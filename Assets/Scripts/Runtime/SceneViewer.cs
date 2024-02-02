@@ -11,6 +11,7 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using UnityEngine;
@@ -43,18 +44,26 @@ namespace rt.xr.unity
 
         bool autoplayMedia = false;
         public bool autoplayAnimation = true;
+        bool showLog = false;
 
         int sceneIndex = 0;
         SceneImport? gltf;
         List<MediaPlayer>? mediaPlayers = null;
 
         Bounds bounds;
+        uint maxLogMessages = 15;
+        Queue logQueue = new Queue();
 
         public string GetSourceUriFromCommandLineArgs()
         {
             string[] args = Environment.GetCommandLineArgs();
             for (int i = 0; i < args.Length; i++)
             {
+                if (args[i] == "--log")
+                {
+                    showLog = true;
+                    continue;
+                }
                 int j = i + 1;
                 if (args[i] == "--gltf")
                 {
@@ -238,8 +247,23 @@ namespace rt.xr.unity
             memoryUsageRecording = false;
         }
 
+        void HandleLog(string logString, string stackTrace, LogType type)
+        {
+            logQueue.Enqueue("[" + type + "] : " + logString);
+            if (type == LogType.Exception)
+                logQueue.Enqueue(stackTrace);
+            while (logQueue.Count > maxLogMessages)
+                logQueue.Dequeue();
+        }
+
+        void OnEnable()
+        {
+            Application.logMessageReceived += HandleLog;
+        }
+
         private void OnDisable()
         {
+            Application.logMessageReceived -= HandleLog;
             disposeMemoryRecorder();
         }
 
@@ -288,6 +312,15 @@ namespace rt.xr.unity
                 ConfigureInitialCamera();
             }
 
+            if (Input.GetKeyDown(KeyCode.L))
+            {
+                if(showLog){
+                    showLog = false;
+                } else {
+                    showLog = true;
+                }
+            }
+
         }
 
         private void OnDrawGizmos()
@@ -314,6 +347,13 @@ namespace rt.xr.unity
         {
             if (memoryUsageRecorder)
                 GUI.TextArea(new Rect(10, 30, 250, 50), statsText);
+
+            if (showLog)
+            {
+                GUILayout.BeginArea(new Rect(0, 0, Screen.width, Screen.height));
+                GUILayout.Label("\n" + string.Join("\n", logQueue.ToArray()));
+                GUILayout.EndArea();
+            }
         }
 
     }
