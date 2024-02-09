@@ -1,5 +1,18 @@
 # sample gltf scene viewer implementing mpeg extensions 
 
+## Supported platforms
+
+The project supports the latest [Unity3D LTS editor release](https://unity.com/releases/editor/qa/lts-releases).
+
+XR is implemented through the [OpenXR plugin](https://docs.unity3d.com/Packages/com.unity.xr.openxr@latest) for Unity's [XR plugin management package](https://docs.unity3d.com/Packages/com.unity.xr.management@latest).
+
+The OpenXR plugin provides a [list of supported platforms](https://docs.unity3d.com/Packages/com.unity.xr.openxr@1.10/manual/index.html#runtimes).
+
+It is currently developed and tested on Windows 11 using the [Meta Quest Link](https://www.meta.com/help/quest/articles/headsets-and-accessories/oculus-link/set-up-link/).
+
+Please open an issue to request support for new platforms.
+
+
 ## Build
 
 **1. clone the project and its submodules**
@@ -30,7 +43,6 @@ This is a dependency of the sample media pipeline based on libav. For details, i
 
 **5. use the editor's play mode, or build the project and run the executable** (eg. `File > Build settings > Build > Clean Build`)
 
-The project is currently developped and tested on windows only (precompiled maf library).
 
 
 ## Usage
