@@ -11,6 +11,7 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using UnityEngine;
@@ -41,19 +42,27 @@ namespace rt.xr.unity
         int minFps = int.MaxValue;
         int maxFps = int.MinValue;
 
-        bool autoplay = true;
+        public bool autoplayAnimation = true;
+        bool showLog = false;
 
         int sceneIndex = 0;
         SceneImport? gltf;
         List<MediaPlayer>? mediaPlayers = null;
 
         Bounds bounds;
+        uint maxLogMessages = 15;
+        Queue logQueue = new Queue();
 
         public string GetSourceUriFromCommandLineArgs()
         {
             string[] args = Environment.GetCommandLineArgs();
             for (int i = 0; i < args.Length; i++)
             {
+                if (args[i] == "--log")
+                {
+                    showLog = true;
+                    continue;
+                }
                 int j = i + 1;
                 if (args[i] == "--gltf")
                 {
@@ -94,7 +103,7 @@ namespace rt.xr.unity
             }
 
             bounds = Utils.ComputeSceneBounds();
-            Utils.LookAt(main, bounds, transform.forward);            
+            Utils.LookAt(main, bounds, transform.forward);
         }
 
         public Camera GetMainCamera()
@@ -187,9 +196,16 @@ namespace rt.xr.unity
                 }
 
                 var instantiator = new GameObjectInstantiator(gltf, transform);
+                await gltf.InstantiateSceneAsync(instantiator, sceneIndex);
+                if (autoplayAnimation)
+                {
+                    var legacyAnimation = instantiator.sceneInstance.legacyAnimation;
+                    if (legacyAnimation != null)
+                    {
+                        legacyAnimation.Play();
+                    }
+                }
 
-                await gltf.InstantiateSceneAsync(instantiator, sceneIndex); 
-                
                 mediaPlayers = CreateMediaPlayers(gltf, baseUri);
                 CreateVideoTextures(gltf, mediaPlayers);
                 CreateAudioSources(gltf, instantiator, mediaPlayers);
@@ -230,8 +246,23 @@ namespace rt.xr.unity
             memoryUsageRecording = false;
         }
 
+        void HandleLog(string logString, string stackTrace, LogType type)
+        {
+            logQueue.Enqueue("[" + type + "] : " + logString);
+            if (type == LogType.Exception)
+                logQueue.Enqueue(stackTrace);
+            while (logQueue.Count > maxLogMessages)
+                logQueue.Dequeue();
+        }
+
+        void OnEnable()
+        {
+            Application.logMessageReceived += HandleLog;
+        }
+
         private void OnDisable()
         {
+            Application.logMessageReceived -= HandleLog;
             disposeMemoryRecorder();
         }
 
@@ -266,18 +297,29 @@ namespace rt.xr.unity
                     disposeMemoryRecorder();
             }
 
-            if (autoplay && (mediaPlayers != null))
+            if (mediaPlayers != null)
             {
                 foreach (var mp in mediaPlayers)
                 {
-                    mp.Play();
+                    if (mp.autoPlay)
+                    {
+                        mp.Play();
+                    }
                 }
-                autoplay = false;
             }
 
             if (Input.GetKeyDown(KeyCode.Tab))
             {
                 ConfigureInitialCamera();
+            }
+
+            if (Input.GetKeyDown(KeyCode.L))
+            {
+                if(showLog){
+                    showLog = false;
+                } else {
+                    showLog = true;
+                }
             }
 
         }
@@ -306,6 +348,13 @@ namespace rt.xr.unity
         {
             if (memoryUsageRecorder)
                 GUI.TextArea(new Rect(10, 30, 250, 50), statsText);
+
+            if (showLog)
+            {
+                GUILayout.BeginArea(new Rect(0, 0, Screen.width, Screen.height));
+                GUILayout.Label("\n" + string.Join("\n", logQueue.ToArray()));
+                GUILayout.EndArea();
+            }
         }
 
     }
