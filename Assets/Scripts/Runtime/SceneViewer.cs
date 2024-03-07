@@ -24,10 +24,10 @@ namespace rt.xr.unity
 {
 
     using GLTFast;
+    using UnityEngine.SceneManagement;
 
     public class SceneViewer : MonoBehaviour
     {
-
         public string defaultGltfSouceUri = "";
 
         string statsText = "";
@@ -48,6 +48,11 @@ namespace rt.xr.unity
         int sceneIndex = 0;
         SceneImport? gltf;
         List<MediaPlayer>? mediaPlayers = null;
+
+        // Xr camera support
+        [SerializeField] private bool m_IsXrMode;
+        [SerializeField] private GameObject m_XrCameraRigPrefab;
+        private GameObject m_CameraRig;
 
         Bounds bounds;
         uint maxLogMessages = 15;
@@ -125,7 +130,8 @@ namespace rt.xr.unity
             UnityEngine.AudioListener[] listener = GetComponentsInChildren<UnityEngine.AudioListener>();
             if (listener.Length == 0)
             {
-                UnityEngine.Camera.main.gameObject.AddComponent<AudioListener>();
+                Camera c = GetMainCamera();
+                c.gameObject.AddComponent<AudioListener>();
             }
         }
 
@@ -168,9 +174,47 @@ namespace rt.xr.unity
             }
         }
 
-
-        async void Start()
+        [ContextMenu("Load default gltf scene")]
+        public void LoadDefaultGltfScene()
         {
+            LoadScene(defaultGltfSouceUri);
+        }
+
+        public void LoadScene(string scenePath)
+        {
+            LoadGltf(scenePath);
+        }
+
+        void CreateXRCamera()
+        {
+            if(m_CameraRig != null)
+            {
+                return;
+                Destroy(m_CameraRig);
+            }
+
+            // Destroy all cameras in the scene
+            Camera[] cameras = FindObjectsOfType<Camera>();
+
+            for(int i = 0; i < cameras.Length; i++)
+            {
+                Destroy(cameras[i].gameObject);
+            }
+
+            m_CameraRig = Instantiate(m_XrCameraRigPrefab, null);
+
+            // Set this camera prioritary
+            // Find the camera component under this rig
+            Camera xrCam = m_CameraRig.GetComponentInChildren<Camera>();
+            if(xrCam != null)
+            {
+                xrCam.depth = 100;
+            }
+        }
+
+        async void LoadGltf(string filePath)
+        {
+            defaultGltfSouceUri = filePath;
             string p = GetSourceUriFromCommandLineArgs();
             Uri path = new Uri(p, UriKind.RelativeOrAbsolute);
             
@@ -183,6 +227,21 @@ namespace rt.xr.unity
                 Debug.LogError("Source GLTF document path not configured. Use `--gltf ` command line argument, followed by the document URI.");
                 Application.Quit(1);
             }
+
+            // Instantiate XR camera in the scene and set it as main camera
+            if(m_IsXrMode)
+            {
+                CreateXRCamera();
+            }
+            
+#if UNITY_ANDROID && !UNITY_EDITOR
+
+            if(m_CameraRig == null)
+            {
+                CreateXRCamera();
+            }
+
+#endif
 
             gltf = new SceneImport();
             bool success = await gltf.Load(path);
@@ -210,9 +269,8 @@ namespace rt.xr.unity
                 CreateVideoTextures(gltf, mediaPlayers);
                 CreateAudioSources(gltf, instantiator, mediaPlayers);
 
-                ConfigureInitialCamera();
+                // ConfigureInitialCamera();
                 EnsureAudioListenerExists();
-                
             }
             else
             {
@@ -220,6 +278,30 @@ namespace rt.xr.unity
                 Application.Quit(1);
             }
 
+        }
+
+        public void UnloadGltfScene()
+        {
+            VirtualSceneGraph.ResetAll();
+            
+            if(m_CameraRig != null)
+            {
+                Destroy(m_CameraRig.gameObject);
+            }
+
+            // Destroy all game objects instances
+            gltf.Dispose();
+
+            // Dispose media players
+            // FIXME: For some reasons, this code make Unity crash
+            // TODO: Find a way to dispose media resources
+            // if (mediaPlayers != null)
+            // {
+            //     foreach (var mp in mediaPlayers)
+            //     {
+            //         mp.Dispose();
+            //     }
+            // }
         }
 
         private void enableMemoryRecorder()

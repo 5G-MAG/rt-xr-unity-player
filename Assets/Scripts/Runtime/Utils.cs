@@ -12,7 +12,9 @@
 
 #nullable enable
 
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.XR;
 
 namespace rt.xr
 {
@@ -63,6 +65,27 @@ namespace rt.xr
             float distance = bounds.size.y * 0.5f / Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
             cam.transform.position = bounds.center + Vector3.Project(bounds.size, forward) + forward * distance;
             cam.transform.LookAt(bounds.center);
+        }
+
+        /// <summary>
+        /// Returns whether any of XR Subsystem is running, meaning that we 
+        /// are in XR mode on a XR device
+        /// </summary>
+        public static bool IsInXrMode()
+        {
+#if UNITY_ANDROID
+            List<XRDisplaySubsystem> xrDisplaySubSystems = new List<XRDisplaySubsystem>();
+            SubsystemManager.GetInstances(xrDisplaySubSystems);
+
+            for(int i = 0; i < xrDisplaySubSystems.Count; i++)
+            {
+                if(xrDisplaySubSystems[i].running)
+                {
+                    return true;
+                }
+            }
+#endif
+            return false;
         }
 
     }

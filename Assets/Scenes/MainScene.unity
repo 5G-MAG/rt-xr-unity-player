@@ -169,6 +169,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultGltfSouceUri: rt-xr-content/video/scene.gltf
   memoryUsageRecorder: 0
+  autoplayAnimation: 1
 --- !u!1 &1548217747
 GameObject:
   m_ObjectHideFlags: 0
