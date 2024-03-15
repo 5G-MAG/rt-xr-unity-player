@@ -11,22 +11,19 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using UnityEngine;
 using System.Text;
 using Unity.Profiling;
 
-#nullable enable
-
 namespace rt.xr.unity
 {
-
     using GLTFast;
 
     public class SceneViewer : MonoBehaviour
     {
-
         public string defaultGltfSouceUri = "";
 
         string statsText = "";
@@ -41,19 +38,35 @@ namespace rt.xr.unity
         int minFps = int.MaxValue;
         int maxFps = int.MinValue;
 
-        bool autoplay = true;
+        public bool autoplayAnimation = true;
+        bool showLog = false;
 
         int sceneIndex = 0;
+        
+#nullable enable
         SceneImport? gltf;
         List<MediaPlayer>? mediaPlayers = null;
+#nullable disable
 
-        Bounds bounds;
+        // Xr camera support
+        // [SerializeField] private bool m_IsXrMode;
+        // [SerializeField] private GameObject m_XrCameraRigPrefab;
+        // private GameObject m_CameraRig;
+
+        private Bounds bounds;
+        private uint maxLogMessages = 15;
+        private Queue logQueue = new Queue();
 
         public string GetSourceUriFromCommandLineArgs()
         {
             string[] args = Environment.GetCommandLineArgs();
             for (int i = 0; i < args.Length; i++)
             {
+                if (args[i] == "--log")
+                {
+                    showLog = true;
+                    continue;
+                }
                 int j = i + 1;
                 if (args[i] == "--gltf")
                 {
@@ -72,6 +85,25 @@ namespace rt.xr.unity
 
         public void ConfigureInitialCamera()
         {
+            // Check if a camera exists in the scene first
+            Camera[] _cameras = FindObjectsOfType<Camera>();
+
+            Camera _currentCamera = null;
+
+            // First camera encountered become the camera for the scene
+            for(int i = 0; i < _cameras.Length; i++)
+            {
+                if(i == 0)
+                {
+                    _currentCamera = _cameras[i];
+                    _currentCamera.tag = "MainCamera";
+                }
+                else
+                {
+                    Destroy(_cameras[i].gameObject);
+                }
+            }
+
             /*
              * Configure camera[0] as the default camera, otherwise creates a new camera looking at the scene
              */
@@ -94,7 +126,7 @@ namespace rt.xr.unity
             }
 
             bounds = Utils.ComputeSceneBounds();
-            Utils.LookAt(main, bounds, transform.forward);            
+            Utils.LookAt(main, bounds, transform.forward);
         }
 
         public Camera GetMainCamera()
@@ -116,7 +148,8 @@ namespace rt.xr.unity
             UnityEngine.AudioListener[] listener = GetComponentsInChildren<UnityEngine.AudioListener>();
             if (listener.Length == 0)
             {
-                UnityEngine.Camera.main.gameObject.AddComponent<AudioListener>();
+                Camera c = GetMainCamera();
+                c.gameObject.AddComponent<AudioListener>();
             }
         }
 
@@ -159,9 +192,45 @@ namespace rt.xr.unity
             }
         }
 
-
-        async void Start()
+        [ContextMenu("Load default gltf scene")]
+        public void LoadDefaultGltfScene()
         {
+            LoadScene(defaultGltfSouceUri);
+        }
+
+        public void LoadScene(string scenePath)
+        {
+            LoadGltf(scenePath);
+        }
+
+        // void CreateXRCamera()
+        // {
+        //     if(m_CameraRig != null)
+        //     {
+        //         Destroy(m_CameraRig);
+        //     }
+
+        //     // Destroy all cameras in the scene
+        //     Camera[] cameras = FindObjectsOfType<Camera>();
+        //     for(int i = 0; i < cameras.Length; i++)
+        //     {
+        //         Destroy(cameras[i].gameObject);
+        //     }
+
+        //     m_CameraRig = Instantiate(m_XrCameraRigPrefab, null);
+
+        //     // Set this camera prioritary
+        //     // Find the camera component under this rig
+        //     Camera xrCam = m_CameraRig.GetComponentInChildren<Camera>();
+        //     if(xrCam != null)
+        //     {
+        //         xrCam.depth = 100;
+        //     }
+        // }
+
+        async void LoadGltf(string filePath)
+        {
+            defaultGltfSouceUri = filePath;
             string p = GetSourceUriFromCommandLineArgs();
             Uri path = new Uri(p, UriKind.RelativeOrAbsolute);
             
@@ -175,6 +244,21 @@ namespace rt.xr.unity
                 Application.Quit(1);
             }
 
+            // Instantiate XR camera in the scene and set it as main camera
+            // if(m_IsXrMode)
+            // {
+            //     CreateXRCamera();
+            // }
+            
+// #if UNITY_ANDROID && !UNITY_EDITOR
+
+//             if(m_CameraRig == null)
+//             {
+//                 CreateXRCamera();
+//             }
+
+// #endif
+
             gltf = new SceneImport();
             bool success = await gltf.Load(path);
 
@@ -187,23 +271,52 @@ namespace rt.xr.unity
                 }
 
                 var instantiator = new GameObjectInstantiator(gltf, transform);
+                await gltf.InstantiateSceneAsync(instantiator, sceneIndex);
+                if (autoplayAnimation)
+                {
+                    var legacyAnimation = instantiator.sceneInstance.legacyAnimation;
+                    if (legacyAnimation != null)
+                    {
+                        legacyAnimation.Play();
+                    }
+                }
 
-                await gltf.InstantiateSceneAsync(instantiator, sceneIndex); 
-                
                 mediaPlayers = CreateMediaPlayers(gltf, baseUri);
                 CreateVideoTextures(gltf, mediaPlayers);
                 CreateAudioSources(gltf, instantiator, mediaPlayers);
 
                 ConfigureInitialCamera();
                 EnsureAudioListenerExists();
-                
             }
             else
             {
                 UnityEngine.Debug.LogError("Loading glTF failed!");
                 Application.Quit(1);
             }
+        }
 
+        public void UnloadGltfScene()
+        {
+            VirtualSceneGraph.ResetAll();
+            
+            // if(m_CameraRig != null)
+            // {
+            //     Destroy(m_CameraRig.gameObject);
+            // }
+
+            // Destroy all game objects instances
+            gltf?.Dispose();
+
+            // Dispose media players
+            // FIXME: For some reasons, this code make Unity crash
+            // TODO: Find a way to dispose media resources
+            // if (mediaPlayers != null)
+            // {
+            //     foreach (var mp in mediaPlayers)
+            //     {
+            //         mp.Dispose();
+            //     }
+            // }
         }
 
         private void enableMemoryRecorder()
@@ -230,8 +343,23 @@ namespace rt.xr.unity
             memoryUsageRecording = false;
         }
 
+        void HandleLog(string logString, string stackTrace, LogType type)
+        {
+            logQueue.Enqueue("[" + type + "] : " + logString);
+            if (type == LogType.Exception)
+                logQueue.Enqueue(stackTrace);
+            while (logQueue.Count > maxLogMessages)
+                logQueue.Dequeue();
+        }
+
+        void OnEnable()
+        {
+            Application.logMessageReceived += HandleLog;
+        }
+
         private void OnDisable()
         {
+            Application.logMessageReceived -= HandleLog;
             disposeMemoryRecorder();
         }
 
@@ -266,13 +394,15 @@ namespace rt.xr.unity
                     disposeMemoryRecorder();
             }
 
-            if (autoplay && (mediaPlayers != null))
+            if (mediaPlayers != null)
             {
                 foreach (var mp in mediaPlayers)
                 {
-                    mp.Play();
+                    if (mp.autoPlay)
+                    {
+                        mp.Play();
+                    }
                 }
-                autoplay = false;
             }
 
             if (Input.GetKeyDown(KeyCode.Tab))
@@ -280,6 +410,14 @@ namespace rt.xr.unity
                 ConfigureInitialCamera();
             }
 
+            if (Input.GetKeyDown(KeyCode.L))
+            {
+                if(showLog){
+                    showLog = false;
+                } else {
+                    showLog = true;
+                }
+            }
         }
 
         private void OnDrawGizmos()
@@ -306,8 +444,13 @@ namespace rt.xr.unity
         {
             if (memoryUsageRecorder)
                 GUI.TextArea(new Rect(10, 30, 250, 50), statsText);
+
+            if (showLog)
+            {
+                GUILayout.BeginArea(new Rect(0, 0, Screen.width, Screen.height));
+                GUILayout.Label("\n" + string.Join("\n", logQueue.ToArray()));
+                GUILayout.EndArea();
+            }
         }
-
     }
-
 }

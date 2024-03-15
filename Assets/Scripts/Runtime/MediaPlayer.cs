@@ -277,7 +277,7 @@ namespace rt.xr.unity
                 Debug.LogException(e);
                 return null;
             }
-            mp.autoPlay = media.autoPlay;
+            mp.autoPlay = media.autoplay;
             return mp;
         }
 
@@ -392,6 +392,8 @@ namespace rt.xr.unity
 
         public void Play(TimeInfo t = null, ViewInfo v = null)
         {
+            autoPlay = false;
+
             if (timeInfo == null)
             {
                 timeInfo = new TimeInfo();
