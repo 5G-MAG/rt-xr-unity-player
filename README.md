@@ -1,136 +1,61 @@
-# sample gltf scene viewer implementing mpeg extensions 
+# 5GMAG - XR Player
+
+This project is an interactive and XR capable gltf scene viewer supporting GLTF extensions specified in [ISO/IEC 23090-14](https://www.iso.org/standard/86439.html), implemented in Unity3D.
+
+These extensions support features such as video textures, spatial audio sources, interactivity behaviors, AR anchors, ...
+
+The [dedicated 5GMAG wiki section](https://5g-mag.github.io/Getting-Started/pages/xr-media-integration-in-5g/) provides an overview of the project and additional ressources, including the implementation status of [ISO/IEC 23090-14](https://www.iso.org/standard/86439.html).
 
 ## Supported platforms
 
-The project supports the latest [Unity3D LTS editor release](https://unity.com/releases/editor/qa/lts-releases).
+The project supports the latest [Unity3D LTS editor release](https://unity.com/releases/editor/qa/lts-releases), Unity 2022.3.
 
-XR is implemented through the [OpenXR plugin](https://docs.unity3d.com/Packages/com.unity.xr.openxr@latest) for Unity's [XR plugin management package](https://docs.unity3d.com/Packages/com.unity.xr.management@latest).
+The XR Player feature set dependends on the target platform. See the [features page](https://5g-mag.github.io/Getting-Started/pages/xr-media-integration-in-5g/features) implementation status.
 
-The OpenXR plugin provides a [list of supported platforms](https://docs.unity3d.com/Packages/com.unity.xr.openxr@1.10/manual/index.html#runtimes).
+It is currently developped, tested and built for Windows and Android targets.
 
-It is currently developed and tested on Windows 11 using the [Meta Quest Link](https://www.meta.com/help/quest/articles/headsets-and-accessories/oculus-link/set-up-link/).
+## Getting the code
 
-Please open an issue to request support for new platforms.
+The projet has dependencies which are not delivered through UPM (Unity's Package Manager), but instead are tracked as git submodules.
 
-
-## Build
-
-**1. clone the project and its submodules**
+**clone the project and fetch all submodules**
 ```
 mkdir gltfsceneviewer && cd gltfsceneviewer
 git clone https://github.com/5G-MAG/rt-xr-unity-player.git .
 git submodule update --init --recursive
 ```
 
-**2. Fetch sample content**
 
-In the root folder of the project create a folder `content` and enter the folder:
+## Building
 
-`mkdir content && cd content`
+### Building the Unity project
 
-Now fetch the content from our [rt-xr-content](https://github.com/5G-MAG/rt-xr-content) repository:
+![Build the Unity project](docs/images/unity-build-player.png)
+1. Locate the `Build Settings` menu
+2. Review the target platform, [change as needed](#changing-the-build-target-platform)
+3. Review the build type
+4. Build
 
-`git clone https://github.com/5G-MAG/rt-xr-content`
+## Configuring the project
 
+### Changing the build target platform
 
-**3. Make sure libav's dynamic libraries are installed on your system**. 
-
-This is a dependency of the sample media pipeline based on libav. For details, including compatible libav version, [see "dependency on libav" below](#dependency-on-libav).
-
-
-**4. open the project in Unity**
-
-
-**5. use the editor's play mode, or build the project and run the executable** (eg. `File > Build settings > Build > Clean Build`)
+![Build target configuration](docs/images/unity-build-change-target.png)
+1. in the build settings, select the target platform
+2. click on the "switch platform" button
 
 
+### Configure an Audio spatializer SDK
 
-## Usage
-
-from command line: 
-```
-SampleSceneViewer.exe --gltf path/to/scene.gltf
-``` 
-
-the path to the gltf document can be an http URI or a local path.
-
-A default gltf document can be configured in Unity's editor:
-
-![Adding a default gltf uri](/doc/images/default-gltf-uri.jpg "Adding a default gltf uri")
-
-This is mostly usefull to try different assets directly in the editor. When specified, the --gltf flag has priority over the default value.
-
-
-### Controls
-
-#### XR
-
-If an OpenXR HMD is detected, it is used to control the camera.
-
-#### Mouse & Keyboard usage
-
-| Key           | Action                |
-|---------------|-----------------------|
-| mouse drag    | look around           |
-| arrow UP      | move forward          |
-| arrow DOWN    | move backward         |
-| arrow LEFT    | move left             |
-| arrow RIGHT   | move right            |
-| mouse wheel   | move up/down          |
-| left shift    | faster                |
-| right shift   | faster                |
-| Tab           | reset main camera     |
-
-
-
-## Dependencies
-
-### Audio spatializer
-
-Support for spatial audio, Unity3D requires an Audio Spatializer plugin to be configured in the project settings *Edit > Project Settings > Audio > Spatializer Plugin*.
+Support for spatial audio, Unity3D requires an Audio Spatializer has to be configured in the project settings *Edit > Project Settings > Audio > Spatializer Plugin*.
 
 **If no audio spatializer plugin is configured, audio will play without spatialization**.
 
 Please refer to Unity's [documentation for details and a list of available plugins](https://docs.unity3d.com/Manual/VRAudioSpatializer.html). 
-Unity offers a native audio spatializer SDK with a [simple spatializer implementation](https://docs.unity3d.com/Manual/AudioSpatializerSDK.html).
+
+Unity provides a native audio spatializer SDK with a [simple spatializer implementation](https://docs.unity3d.com/Manual/AudioSpatializerSDK.html).
 
 
-### **media pipelines and Media Access Functions**
+### Configure an XR Plugin 
 
-The media pipelines and MAF API are implemented as C++ with c# bindings. 
-These are bundled as a unity package pulled from a separate repository:[https://github.com/5G-MAG/rt-xr-maf-plugin](https://github.com/5G-MAG/rt-xr-maf-plugin), with precompiled binaries. To build your own media pipeline, see the [MAF library C++ source](https://github.com/5G-MAG/rt-xr-maf-native). The sample media pipeline implements audio/video decoding using libav.
-
-
-#### **dependency on libav**
-
-Libav must be available as a dynamic library on your system.
-
-More specificaly, the following versions are expected, from `ffmpeg-5.1.2`'s shared libraries:
-- libavcodec-59
-- libavformat-59
-- libavutil-57
-- libswscale-6
-- libswresample-4
-
-You can build your own, or use pre-built binaries from [https://ffmpeg.org/download.html](https://ffmpeg.org/download.html#build-windows)
-
-On windows, open the 'Edit environment variables' settings dialog, double click on 'Path', and add the directory containing the libav DLLs to the list of directories.
-
-
-### **GLTFast fork**
-
-The project requires a [custom fork of glTFast](https://github.com/5G-MAG/rt-xr-gITFast) implementing MPEG scene description extensions.
-
-For development, the package is installed as a git submodule in the Package directory, making it an [embedded package](https://docs.unity3d.com/Manual/CustomPackages.html#EmbedMe) to the project.
-
-#### working on glTFast
-
-Close Unity Editor while working on the glTFast package.
-Reopen the project from the Unity hub to test integration and rebuild the project.
-
-
-## Documentation
-
-SceneViewer's implementation overview: 
-
-![Components diagram](/doc/images/SceneViewerComponentsDiagram.png "Adding a default gltf uri")
+https://docs.unity3d.com/Manual/xr-configure-providers.html
