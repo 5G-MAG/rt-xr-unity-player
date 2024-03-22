@@ -36,7 +36,7 @@ The project has dependencies which aren't supplied through UPM and are maintaine
 
 
 
-## Building
+## Build
 
 ### Building the Unity project
 
