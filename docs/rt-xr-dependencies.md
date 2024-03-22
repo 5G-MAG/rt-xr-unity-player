@@ -1,10 +1,20 @@
 # Dependencies
 
+[This tutorial](https://5g-mag.github.io/Getting-Started/pages/xr-media-integration-in-5g/tutorials/xr-player-overview.html) on the 5GMAG wiki provides an overview of the project's dependencies mentionned below. 
+
+
 ## rt-xr-gITFast : MPEG_* glTF extensions
 
 ISO/IEC 23090-14 specifies a set of extensions to the glTF format.
 
-The project requires a [custom fork of glTFast](https://github.com/5G-MAG/rt-xr-gITFast), Unity's gltf parser.
+These extensions are implemented in a [fork of glTFast](https://github.com/5G-MAG/rt-xr-gITFast), which has now become Unity's gltf parser.
+
+Contributors to glTFast, must ensure to keep up to date with the fork's upstream changes.
+
+
+### shader contributions
+
+If a contribution to glTFast contains shaders, currently these shaders must be manually imported to the Unity project's directory: `rt-xr-unity-player/Assets/Resources`.
 
 
 
