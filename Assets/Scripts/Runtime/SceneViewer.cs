@@ -113,7 +113,7 @@ namespace rt.xr.unity
             {
                 main.gameObject.AddComponent<CameraController>();
             }
-
+            
             foreach(var cam in gameObject.GetComponentsInChildren<Camera>())
             {
                 if (cam != main)
@@ -121,6 +121,7 @@ namespace rt.xr.unity
                     main.CopyFrom(cam);
                     main.clearFlags = CameraClearFlags.Color;
                     main.backgroundColor = Color.black;
+                    cam.enabled = false;
                     return;
                 }
             }
@@ -137,7 +138,6 @@ namespace rt.xr.unity
                 cam = gameObject.AddComponent<Camera>();
                 cam.enabled = true;
                 cam.tag = "MainCamera";
-                // Assert.AreEqual(cam, Camera.main);
             }
             return cam;
         }
