@@ -32,7 +32,8 @@ The project has dependencies which aren't supplied through UPM and are maintaine
 - *rt-xr-glTFast*: a fork of `com.atteneder.glTFast` 
 - *rt-xr-maf-native*: C++ media pipelines
 
-**Refer to [this documentation](docs/rt-xr-dependencies)** if you intend to contribute to these dependencies.
+> [!IMPORTANT] 
+> **Refer to [this documentation](docs/rt-xr-dependencies)** if you intend to contribute to these dependencies.
 
 
 
@@ -46,8 +47,6 @@ The project has dependencies which aren't supplied through UPM and are maintaine
 3. Review the build type
 4. Build
 
-## Configuring the project
-
 ### Changing the build target platform
 
 ![Build target configuration](docs/images/unity-build-change-target.png)
@@ -55,9 +54,20 @@ The project has dependencies which aren't supplied through UPM and are maintaine
 2. click on the "switch platform" button
 
 
+## Configuring the project
+
+### Configure the default scene
+
+The XR player allows configuration of a default scene URI, which can be overiden when running the player from the command line.  
+
+![Default scene configuration](docs/images/unity-player-default-scene-config.png)
+
+
 ### Configure an Audio spatializer SDK
 
 Support for spatial audio, Unity3D requires an Audio Spatializer has to be configured in the project settings *Edit > Project Settings > Audio > Spatializer Plugin*.
+
+![Audio spatializer configuration](docs/images/unity-audio-spatializer-config.jpeg)
 
 **If no audio spatializer plugin is configured, audio will play without spatialization**.
 
@@ -69,3 +79,34 @@ Unity provides a native audio spatializer SDK with a [simple spatializer impleme
 ### Configure an XR Plugin 
 
 https://docs.unity3d.com/Manual/xr-configure-providers.html
+
+
+## Usage
+
+The player can be launched from a command line specifying a scene document to load:
+
+![Launch scene over command line](docs/images/xr-player-usage-cli-http.png)
+
+If no gltf document is specified, the [default scene configured](#configure-the-default-scene) in the project is used.
+
+### XR
+
+If an OpenXR HMD is detected, it is used to render and control the camera.
+
+Otherwise, the player renders in a regular desktop OS window, and camera is controled using keyboard and mouse.  
+
+
+### Mouse & Keyboard controls
+
+| Key           | Action                |
+|---------------|-----------------------|
+| mouse drag    | look around           |
+| arrow UP      | move forward          |
+| arrow DOWN    | move backward         |
+| arrow LEFT    | move left             |
+| arrow RIGHT   | move right            |
+| mouse wheel   | move up/down          |
+| left shift    | faster                |
+| right shift   | faster                |
+| Tab           | reset main camera     |
+| L             | toggle log overlay    |
