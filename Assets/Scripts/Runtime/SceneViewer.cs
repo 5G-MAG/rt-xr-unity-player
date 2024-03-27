@@ -417,13 +417,13 @@ namespace rt.xr.unity
 
         void OnDestroy()
         {
-            if (mediaPlayers != null)
-            {
-                foreach (var mp in mediaPlayers)
-                {
-                    mp.Dispose();
-                }
-            }
+            // if (mediaPlayers != null)
+            // {
+            //     foreach (var mp in mediaPlayers)
+            //     {
+            //         mp.Dispose();
+            //     }
+            // }
         }
 
         void OnGUI()

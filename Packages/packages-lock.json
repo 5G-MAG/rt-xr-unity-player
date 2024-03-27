@@ -1,9 +1,9 @@
 {
   "dependencies": {
     "com.atteneder.gltfast": {
-      "version": "file:C:/Users/etienne.faivredarcie/Desktop/5g-mag/gltfast-iso-23090-14",
+      "version": "file:com.atteneder.gltfast",
       "depth": 0,
-      "source": "local",
+      "source": "embedded",
       "dependencies": {
         "com.unity.modules.jsonserialize": "1.0.0",
         "com.unity.modules.unitywebrequest": "1.0.0",
@@ -365,9 +365,9 @@
       "url": "https://packages.unity.com"
     },
     "rt.xr.maf": {
-      "version": "file:C:/Users/etienne.faivredarcie/Desktop/5g-mag/rt-xr-maf-plugin-main",
+      "version": "file:rt.xr.maf",
       "depth": 0,
-      "source": "local",
+      "source": "embedded",
       "dependencies": {}
     },
     "com.unity.modules.ai": {
