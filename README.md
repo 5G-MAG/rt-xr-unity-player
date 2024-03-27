@@ -25,7 +25,7 @@ git clone https://github.com/5G-MAG/rt-xr-unity-player.git .
 git submodule update --init --recursive
 ```
 
-### Non UPM dependencies
+### Embedded dependencies
 
 The project has dependencies which aren't supplied through UPM and are maintained on the 5GMAG github organization:
 
@@ -33,7 +33,7 @@ The project has dependencies which aren't supplied through UPM and are maintaine
 - *rt-xr-maf-native*: C++ media pipelines
 
 > [!IMPORTANT] 
-> **Refer to [this documentation](docs/rt-xr-dependencies)** if you intend to contribute to these dependencies.
+> **Refer to [this documentation](docs/rt-xr-dependencies)** if you are contributing to these dependencies.
 
 
 

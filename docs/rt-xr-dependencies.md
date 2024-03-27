@@ -2,6 +2,25 @@
 
 [This tutorial](https://5g-mag.github.io/Getting-Started/pages/xr-media-integration-in-5g/tutorials/xr-player-overview.html) on the 5GMAG wiki provides an overview of the project's dependencies mentionned below. 
 
+These dependencies are [embedded dependencies](https://docs.unity3d.com/Manual/upm-embed.html) which source is tracked as git submodules. This approach makes the packages editable, and is compatible with Unity cloud build.
+
+> [!IMPORTANT] 
+> Embedded packages don’t need to appear in the project manifest as a dependency.
+
+## Working on dependencies
+
+Because the dependencies are git submodules, it is possible to work on the dependencies directly within the project.
+
+For instance, to work on `rt-xr-gITFast`, just create a branch to commit your changes:
+```
+cd .\Packages\com.atteneder.gltfast\
+git checkout -b rt-xr/dev/contribution
+```
+
+Similarly, it is easy to checkout out a specific commit or branch.
+
+To contribute your changes, push your branch and open a pull request on the submodule repository.
+
 
 ## rt-xr-gITFast : MPEG_* glTF extensions
 
