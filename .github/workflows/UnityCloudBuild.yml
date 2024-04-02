@@ -1,0 +1,436 @@
+# based on public reusable workflow: condensereality/UnityCloudBuildAction/.github/workflows/UnityCloudBuild.yml@v1.14.1
+# we use a local copy to avoid coping with organizatiton restrictions
+# https://docs.github.com/en/actions/using-workflows/reusing-workflows
+name: Build With Unity Cloud
+
+on:
+  workflow_call:
+   inputs:
+     UnityCloudOrganisation:
+       required: true
+       type: string
+     UnityCloudProject:
+       required: true
+       type: string
+     UnityCloudBuildTarget:
+       required: true
+       type: string
+     UnityCloudTargetPlatform:
+       required: false
+       type: string
+       #deprecationMessage: "UnityCloudTargetPlatform is no longer needed and has no effect." # gr: cannot deprecate workflow inputs, just action inputs
+     UnityCloudExistingBuildNumber:
+       required: false
+       type: string # this should be a number, but to allow the input to be used from a workflow_dispatch input, numbers dont work
+
+     DownloadBinaryToArtifact:
+       required: false
+       type: boolean
+     ReportShareUrl:
+       required: false
+       type: boolean
+     SlackBotChannelId:
+       required: false
+       type: string
+
+     # temporary seperate macos-path to use https://github.com/condensereality/AppleStoreUploadAction action
+     UploadToMacosTestFlight:
+       required: false
+       type: boolean
+     AppStoreConnect_TeamIdentifier: # required to sign macos
+       required: false
+       type: string
+
+     UploadToTestFlight:
+       required: false
+       type: boolean
+
+     UploadToOculusReleaseChannel:
+       required: false
+       type: boolean
+     OculusReleaseChannel:
+       required: false
+       type: string
+
+     UploadToUnityGameServerHosting:
+       required: false
+       type: boolean
+     UnityGameServerHosting_ProjectId:
+       required: false
+       type: string
+     UnityGameServerHosting_Enviroment:
+       required: false
+       type: string
+     UnityGameServerHosting_BuildOsFamily:
+       required: false
+       type: string # LINUX or WINDOWS
+
+     UploadToSteam:
+       required: false
+       type: boolean
+     SteamUsername:
+       required: false
+       type: string
+     SteamAppId:
+       required: false
+       type: string # this should be a number, but github shared workflows cannot convert number to number (tries to interpret as integer)
+     SteamBranch:
+       required: false
+       type: string
+
+   secrets:
+     UnityCloudBuildApiKey:
+       required: true
+
+     SlackBotAuthToken: # passing this enables slack reporting
+       required: false
+
+     AppStoreConnect_Auth_Key:
+       required: false
+     AppStoreConnect_Auth_P8_Base64:
+       required: false
+     AppStoreConnect_Auth_Issuer:
+       required: false
+     AppStoreConnect_SigningCertificate_P12_Base64:
+       required: false
+     AppStoreConnect_SigningCertificate_Password:
+       required: false
+     AppStoreConnect_ProvisioningProfile_Base64:
+       required: false
+     AppStoreConnect_InstallerCertificate_P12_Base64:
+       required: false
+     AppStoreConnect_InstallerCertificate_Password:
+       required: false
+
+     OculusAppId:
+       required: false
+     OculusAppSecret:
+       required: false
+
+     UnityGameServerHosting_Key:
+       required: false
+     UnityGameServerHosting_Secret:
+       required: false
+
+     SteamConfigVdfBase64: # base64 encoded config.vdf from steamcmd https://github.com/game-ci/steam-deploy (see readme)
+       required: false
+
+jobs:
+  Build:
+    runs-on: ubuntu-22.04
+    outputs:
+     share_url: ${{ steps.build.outputs.SHARE_URL }}
+     artifact_filepath: ${{ steps.build.outputs.ARTIFACT_FILEPATH }}
+     artifact_filename: ${{ steps.build.outputs.ARTIFACT_FILENAME }}
+
+    steps:
+
+    - name: Build with Unity Cloud Build
+      uses: condensereality/UnityCloudBuildAction@v1.14.1
+      id: build
+      with:
+       unity_cloud_build_api_key: ${{ secrets.UnityCloudBuildApiKey }}
+       unity_cloud_build_org_id: ${{ inputs.UnityCloudOrganisation }}
+       unity_cloud_build_project_id: ${{ inputs.UnityCloudProject }}
+       unity_cloud_build_polling_interval: 60
+       unity_cloud_build_primary_target: ${{ inputs.UnityCloudBuildTarget }}
+       unity_cloud_build_download_binary: ${{ inputs.DownloadBinaryToArtifact || inputs.UploadToTestFlight || inputs.UploadToMacosTestFlight || inputs.UploadToOculusReleaseChannel || inputs.UploadToUnityGameServerHosting || inputs.UploadToSteam }}
+       unity_cloud_build_create_share: ${{ inputs.ReportShareUrl }}
+       # github.ref is the fully formed ref, eg refs/pull/6/merge or refs/tag/v0.1.2
+       # github.head_ref is present in pull requests, and is the SOURCE branch (eg. YourFeatureBranch)
+       # github.base_ref is present in pull requests, and is the TARGET branch (eg. main)
+       unity_cloud_build_github_branch_ref: ${{ github.ref }}
+       unity_cloud_build_github_head_ref: ${{ github.head_ref }}
+       unity_cloud_build_github_commit_sha: ${{ github.sha }}
+       unity_cloud_build_use_existing_build_number: ${{ inputs.UnityCloudExistingBuildNumber }}
+
+    - name: Store binary as artifact
+      if: ${{ inputs.DownloadBinaryToArtifact || inputs.UploadToTestFlight || inputs.UploadToMacosTestFlight || inputs.UploadToOculusReleaseChannel || inputs.UploadToUnityGameServerHosting || inputs.UploadToSteam }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ steps.build.outputs.ARTIFACT_FILENAME }}
+        path: ${{ steps.build.outputs.ARTIFACT_FILEPATH }}
+        if-no-files-found: error
+
+  UploadToMacosTestFlight:
+    if: ${{ inputs.UploadToMacosTestFlight }}
+    name: Upload to TestFlight (macos)
+    needs: Build
+    runs-on: macos-latest # AppleStoreUploadAction must run on macos
+    env:
+     ARTIFACT_FILENAME: ${{ needs.Build.outputs.artifact_filename }}
+    steps:
+      # error if artifact doesn't exist
+      - name: Check Artifact exists
+        uses: xSAVIKx/artifact-exists-action@v0
+        with:
+          name: ${{ env.ARTIFACT_FILENAME }}
+      - name: "Download build artifact"
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ env.ARTIFACT_FILENAME }}
+
+      - name: "Unzip artifact to .App"
+        id: ExtractArtifactApp
+        run: |
+         echo "Unzipping artifact; ${{ env.ARTIFACT_FILENAME }}, without do-not-ship files, into UnzippedArtifact/..."
+         ls -l ./
+         # -x excludes patterns when unzipping
+         unzip ${{ env.ARTIFACT_FILENAME }} -d "UnzippedArtifact" -x "*DoNotShip*" "*DontShip*"
+         echo "Listing ./UnzippedArtifact..."
+         ls -l ./UnzippedArtifact
+         export AppFilename=$(find . -name *.app)
+         [ -z "$AppFilename" ] && echo "Didn't find a .app file; $Filename" && exit 1
+         echo "ArtifactFilename=$AppFilename" >> "$GITHUB_OUTPUT"
+
+      - name: "Package, sign and upload to TestFlight"
+        uses: condensereality/AppleStoreUploadAction@v0.0.5
+        with:
+          AppFilename: ${{ steps.ExtractArtifactApp.outputs.ArtifactFilename }}
+          Upload: false # temporarily dont publish; gr: this is is still uploading!
+          SignApp: true
+          SignPackage: true
+          TeamIdentifier: ${{ inputs.AppStoreConnect_TeamIdentifier }}
+          TestFlightPlatform: macos
+          AppStoreConnect_Auth_Key: ${{ secrets.AppStoreConnect_Auth_Key }}
+          AppStoreConnect_Auth_P8_Base64: ${{ secrets.AppStoreConnect_Auth_P8_Base64 }}
+          AppStoreConnect_Auth_Issuer: ${{ secrets.AppStoreConnect_Auth_Issuer }}
+          SigningCertificate_P12_Base64: ${{ secrets.AppStoreConnect_SigningCertificate_P12_Base64 }}
+          SigningCertificate_Password: ${{ secrets.AppStoreConnect_SigningCertificate_Password }}
+          ProvisioningProfile_Base64: ${{ secrets.AppStoreConnect_ProvisioningProfile_Base64 }}
+          InstallerCertificate_P12_Base64: ${{ secrets.AppStoreConnect_InstallerCertificate_P12_Base64 }}
+          InstallerCertificate_Password: ${{ secrets.AppStoreConnect_InstallerCertificate_Password }}
+
+
+  UploadToTestFlight:
+    if: ${{ inputs.UploadToTestFlight }}
+    name: Upload to TestFlight
+    runs-on: macos-latest
+    needs: Build
+    env:
+      APPSTORECONNECT_AUTH_KEY: ${{ secrets.AppStoreConnect_Auth_Key }}
+      APPSTORECONNECT_AUTH_ISSUER: ${{ secrets.AppStoreConnect_Auth_Issuer }}
+      APPSTORECONNECT_AUTH_P8_BASE64: ${{ secrets.AppStoreConnect_Auth_P8_Base64 }}
+      ARTIFACT_FILENAME: ${{ needs.Build.outputs.artifact_filename }}
+
+    steps:
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ env.ARTIFACT_FILENAME }}
+
+      # put the authkey p8 in private_keys/ in the filename altool expects
+      - name: Get Auth Key.P8
+        # xxx.p8 no such file or directory, means you cannot pipe to a file in a directory that doesnt exist
+        run: |
+         mkdir -p ./private_keys
+         echo "$APPSTORECONNECT_AUTH_P8_BASE64" | base64 -d > ./private_keys/AuthKey_$APPSTORECONNECT_AUTH_KEY.p8
+
+      # for debugging any errors below, print out the bundle version from the IPA/plist
+      - name: Print Bundle Version
+        continue-on-error: true
+        env:
+         UNZIPPED_PATH: "$GITHUB_WORKSPACE/UnzippedIpa"
+        # command used on mac; requires absolute path! defaults read "$(find $(pwd)/unzipped_ipa/Payload/Showcase.app -name '*.app')/Info.plist" CFBundleShortVersionString
+        run: |
+         unzip -d $UNZIPPED_PATH ${{ env.ARTIFACT_FILENAME }}
+         defaults read "$(find $UNZIPPED_PATH -name '*.app')/Info.plist" CFBundleShortVersionString
+
+      - name: Upload .ipa to TestFlight
+        env:
+         IosBundleId: "xxx" # todo: extract from ipa. altool doesn't seem to need this to be correct
+         IosBundleVersion: 0 # doesnt seem to need this to be correct. altool uses data in the ipa
+         IosBundleShortVersionString: "yyy" # doesnt seem to need this to be correct. altool uses data in the ipa
+        run: |
+         xcrun altool --upload-app --file ${{ env.ARTIFACT_FILENAME }} --type ios --bundle-id ${{ env.IosBundleId }} --bundle-version ${{ env.IosBundleVersion }} --bundle-short-version-string ${{ env.IosBundleShortVersionString }} --apiKey ${APPSTORECONNECT_AUTH_KEY} --apiIssuer ${APPSTORECONNECT_AUTH_ISSUER}
+
+
+  UploadToOculusReleaseChannel:
+    if: ${{ inputs.UploadToOculusReleaseChannel }}
+    name: Upload to Oculus Release Channel
+    runs-on: macos-latest
+    needs: Build
+    env:
+      ARTIFACT_FILENAME: ${{ needs.Build.outputs.artifact_filename }}
+
+    steps:
+      # error if artifact doesn't exist
+      - name: Check Artifact exists
+        uses: xSAVIKx/artifact-exists-action@v0
+        with:
+          name: ${{ env.ARTIFACT_FILENAME }}
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ env.ARTIFACT_FILENAME }}
+
+      # unzip the artifact and find the apk inside, save that filename
+      - name: Unzip APK from artifact
+        id: UnzipApkFromZip
+        # the artifact is in fact an .apk in this case, doesn't need unzipping
+        #run: |
+        # unzip ${{ env.ARTIFACT_FILENAME }}
+        # echo APK_FILENAME="$(ls *.apk)" >> "$GITHUB_OUTPUT"
+        run: |
+         echo APK_FILENAME="${{ env.ARTIFACT_FILENAME }}" >> "$GITHUB_OUTPUT"
+
+      - name: Install ovr-platform-util
+        uses: condensereality/setup-ovr-platform-util@main
+
+      - name: Check ovr-platform-util
+        run: |
+         ovr-platform-util version
+
+      - name: Upload APK to oculus release channel
+        uses: condensereality/upload-meta-quest-build@main
+        with:
+          appId: ${{ secrets.OculusAppId }}
+          appSecret: ${{ secrets.OculusAppSecret }}
+          apkPath: ${{ steps.UnzipApkFromZip.outputs.APK_FILENAME }}
+          releaseChannel: ${{ inputs.OculusReleaseChannel }}
+
+  UploadToSteam:
+    if: ${{ inputs.UploadToSteam }}
+    name: Upload to Steam
+    runs-on: ubuntu-latest # will also run on macos-latest
+    needs: Build
+    env:
+      ARTIFACT_FILENAME: ${{ needs.Build.outputs.artifact_filename }}
+
+    steps:
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ env.ARTIFACT_FILENAME }}
+
+      # -x excludes patterns when unzipping
+      - name: Unzip Artifact
+        id: UnzipArtifacts
+        run: |
+         [ -z "$ARTIFACT_FILENAME" ] && echo "ARTIFACT_FILENAME env var is empty" && exit 1
+         echo "Unzipping artifact; ${{ env.ARTIFACT_FILENAME }}..."
+         ls -l ./
+         unzip ${{ env.ARTIFACT_FILENAME }} -d "BuildFiles" -x "*DoNotShip*" "*DontShip*"
+         echo ArtifactPath="BuildFiles" >> "$GITHUB_OUTPUT"
+
+      - name: Format Steam Build Description
+        id: SteamBuildDescription
+        run: |
+          echo BuildDescription="${{ github.ref }} ${{ github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: Deploy to Steam
+        uses: game-ci/steam-deploy@v3 # v3 doesn't need ssfn
+        with:
+          username: ${{ inputs.SteamUsername }}
+          configVdf: ${{ secrets.SteamConfigVdfBase64 }}
+          appId: ${{ inputs.SteamAppId }}
+          buildDescription: ${{ steps.SteamBuildDescription.outputs.BuildDescription }}
+          rootPath: "."
+          depot1Path: ${{ steps.UnzipArtifacts.outputs.ArtifactPath }}
+          releaseBranch: ${{ inputs.SteamBranch }}
+
+  UploadToUnityGameServerHosting:
+    if: ${{ inputs.UploadToUnityGameServerHosting }}
+    name: Upload to UnityGameServerHosting
+    runs-on: ubuntu-latest # will also run on macos-latest
+    needs: Build
+    env:
+      ARTIFACT_FILENAME: ${{ needs.Build.outputs.artifact_filename }}
+
+    steps:
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ env.ARTIFACT_FILENAME }}
+
+      # -x excludes patterns when unzipping
+      - name: Unzip Artifact
+        id: UnzipArtifacts
+        run: |
+         echo "Unzipping artifact; ${{ env.ARTIFACT_FILENAME }}..."
+         ls -l ./
+         unzip ${{ env.ARTIFACT_FILENAME }} -d "BuildFiles" -x "*DoNotShip*" "*DontShip*"
+         echo ArtifactPath="BuildFiles" >> "$GITHUB_OUTPUT"
+
+
+      # any service acount key to upload needs these roles
+      #Game Server Hosting Allocations Admin
+      #Game Server Hosting API Editor
+      #Game Server Hosting API Manager
+      #Game Server Hosting API Viewer
+      #Unity Environments Viewer
+      - name: Upload To new Unity Game Hosting build
+        uses: condensereality/UnityGameHostingAction@main
+        with:
+         BuildName: ${{ github.ref }}
+         BuildFilesDirectory: ${{ steps.UnzipArtifacts.outputs.ArtifactPath }}
+         BuildOsFamily: ${{ inputs.UnityGameServerHosting_BuildOsFamily }}
+         Project: ${{ inputs.UnityGameServerHosting_ProjectId }}
+         Environment: ${{ inputs.UnityGameServerHosting_Enviroment }}
+         Key: ${{ secrets.UnityGameServerHosting_Key }}
+         Secret: ${{ secrets.UnityGameServerHosting_Secret }}
+
+  ReportToSlack:
+   runs-on: ubuntu-22.04
+   # can we force this to run (always()) AND only if channel is present?
+   #if: ${{ inputs.SlackBotChannelId != '' }}
+   if: always()
+   needs: [Build,UploadToTestFlight,UploadToMacosTestFlight,UploadToOculusReleaseChannel,UploadToUnityGameServerHosting,UploadToSteam]
+   steps:
+    - name: Set SHARE_STRING env
+      if: needs.Build.outputs.share_url != ''
+      env:
+       SHARE_URL: ${{ needs.Build.outputs.share_url }}
+       UNITY_CLOUD_BUILD_TARGET: ${{ inputs.UnityCloudBuildTarget }}
+      run: |
+       echo "SHARE_STRING=:gift: $UNITY_CLOUD_BUILD_TARGET $SHARE_URL" >> "$GITHUB_ENV"
+
+    - name: Set TESTFLIGHTRESULT_STRING env
+      if: ${{ inputs.UploadToTestFlight }}
+      env:
+       TF_RESULT_STRING: ${{ needs.UploadToTestFlight.result == 'success' && ':green_heart:' || ':x:' }} ${{ needs.UploadToTestFlight.result }}
+      run: |
+       echo TESTFLIGHTRESULT_STRING="TestFlight $TF_RESULT_STRING " >> "$GITHUB_ENV"
+
+    - name: Set TESTFLIGHTMACOSRESULT_STRING env
+      if: ${{ inputs.UploadToMacosTestFlight }}
+      env:
+       TF_RESULT_STRING: ${{ needs.UploadToMacosTestFlight.result == 'success' && ':green_heart:' || ':x:' }} ${{ needs.UploadToMacosTestFlight.result }}
+      run: |
+       echo TESTFLIGHTMACOSRESULT_STRING="Macos TestFlight $TF_RESULT_STRING " >> "$GITHUB_ENV"
+
+    - name: Set OCULUSRELEASERESULT_STRING env
+      if: ${{ inputs.UploadToOculusReleaseChannel }}
+      env:
+       OR_RESULT_STRING: ${{ needs.UploadToOculusReleaseChannel.result == 'success' && ':green_heart:' || ':x:' }} ${{ needs.UploadToOculusReleaseChannel.result }}
+      run: |
+       echo OCULUSRELEASERESULT_STRING="OculusRelease $OR_RESULT_STRING " >> "$GITHUB_ENV"
+
+    - name: Set UNITYGAMEHOSTINGUPLOADRESULT_STRING env
+      if: ${{ inputs.UploadToUnityGameServerHosting }}
+      env:
+       UGS_RESULT_STRING: ${{ needs.UploadToUnityGameServerHosting.result == 'success' && ':green_heart:' || ':x:' }} ${{ needs.UploadToUnityGameServerHosting.result }}
+      run: |
+       echo UNITYGAMEHOSTINGUPLOADRESULT_STRING="UnityGameHosting $UGS_RESULT_STRING " >> "$GITHUB_ENV"
+
+    - name: Set UPLOADTOSTEAM_RESULT_STRING env
+      if: ${{ inputs.UploadToSteam }}
+      env:
+       UTS_RESULT_STRING: ${{ needs.UploadToSteam.result == 'success' && ':green_heart:' || ':x:' }} ${{ needs.UploadToSteam.result }}
+      run: |
+       echo UPLOADTOSTEAM_RESULT_STRING="UploadToSteam $UTS_RESULT_STRING " >> "$GITHUB_ENV"
+
+
+    - name: Notify Slack
+      continue-on-error: true
+      uses: slackapi/slack-github-action@v1.23.0
+      env:
+       SLACK_BOT_TOKEN: ${{ secrets.SlackBotAuthToken }}
+       RESULT_STRING: ${{ needs.Build.result == 'success' && ':green_heart:' || ':x:' }} ${{ needs.Build.result }}
+       RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+       BRANCH_STRING: Branch `${{ github.ref_name }}`
+       COMMIT_STRING: <${{ github.event.pull_request.url || github.event.head_commit.url }}|${{ github.event.pull_request.title || github.event.head_commit.message}}>
+
+      with:
+       channel-id: ${{ inputs.SlackBotChannelId }}
+       slack-message: "`${{github.repository}}/${{github.github.ref_name}}${{github.workflow}}` Build Result: ${{env.RESULT_STRING}} ${{ env.TESTFLIGHTRESULT_STRING }} ${{ env.OCULUSRELEASERESULT_STRING }} ${{ env.UNITYGAMEHOSTINGUPLOADRESULT_STRING }} ${{ env.UPLOADTOSTEAM_RESULT_STRING }}\n:pencil2: ${{env.COMMIT_STRING}} ${{ env.BRANCH_STRING }} \n:runner: ${{env.RUN_URL}} \n${{ env.SHARE_STRING }}"
