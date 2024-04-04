@@ -18,8 +18,6 @@ using UnityEngine;
 using System.Text;
 using Unity.Profiling;
 
-#nullable enable
-
 namespace rt.xr.unity
 {
 
@@ -46,8 +44,11 @@ namespace rt.xr.unity
         bool showLog = false;
 
         int sceneIndex = 0;
+        
+#nullable enable
         SceneImport? gltf;
         List<MediaPlayer>? mediaPlayers = null;
+#nullable disable
 
         // Xr camera support
         [SerializeField] private bool m_IsXrMode;
@@ -189,7 +190,6 @@ namespace rt.xr.unity
         {
             if(m_CameraRig != null)
             {
-                return;
                 Destroy(m_CameraRig);
             }
 
@@ -277,7 +277,6 @@ namespace rt.xr.unity
                 UnityEngine.Debug.LogError("Loading glTF failed!");
                 Application.Quit(1);
             }
-
         }
 
         public void UnloadGltfScene()
@@ -290,7 +289,7 @@ namespace rt.xr.unity
             }
 
             // Destroy all game objects instances
-            gltf.Dispose();
+            gltf?.Dispose();
 
             // Dispose media players
             // FIXME: For some reasons, this code make Unity crash

@@ -13,14 +13,15 @@
       }
     },
     "com.google.ar.core.arfoundation.extensions": {
-      "version": "file:C:/Users/etienne.faivredarcie/Desktop/5g-mag/arcore-unity-extensions-1.40.0/package",
+      "version": "https://github.com/google-ar/arcore-unity-extensions.git#1.42.0",
       "depth": 0,
-      "source": "local",
+      "source": "git",
       "dependencies": {
         "com.unity.xr.arfoundation": "4.1.5",
         "com.unity.xr.arcore": "4.1.5",
         "com.unity.xr.arkit": "4.1.5"
-      }
+      },
+      "hash": "a7adcde95fc45832551ea939db3d6876a7365b7b"
     },
     "com.unity.ai.navigation": {
       "version": "1.1.5",
