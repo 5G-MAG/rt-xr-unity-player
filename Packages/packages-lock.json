@@ -13,9 +13,9 @@
       }
     },
     "com.google.ar.core.arfoundation.extensions": {
-      "version": "file:C:/Users/etienne.faivredarcie/Desktop/5g-mag/arcore-unity-extensions-1.40.0/package",
+      "version": "file:com.google.ar.core.arfoundation.extensions",
       "depth": 0,
-      "source": "local",
+      "source": "embedded",
       "dependencies": {
         "com.unity.xr.arfoundation": "4.1.5",
         "com.unity.xr.arcore": "4.1.5",
