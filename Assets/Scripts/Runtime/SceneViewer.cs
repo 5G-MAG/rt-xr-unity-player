@@ -293,7 +293,6 @@ namespace rt.xr.unity
                 UnityEngine.Debug.LogError("Loading glTF failed!");
                 Application.Quit(1);
             }
-
         }
 
         public void UnloadGltfScene()

@@ -154,7 +154,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Items:
-  - name: abc
+  - name: video
     path: content/rt-xr-content/video/scene.gltf
   m_GlTFItemPrefab: {fileID: 7641794529857378841, guid: 53eec5b9f2d067b4a90db7c5ba90e892, type: 3}
   m_ListItemLocation: {fileID: 4361050352776026659}
