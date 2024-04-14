@@ -110,3 +110,12 @@ Otherwise, the player renders in a regular desktop OS window, and camera is cont
 | right shift   | faster                |
 | Tab           | reset main camera     |
 | L             | toggle log overlay    |
+
+
+
+## License
+
+Licensing and authorization
+
+This project is developed under 5GMAG's Public License. For the full license terms, please see the LICENSE file distributed along with the repository or retrieve it from [here](https://drive.google.com/file/d/1cinCiA778IErENZ3JN52VFW-1ffHpx7Z/view).
+
