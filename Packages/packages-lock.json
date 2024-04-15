@@ -13,7 +13,7 @@
       }
     },
     "com.google.ar.core.arfoundation.extensions": {
-      "version": "file:com.google.ar.core.arfoundation.extensions",
+      "version": "file:arcore-unity-extensions",
       "depth": 0,
       "source": "embedded",
       "dependencies": {
