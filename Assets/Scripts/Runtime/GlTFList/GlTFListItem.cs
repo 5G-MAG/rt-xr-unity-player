@@ -12,7 +12,7 @@ public class GlTFListItem : MonoBehaviour
     public void SetProperties(System.Action<string> _req, glTFFile _property)
     {
         m_Txt.text = _property.name;
-#if UNITY_ANDROID
+#if UNITY_ANDROID && !UNITY_EDITOR
         m_Path = Application.persistentDataPath + "/" + _property.path;
 #else
         m_Path = _property.path;

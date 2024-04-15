@@ -135,7 +135,7 @@ namespace rt.xr.unity
             var cam = Camera.main;
             if (cam == null)
             {
-                cam = gameObject.AddComponent<Camera>();
+                cam = new GameObject("Created camera").AddComponent<Camera>();
                 cam.enabled = true;
                 cam.tag = "MainCamera";
             }

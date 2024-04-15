@@ -304,21 +304,13 @@ PrefabInstance:
       propertyPath: m_Name
       value: glTFListMenu
       objectReference: {fileID: 0}
-    - target: {fileID: 2062540971298930655, guid: 6ec68238cf076ae40a7605a5d5cf7a7c, type: 3}
-      propertyPath: m_AnchorMax.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2062540971298930655, guid: 6ec68238cf076ae40a7605a5d5cf7a7c, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 3824568111325024768, guid: 6ec68238cf076ae40a7605a5d5cf7a7c, type: 3}
       propertyPath: m_Value
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4361050352776026659, guid: 6ec68238cf076ae40a7605a5d5cf7a7c, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -0.0000009536743
       objectReference: {fileID: 0}
     - target: {fileID: 4813729235127218080, guid: 6ec68238cf076ae40a7605a5d5cf7a7c, type: 3}
       propertyPath: m_Pivot.x
