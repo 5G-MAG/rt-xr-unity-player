@@ -8,3 +8,4 @@
 [submodule "Packages/com.google.ar.core.arfoundation.extensions"]
 	path = Packages/com.google.ar.core.arfoundation.extensions
 	url = https://github.com/google-ar/arcore-unity-extensions.git
+	branch = v1.41.0
