@@ -307,16 +307,16 @@ namespace rt.xr.unity
             // Destroy all game objects instances
             gltf?.Dispose();
 
-            // Dispose media players
-            // FIXME: For some reasons, this code make Unity crash
-            // TODO: Find a way to dispose media resources
-            // if (mediaPlayers != null)
-            // {
-            //     foreach (var mp in mediaPlayers)
-            //     {
-            //         mp.Dispose();
-            //     }
-            // }
+            // Dispose of all media players
+            if (mediaPlayers != null)
+            {
+                foreach (var mp in mediaPlayers)
+                {
+                    mp.Dispose();
+                }
+                mediaPlayers.Clear();
+                mediaPlayers = null;
+            }
         }
 
         private void enableMemoryRecorder()
