@@ -1,3 +1,4 @@
+https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF/Duck.gltf
 content/rt-xr-content/video/scene.gltf
 content/rt-xr-content/interactivity/UseCase_01-variant3-Interactivity.gltf
 content/rt-xr-content/anchoring/anchorTest_m2D_n.gltf

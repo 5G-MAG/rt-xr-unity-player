@@ -46,6 +46,7 @@ public class GlTFListLoader : MonoBehaviour
         for(int i = 0; i < _lines.Length; i++)
         {
             GlTFListItem _itm = Instantiate(m_GlTFItemPrefab, m_ListItemLocation);
+            
             glTFFile _file = new glTFFile
             {
                 path = _lines[i],
