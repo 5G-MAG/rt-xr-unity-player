@@ -23,6 +23,7 @@ public class GlTFListItem : MonoBehaviour
     // Called by UI
     public void LoadItem()
     {
+        Debug.Log($"Loading glTF scene at {m_Path}");
         m_OnGltfLoadRequest?.Invoke(m_Path);
     }
 }

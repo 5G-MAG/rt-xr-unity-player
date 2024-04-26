@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/XRScene.unity
+    guid: 1cae6e89e30a37b49927d0f0e5376f28
+  - enabled: 1
     path: Assets/Scenes/MainScene.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
   m_configObjects:
@@ -15,3 +18,4 @@ EditorBuildSettings:
     com.unity.xr.magicleap.magic_leap_settings: {fileID: 11400000, guid: 1a52ffc01e67b6f41a8396d5ed9de6fa, type: 2}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 95f577457fb19054a9268e63719974b2, type: 2}
     com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 9346c020f518c5243a75c1787b2aaeeb, type: 2}
+    xr.sdk.mock-hmd.settings: {fileID: 11400000, guid: 426d7fd3fd72d1a4c99d61839b068506, type: 2}

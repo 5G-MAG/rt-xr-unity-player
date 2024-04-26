@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using rt.xr.unity;
 using System;
+using System.IO;
 
 [System.Serializable] public struct glTFFile
 {
@@ -11,7 +12,6 @@ using System;
 
 public class GlTFListLoader : MonoBehaviour
 {
-    [SerializeField] private List<glTFFile> m_Items;
     [SerializeField] private GlTFListItem m_GlTFItemPrefab;
     [SerializeField] private RectTransform m_ListItemLocation;
     [SerializeField] private GameObject m_BackBtn;
@@ -27,12 +27,32 @@ public class GlTFListLoader : MonoBehaviour
             Debug.LogError("Can't load GlTF list items, Viewer is null");
             return;
         }
+        
         m_BackBtn.SetActive(false);
         m_ListItems = new List<GlTFListItem>();
-        for(int i = 0; i < m_Items.Count; i++)
+
+        // Get the Paths.txt file
+        string _pathFileName =  "Paths.txt";
+        string _pathFile = Application.dataPath + "/../" + _pathFileName;
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+        _pathFile = Application.persistentDataPath + "/" + _pathFileName;
+#endif
+
+        // Every lines should contains a path to a glTF file
+        string[] _lines = File.ReadAllLines(_pathFile);
+
+        // Create list of button based on detected paths
+        for(int i = 0; i < _lines.Length; i++)
         {
             GlTFListItem _itm = Instantiate(m_GlTFItemPrefab, m_ListItemLocation);
-            _itm.SetProperties(LoadGltfScene, m_Items[i]);
+            glTFFile _file = new glTFFile
+            {
+                path = _lines[i],
+                name = _lines[i]
+            };
+
+            _itm.SetProperties(LoadGltfScene, _file);
             m_ListItems.Add(_itm);
         }
     }
