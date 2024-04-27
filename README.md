@@ -1,4 +1,11 @@
-# 5GMAG - XR Player
+<h1 align="center">XR Unity Player</h1>
+<p align="center">
+  <img src="https://img.shields.io/badge/Status-Under_Development-yellow" alt="Under Development">
+  <img src="https://img.shields.io/github/v/tag/5G-MAG/rt-5gms-application-server?label=version" alt="Version">
+  <img src="https://img.shields.io/badge/License-5G--MAG%20Public%20License%20(v1.0)-blue" alt="License">
+</p>
+
+## Introduction
 
 This project is an interactive and XR capable gltf scene viewer supporting GLTF extensions specified in [ISO/IEC 23090-14](https://www.iso.org/standard/86439.html), implemented in Unity3D.
 
