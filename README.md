@@ -11,9 +11,6 @@ The XR Unity Player is an interactive and XR-capable glTF scene viewer supportin
 
 Additional information can be found at: https://5g-mag.github.io/Getting-Started/pages/xr-media-integration-in-5g/
 
-
-The [dedicated 5GMAG wiki section](https://5g-mag.github.io/Getting-Started/pages/xr-media-integration-in-5g/) provides an overview of the project and additional ressources, including the implementation status of [ISO/IEC 23090-14](https://www.iso.org/standard/86439.html).
-
 ### About the implementation
 
 The project supports the latest [Unity3D LTS editor release](https://unity.com/releases/editor/qa/lts-releases), Unity 2022.3.
