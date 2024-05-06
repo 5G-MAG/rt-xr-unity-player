@@ -32,7 +32,7 @@ git submodule update --init --recursive
 
 ## Install dependencies
 
-The project has dependencies which aren't supplied through UPM and are maintained on the 5GMAG github organization:
+The project has dependencies which aren't supplied through UPM and are maintained on the 5G-MAG github organization:
 
 - *rt-xr-glTFast*: a fork of `com.atteneder.glTFast` 
 - *rt-xr-maf-native*: C++ media pipelines
