@@ -1,12 +1,17 @@
-# 5GMAG - XR Player
+<h1 align="center">XR Unity Player</h1>
+<p align="center">
+  <img src="https://img.shields.io/badge/Status-Under_Development-yellow" alt="Under Development">
+  <img src="https://img.shields.io/github/v/tag/5G-MAG/rt-xr-unity-player?label=version" alt="Version">
+  <img src="https://img.shields.io/badge/License-5G--MAG%20Public%20License%20(v1.0)-blue" alt="License">
+</p>
 
-This project is an interactive and XR capable gltf scene viewer supporting GLTF extensions specified in [ISO/IEC 23090-14](https://www.iso.org/standard/86439.html), implemented in Unity3D.
+## Introduction
 
-These extensions support features such as video textures, spatial audio sources, interactivity behaviors, AR anchors, ...
+The XR Unity Player is an interactive and XR-capable glTF scene viewer supporting glTF extensions specified in the MPEG-I Scene Description framework ([ISO/IEC 23090-14](https://www.iso.org/standard/86439.html)), implemented in Unity3D. These extensions support features such as video textures, spatial audio sources, interactivity behaviors, AR anchors, ...
 
-The [dedicated 5GMAG wiki section](https://5g-mag.github.io/Getting-Started/pages/xr-media-integration-in-5g/) provides an overview of the project and additional ressources, including the implementation status of [ISO/IEC 23090-14](https://www.iso.org/standard/86439.html).
+Additional information can be found at: https://5g-mag.github.io/Getting-Started/pages/xr-media-integration-in-5g/
 
-## Supported platforms
+### About the implementation
 
 The project supports the latest [Unity3D LTS editor release](https://unity.com/releases/editor/qa/lts-releases), Unity 2022.3.
 
@@ -14,9 +19,9 @@ The XR Player feature set dependends on the target platform. See the [features p
 
 It is currently developped, tested and built for Windows and Android targets.
 
-## Getting the code
+## Downloading
 
-The projet has dependencies which are not delivered through UPM (Unity's Package Manager), but instead are tracked as git submodules.
+The project has dependencies which are not delivered through UPM (Unity's Package Manager), but instead are tracked as git submodules.
 
 **clone the project and fetch all submodules**
 ```
@@ -25,9 +30,9 @@ git clone https://github.com/5G-MAG/rt-xr-unity-player.git .
 git submodule update --init --recursive
 ```
 
-### Embedded dependencies
+## Install dependencies
 
-The project has dependencies which aren't supplied through UPM and are maintained on the 5GMAG github organization:
+The project has dependencies which aren't supplied through UPM and are maintained on the 5G-MAG github organization:
 
 - *rt-xr-glTFast*: a fork of `com.atteneder.glTFast` 
 - *rt-xr-maf-native*: C++ media pipelines
@@ -35,9 +40,7 @@ The project has dependencies which aren't supplied through UPM and are maintaine
 > [!IMPORTANT] 
 > **Refer to [this documentation](docs/rt-xr-dependencies)** if you are contributing to these dependencies.
 
-
-
-## Build
+## Building
 
 ### Building the Unity project
 
@@ -81,7 +84,7 @@ Unity provides a native audio spatializer SDK with a [simple spatializer impleme
 https://docs.unity3d.com/Manual/xr-configure-providers.html
 
 
-## Usage
+## Running
 
 The player can be launched from a command line specifying a scene document to load:
 
@@ -94,7 +97,6 @@ If no gltf document is specified, the [default scene configured](#configure-the-
 If an OpenXR HMD is detected, it is used to render and control the camera.
 
 Otherwise, the player renders in a regular desktop OS window, and camera is controled using keyboard and mouse.  
-
 
 ### Mouse & Keyboard controls
 
@@ -111,11 +113,7 @@ Otherwise, the player renders in a regular desktop OS window, and camera is cont
 | Tab           | reset main camera     |
 | L             | toggle log overlay    |
 
-
-
 ## License
 
-Licensing and authorization
-
-This project is developed under 5GMAG's Public License. For the full license terms, please see the LICENSE file distributed along with the repository or retrieve it from [here](https://drive.google.com/file/d/1cinCiA778IErENZ3JN52VFW-1ffHpx7Z/view).
+This project is developed under 5G-MAG's Public License. For the full license terms, please see the LICENSE file distributed along with the repository or retrieve it from [here](https://drive.google.com/file/d/1cinCiA778IErENZ3JN52VFW-1ffHpx7Z/view).
 
