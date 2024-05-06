@@ -21,7 +21,7 @@ It is currently developped, tested and built for Windows and Android targets.
 
 ## Downloading
 
-The projet has dependencies which are not delivered through UPM (Unity's Package Manager), but instead are tracked as git submodules.
+The project has dependencies which are not delivered through UPM (Unity's Package Manager), but instead are tracked as git submodules.
 
 **clone the project and fetch all submodules**
 ```
