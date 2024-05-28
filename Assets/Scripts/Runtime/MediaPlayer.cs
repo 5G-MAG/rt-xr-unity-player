@@ -392,6 +392,11 @@ namespace rt.xr.unity
 
         public void Play(TimeInfo t = null, ViewInfo v = null)
         {
+            if (pipeline == null)
+            {
+                throw new Exception("Pipeline not initialized. Use MediaPipeline.Create() to initialize a Media Player");
+            }
+            
             autoPlay = false;
 
             if (timeInfo == null)
@@ -416,6 +421,10 @@ namespace rt.xr.unity
 
         public void Stop()
         {
+            if (pipeline == null)
+            {
+                return;
+            }
             if (audioReaders != null)
             {
                 foreach (var aSrc in audioReaders.Values)
@@ -426,14 +435,23 @@ namespace rt.xr.unity
             pipeline.stopFetching();
         }
 
+        // Dispose() stops media pipeline and properly dispose of the media pipeline.
+        // After calling Dispose(), the MediaPlayer instance is not longer usable and should no longer be referenced.
         public void Dispose()
         {
+            if (pipeline == null)
+            {
+                return;
+            }
             Stop();
             pipeline.Dispose();
+            pipeline = null;
+
             foreach (var mb in mediaBuffers.Values)
             {
                 mb.Dispose();
             }
+            mediaBuffers.Clear();
         }
 
         public void Update()

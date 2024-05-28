@@ -144,11 +144,7 @@ namespace rt.xr.unity
 
         public Frame ReadFrame()
         {
-            var frame = Handler.readFrame();
-            if (frame != null)
-            {
-            }
-            return frame;
+            return Handler.readFrame(); ;
         }
 
         public bool IsFull()
@@ -229,37 +225,6 @@ namespace rt.xr.unity
             return frame;
         }
 
-        /*
-        public Frame UpdatePresentationFrame2(double time)
-        {
-            Debug.Log("UpdatePresentationFrame2(" + time + ")");
-            if (PresentationFrame == null)
-            {
-                PresentationFrame = Handler.readFrame();
-                if (PresentationFrame != null)
-                {
-                    PresentationTimeOffset = PresentationFrame.timestamp;
-                }
-                return PresentationFrame;
-            }
-            ulong timestamp = PresentationTimeOffset + (ulong)(time * updateRate * 1000);
-            if (timestamp < PresentationFrame.timestamp)
-            {
-                return null;
-            }
-            Frame frame = Handler.readFrame(timestamp);
-            if (frame == null)
-            {
-                frame = Handler.readFrame();
-            }
-            if (frame != null)
-            {
-                PresentationFrame = frame;
-            }
-            return frame;
-        }
-        */
-
         public void ClearPresentationFrameAndTimeOffset()
         {
             PresentationTimeOffset = 0;
@@ -278,6 +243,7 @@ namespace rt.xr.unity
 
         public void Dispose()
         {
+            Handler.free();
             Handler.Dispose();
         }
         
