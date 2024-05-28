@@ -31,38 +31,61 @@ public class GlTFListLoader : MonoBehaviour
         m_BackBtn.SetActive(false);
         m_ListItems = new List<GlTFListItem>();
 
-        // Get the Paths.txt file
-        string _pathFileName =  "Paths.txt";
-        string _pathFile = Application.dataPath + "/../" + _pathFileName;
+        // Default Paths.txt should be located in the project's ./Assets/Ressources folder
 
-#if UNITY_ANDROID && !UNITY_EDITOR
-        _pathFile = Application.persistentDataPath + "/" + _pathFileName;
-#endif
-
-        // Every lines should contains a path to a glTF file
-        string[] _lines = File.ReadAllLines(_pathFile);
-
+        TextAsset _fileContent = Resources.Load<TextAsset>("Paths");
+        if (_fileContent == null)
+        {
+            throw new Exception("Paths.txt file not found.");
+        }
+        // Every lines should contains a URI to a glTF file
+        string[] _lines = _fileContent.text.Split("\n"[0]);
+        
         // Create list of button based on detected paths
         for(int i = 0; i < _lines.Length; i++)
         {
             GlTFListItem _itm = Instantiate(m_GlTFItemPrefab, m_ListItemLocation);
             
-            glTFFile _file = new glTFFile
+            try
             {
-                path = _lines[i],
-                name = _lines[i]
-            };
+                Uri uri = new Uri(_lines[i]);
+                string name = Uri.UnescapeDataString(uri.Segments[uri.Segments.Length - 1]);
 
-            _itm.SetProperties(LoadGltfScene, _file);
-            m_ListItems.Add(_itm);
+                glTFFile _file = new glTFFile
+                {
+                    path = _lines[i],
+                    name = name
+                };
+
+                _itm.SetProperties(LoadGltfScene, _file);
+                m_ListItems.Add(_itm);
+            } catch (Exception e)
+            {
+                Debug.LogError(e);
+            }
         }
     }
 
     private void LoadGltfScene(string _path)
     {
-        m_Viewer.LoadScene(_path);
-        m_BackBtn.SetActive(true);
-        HideList();
+        try
+        {
+            m_Viewer.LoadScene(_path);
+            m_BackBtn.SetActive(true);
+            HideList();
+        }
+        catch (Exception e)
+        {
+            UnityEngine.Debug.LogError(e);
+        }
+    }
+
+    private void ShowList()
+    {
+        for (int i = 0; i < m_ListItems.Count; i++)
+        {
+            m_ListItems[i].gameObject.SetActive(true);
+        }
     }
 
     private void HideList()
@@ -77,10 +100,7 @@ public class GlTFListLoader : MonoBehaviour
     {
         m_Viewer.UnloadGltfScene();
         m_BackBtn.SetActive(false);
-        for(int i = 0; i < m_ListItems.Count; i++)
-        {
-            m_ListItems[i].gameObject.SetActive(true);
-        }
+        ShowList();
     }
 
     private void OnDisable()

@@ -264,11 +264,6 @@ namespace rt.xr.unity
 
             if (success)
             {
-                if (sceneIndex > (gltf.sceneCount - 1))
-                {
-                    Debug.LogError($"invalid scene index:{sceneIndex }, when document contains {gltf.sceneCount}");
-                    Application.Quit(1);
-                }
 
                 var instantiator = new GameObjectInstantiator(gltf, transform);
                 await gltf.InstantiateSceneAsync(instantiator, sceneIndex);
