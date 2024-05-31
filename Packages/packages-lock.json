@@ -11,7 +11,8 @@
         "com.unity.inputsystem": "1.7.0",
         "com.unity.burst": "1.6.6",
         "com.unity.xr.arcore": "4.2.10",
-        "com.unity.xr.arfoundation": "4.2.10"
+        "com.unity.xr.arfoundation": "4.2.10",
+        "com.google.ar.core.arfoundation.extensions": "1.41.0"
       }
     },
     "com.google.ar.core.arfoundation.extensions": {
