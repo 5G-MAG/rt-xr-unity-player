@@ -13,6 +13,16 @@ jobs:
       UnityCloudProject: ${{ vars.UNITY_CLOUD_PROJECT_ID }}
       UnityCloudBuildTarget: rt-xr-player-win64
       DownloadBinaryToArtifact: true
-      ReportShareUrl: false
+      ReportShareUrl: true
+    secrets:
+      UnityCloudBuildApiKey: ${{ secrets.UNITY_CLOUD_BUILD_API_KEY }}
+  unity-cloud-build-android-arcore:
+    uses: ./.github/workflows/UnityCloudBuild.yml
+    with:
+      UnityCloudOrganisation: ${{ vars.UNITY_CLOUD_ORGANIZATION_ID }}
+      UnityCloudProject: ${{ vars.UNITY_CLOUD_PROJECT_ID }}
+      UnityCloudBuildTarget: rt-xr-player-apk
+      DownloadBinaryToArtifact: true
+      ReportShareUrl: true
     secrets:
       UnityCloudBuildApiKey: ${{ secrets.UNITY_CLOUD_BUILD_API_KEY }}
