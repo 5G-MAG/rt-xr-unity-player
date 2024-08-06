@@ -24,7 +24,6 @@ namespace rt.xr.unity
 
     public class SceneViewer : MonoBehaviour
     {
-        public string defaultGltfSouceUri = "";
 
         string statsText = "";
         ProfilerRecorder totalReservedMemoryRecorder;
@@ -39,7 +38,7 @@ namespace rt.xr.unity
         int maxFps = int.MinValue;
 
         public bool autoplayAnimation = true;
-        bool showLog = false;
+        public bool showLog = false;
 
         int sceneIndex = 0;
         
@@ -48,40 +47,9 @@ namespace rt.xr.unity
         List<MediaPlayer>? mediaPlayers = null;
 #nullable disable
 
-        // Xr camera support
-        // [SerializeField] private bool m_IsXrMode;
-        // [SerializeField] private GameObject m_XrCameraRigPrefab;
-        // private GameObject m_CameraRig;
-
         private Bounds bounds;
         private uint maxLogMessages = 15;
         private Queue logQueue = new Queue();
-
-        public string GetSourceUriFromCommandLineArgs()
-        {
-            string[] args = Environment.GetCommandLineArgs();
-            for (int i = 0; i < args.Length; i++)
-            {
-                if (args[i] == "--log")
-                {
-                    showLog = true;
-                    continue;
-                }
-                int j = i + 1;
-                if (args[i] == "--gltf")
-                {
-                    if (j < args.Length)
-                    {
-                        return args[j];
-                    }
-                    else
-                    {
-                        Debug.LogWarningFormat("--gltf command line option not followed by asset path");
-                    }
-                }
-            }
-            return defaultGltfSouceUri;
-        }
 
         public void ConfigureInitialCamera()
         {
@@ -192,72 +160,14 @@ namespace rt.xr.unity
             }
         }
 
-        [ContextMenu("Load default gltf scene")]
-        public void LoadDefaultGltfScene()
+        async public void LoadGltf(string filePath)
         {
-            LoadScene(defaultGltfSouceUri);
-        }
-
-        public void LoadScene(string scenePath)
-        {
-            LoadGltf(scenePath);
-        }
-
-        // void CreateXRCamera()
-        // {
-        //     if(m_CameraRig != null)
-        //     {
-        //         Destroy(m_CameraRig);
-        //     }
-
-        //     // Destroy all cameras in the scene
-        //     Camera[] cameras = FindObjectsOfType<Camera>();
-        //     for(int i = 0; i < cameras.Length; i++)
-        //     {
-        //         Destroy(cameras[i].gameObject);
-        //     }
-
-        //     m_CameraRig = Instantiate(m_XrCameraRigPrefab, null);
-
-        //     // Set this camera prioritary
-        //     // Find the camera component under this rig
-        //     Camera xrCam = m_CameraRig.GetComponentInChildren<Camera>();
-        //     if(xrCam != null)
-        //     {
-        //         xrCam.depth = 100;
-        //     }
-        // }
-
-        async void LoadGltf(string filePath)
-        {
-            defaultGltfSouceUri = filePath;
-            string p = GetSourceUriFromCommandLineArgs();
-            Uri path = new Uri(p, UriKind.RelativeOrAbsolute);
+            Uri path = new Uri(filePath, UriKind.RelativeOrAbsolute);
             
             if (!path.IsAbsoluteUri)
-                path = new Uri(System.IO.Directory.GetCurrentDirectory()+"/"+p);
+                path = new Uri(System.IO.Directory.GetCurrentDirectory()+"/"+path);
+
             Uri baseUri = UriHelper.GetBaseUri(path);
-
-            if (p == "")
-            {
-                Debug.LogError("Source GLTF document path not configured. Use `--gltf ` command line argument, followed by the document URI.");
-                Application.Quit(1);
-            }
-
-            // Instantiate XR camera in the scene and set it as main camera
-            // if(m_IsXrMode)
-            // {
-            //     CreateXRCamera();
-            // }
-            
-// #if UNITY_ANDROID && !UNITY_EDITOR
-
-//             if(m_CameraRig == null)
-//             {
-//                 CreateXRCamera();
-//             }
-
-// #endif
 
             gltf = new SceneImport();
             bool success = await gltf.Load(path);
@@ -293,11 +203,6 @@ namespace rt.xr.unity
         public void UnloadGltfScene()
         {
             VirtualSceneGraph.ResetAll();
-            
-            // if(m_CameraRig != null)
-            // {
-            //     Destroy(m_CameraRig.gameObject);
-            // }
 
             // Destroy all game objects instances
             gltf?.Dispose();
