@@ -15,7 +15,8 @@ public class GlTFListLoader : MonoBehaviour
     [SerializeField] private GlTFListItem m_GlTFItemPrefab;
     [SerializeField] private RectTransform m_ListItemLocation;
     [SerializeField] private GameObject m_BackBtn;
-    
+    [SerializeField] private string m_PlaylistUri;
+
     private SceneViewer m_Viewer;
     private List<GlTFListItem> m_ListItems;
 
@@ -45,15 +46,21 @@ public class GlTFListLoader : MonoBehaviour
         m_BackBtn.SetActive(false);
         m_ListItems = new List<GlTFListItem>();
 
-        // TODO: make this configurable        
-        Debug.Log("Application.persistentDataPath: " + Application.persistentDataPath);
-        string fp = Path.Combine(Application.persistentDataPath, "Paths");
-
-        // TODO: provide a clean warning `fp` can not be loaded
+        if(m_PlaylistUri == "")
+        {
+            m_PlaylistUri = Path.Combine(Application.persistentDataPath, "Paths");
+        }
+        Debug.LogWarning("Loading: "+m_PlaylistUri);
         
-        string[] _lines = File.ReadAllLines(fp);
-        string fpRoot = GetParentUriString(new Uri(fp));
+        if(!System.IO.File.Exists(m_PlaylistUri)){
+            Debug.LogError("File not found: "+m_PlaylistUri);
+            m_Viewer.showLog = true;
+            return;
+        }
 
+        string _defaultRootLocation = GetParentUriString(new Uri(m_PlaylistUri));
+        string[] _lines = File.ReadAllLines(m_PlaylistUri);
+        
         // Create list of button based path list
         for(int i = 0; i < _lines.Length; i++)
         {
@@ -65,7 +72,7 @@ public class GlTFListLoader : MonoBehaviour
   
                 Uri uri;
                 if(!Uri.TryCreate(line, UriKind.Absolute, out uri)){
-                    System.UriBuilder uriBuilder = new System.UriBuilder(fpRoot);
+                    System.UriBuilder uriBuilder = new System.UriBuilder(_defaultRootLocation);
                     uriBuilder.Path += line;
                     uri = uriBuilder.Uri;
                 }
@@ -91,7 +98,7 @@ public class GlTFListLoader : MonoBehaviour
     {
         try
         {
-            m_Viewer.LoadScene(_path);
+            m_Viewer.LoadGltf(_path);
             m_BackBtn.SetActive(true);
             HideList();
         }
