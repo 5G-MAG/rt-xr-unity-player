@@ -4,7 +4,7 @@
     "com.unity.textmeshpro": "3.0.6",
     "com.unity.toolchain.macos-arm64-linux-x86_64": "2.0.3",
     "com.unity.xr.arcore": "4.2.10",
-    "com.unity.xr.arfoundation": "4.2.10",
+    "com.unity.xr.arfoundation": "5.1.5",
     "com.unity.xr.legacyinputhelpers": "2.1.10",
     "com.unity.xr.management": "4.4.0",
     "com.unity.xr.openxr": "1.10.0",
