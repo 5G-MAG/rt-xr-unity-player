@@ -53,6 +53,7 @@ namespace rt.xr.unity
 
         public void ConfigureInitialCamera()
         {
+
             // Check if a camera exists in the scene first
             Camera[] _cameras = FindObjectsOfType<Camera>();
 
@@ -71,7 +72,7 @@ namespace rt.xr.unity
                     Destroy(_cameras[i].gameObject);
                 }
             }
-
+            
             /*
              * Configure camera[0] as the default camera, otherwise creates a new camera looking at the scene
              */
@@ -190,8 +191,6 @@ namespace rt.xr.unity
                 CreateVideoTextures(gltf, mediaPlayers);
                 CreateAudioSources(gltf, instantiator, mediaPlayers);
 
-                ConfigureInitialCamera();
-                EnsureAudioListenerExists();
             }
             else
             {
@@ -305,19 +304,6 @@ namespace rt.xr.unity
                 }
             }
 
-            if (Input.GetKeyDown(KeyCode.Tab))
-            {
-                ConfigureInitialCamera();
-            }
-
-            if (Input.GetKeyDown(KeyCode.L))
-            {
-                if(showLog){
-                    showLog = false;
-                } else {
-                    showLog = true;
-                }
-            }
         }
 
         private void OnDrawGizmos()
