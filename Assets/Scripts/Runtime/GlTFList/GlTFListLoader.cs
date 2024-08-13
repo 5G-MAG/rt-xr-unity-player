@@ -15,7 +15,6 @@ public class GlTFListLoader : MonoBehaviour
     [SerializeField] private GlTFListItem m_GlTFItemPrefab;
     [SerializeField] private RectTransform m_ListItemLocation;
     [SerializeField] private GameObject m_BackBtn;
-    [SerializeField] private string m_PlaylistUri;
 
     private SceneViewer m_Viewer;
     private List<GlTFListItem> m_ListItems;
@@ -46,14 +45,16 @@ public class GlTFListLoader : MonoBehaviour
         m_BackBtn.SetActive(false);
         m_ListItems = new List<GlTFListItem>();
 
+        string m_PlaylistUri = m_Viewer.ConfigFileLocation;
         if(m_PlaylistUri == "")
         {
             m_PlaylistUri = Path.Combine(Application.persistentDataPath, "Paths");
         }
-        Debug.LogWarning("Loading: "+m_PlaylistUri);
+
+        Debug.LogWarning("Loading xr player config file: "+m_PlaylistUri);
         
         if(!System.IO.File.Exists(m_PlaylistUri)){
-            Debug.LogError("File not found: "+m_PlaylistUri);
+            Debug.LogError("Config file not found: "+m_PlaylistUri);
             m_Viewer.showLog = true;
             return;
         }

@@ -25,6 +25,8 @@ namespace rt.xr.unity
     public class SceneViewer : MonoBehaviour
     {
 
+        [SerializeField] private string m_configFileLocation ;
+    
         string statsText = "";
         ProfilerRecorder totalReservedMemoryRecorder;
         ProfilerRecorder gcReservedMemoryRecorder;
@@ -50,6 +52,8 @@ namespace rt.xr.unity
         private Bounds bounds;
         private uint maxLogMessages = 15;
         private Queue logQueue = new Queue();
+
+        public string ConfigFileLocation { get { return m_configFileLocation; } }
 
         public void ConfigureInitialCamera()
         {

@@ -11,13 +11,16 @@ The XR Unity Player is an interactive and XR-capable glTF scene viewer supportin
 
 Additional information can be found at: https://5g-mag.github.io/Getting-Started/pages/xr-media-integration-in-5g/
 
-### About the implementation
+### Supported Unity Editor version
 
-The project supports the latest [Unity3D LTS editor release](https://unity.com/releases/editor/qa/lts-releases), Unity 2022.3.
+The project supports the [Unity3D 2022 LTS editor release](https://unity.com/releases/editor/qa/lts-releases).
 
-The XR Player feature set dependends on the target platform. See the [features page](https://5g-mag.github.io/Getting-Started/pages/xr-media-integration-in-5g/features) implementation status.
 
-It is currently developped, tested and built for Windows and Android targets.
+### Supported platforms
+
+It is currently developped and tested on Android devices.
+If you are interested in supporting other platforms, please contact the 5GMAG working group.
+
 
 ## Downloading
 
@@ -30,7 +33,12 @@ git clone https://github.com/5G-MAG/rt-xr-unity-player.git .
 git submodule update --init --recursive
 ```
 
-## Install dependencies
+**update all submodules**
+```
+git submodule update --recursive
+```
+
+## working wwith the submodule dependencies
 
 The project has dependencies which aren't supplied through UPM and are maintained on the 5G-MAG github organization:
 
@@ -46,24 +54,41 @@ The project has dependencies which aren't supplied through UPM and are maintaine
 
 ![Build the Unity project](docs/images/unity-build-player.png)
 1. Locate the `Build Settings` menu
-2. Review the target platform, [change as needed](#changing-the-build-target-platform)
+2. Review that Android is the selected platform, [change as needed](#changing-the-build-target-platform)
 3. Review the build type
-4. Build
-
-### Changing the build target platform
-
-![Build target configuration](docs/images/unity-build-change-target.png)
-1. in the build settings, select the target platform
-2. click on the "switch platform" button
+4. Build 
 
 
 ## Configuring the project
 
-### Configure the default scene
+### Configure the main menu's list of gltf documents
 
-The XR player allows configuration of a default scene URI, which can be overiden when running the player from the command line.  
+When the player launches, it looks up a configuration file named 'Paths' containing a list of scenes that populates the main menu to allow selecting between scenes.
 
-![Default scene configuration](docs/images/unity-player-default-scene-config.png)
+The list of scenes is a simple text file with each line providing the location of the gltf documents.
+The locations can be local files or ressources available over HTTP.
+A relative path is considered relative to the configuration file.
+
+```
+/path/to/rt-xr-content/awards/scene.gltf
+https://127.0.0.1:8000/rt-xr-content/awards/scene.gltf
+awards/scene.gltf
+```
+
+By default the application will look for this file in the platform specific [Application.persistenDataPath](https://docs.unity3d.com/ScriptReference/Application-persistentDataPath.html). 
+
+On Android, the path would typically be: `/storage/emulated/0/Android/data/com.fivegmag.rtxrplayer/files/Paths`, which can be confirmed by [inspecting the application's log](https://docs.unity3d.com/Manual/com.unity.mobile.android-logcat.html):
+
+![logcat player config](docs/images/android-logcat-player-config.png).
+
+To push the configuration file to the device, connect the android device to the workstation with a usb cable and use `adb`:
+```
+adb push ./Paths /storage/emulated/0/Android/data/com.fivegmag.rtxrplayer/files/Paths
+```
+
+It is also possible to define a custom location for the configuration file, by setting its path in Unity's Editor:
+![set config file location](docs/images/unity-player-config-location.png)
+
 
 
 ### Configure an Audio spatializer SDK
@@ -78,40 +103,6 @@ Please refer to Unity's [documentation for details and a list of available plugi
 
 Unity provides a native audio spatializer SDK with a [simple spatializer implementation](https://docs.unity3d.com/Manual/AudioSpatializerSDK.html).
 
-
-### Configure an XR Plugin 
-
-https://docs.unity3d.com/Manual/xr-configure-providers.html
-
-
-## Running
-
-The player can be launched from a command line specifying a scene document to load:
-
-![Launch scene over command line](docs/images/xr-player-usage-cli-http.png)
-
-If no gltf document is specified, the [default scene configured](#configure-the-default-scene) in the project is used.
-
-### XR
-
-If an OpenXR HMD is detected, it is used to render and control the camera.
-
-Otherwise, the player renders in a regular desktop OS window, and camera is controled using keyboard and mouse.  
-
-### Mouse & Keyboard controls
-
-| Key           | Action                |
-|---------------|-----------------------|
-| mouse drag    | look around           |
-| arrow UP      | move forward          |
-| arrow DOWN    | move backward         |
-| arrow LEFT    | move left             |
-| arrow RIGHT   | move right            |
-| mouse wheel   | move up/down          |
-| left shift    | faster                |
-| right shift   | faster                |
-| Tab           | reset main camera     |
-| L             | toggle log overlay    |
 
 ## License
 
