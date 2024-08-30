@@ -42,7 +42,8 @@ namespace rt.xr.unity
         bool showLog = false;
 
         int sceneIndex = 0;
-        
+        XRApplication app;
+
 #nullable enable
         SceneImport? gltf;
         List<MediaPlayer>? mediaPlayers = null;
@@ -282,6 +283,14 @@ namespace rt.xr.unity
 
                 ConfigureInitialCamera();
                 EnsureAudioListenerExists();
+
+                app = gameObject.GetComponent<XRApplication>();
+                if (app == null)
+                {
+                    app = gameObject.AddComponent<XRApplication>();
+                }
+                app.StartApplication();
+
             }
             else
             {
