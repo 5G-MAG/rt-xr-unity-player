@@ -15,9 +15,23 @@ public class GlTFListLoader : MonoBehaviour
     [SerializeField] private GlTFListItem m_GlTFItemPrefab;
     [SerializeField] private RectTransform m_ListItemLocation;
     [SerializeField] private GameObject m_BackBtn;
-    
+
     private SceneViewer m_Viewer;
     private List<GlTFListItem> m_ListItems;
+
+    private string ResolveGltfDocumentURI(string root, string path)
+    {
+        // relative path is relative to playlist
+        if (path.StartsWith('.')){
+            return root + path.Substring(2);
+        }
+        return path;
+    }
+
+    private static string GetParentUriString(Uri uri)
+    {
+        return uri.AbsoluteUri.Remove(uri.AbsoluteUri.Length - uri.Segments[uri.Segments.Length -1].Length - uri.Query.Length);
+    }
 
     private void OnEnable()
     {
@@ -31,29 +45,44 @@ public class GlTFListLoader : MonoBehaviour
         m_BackBtn.SetActive(false);
         m_ListItems = new List<GlTFListItem>();
 
-        // Default Paths.txt should be located in the project's ./Assets/Ressources folder
-
-        TextAsset _fileContent = Resources.Load<TextAsset>("Paths");
-        if (_fileContent == null)
+        string m_PlaylistUri = m_Viewer.ConfigFileLocation;
+        if(m_PlaylistUri == "")
         {
-            throw new Exception("Paths.txt file not found.");
+            m_PlaylistUri = Path.Combine(Application.persistentDataPath, "Paths");
         }
-        // Every lines should contains a URI to a glTF file
-        string[] _lines = _fileContent.text.Split("\n"[0]);
+
+        Debug.LogWarning("Loading xr player config file: "+m_PlaylistUri);
         
-        // Create list of button based on detected paths
+        if(!System.IO.File.Exists(m_PlaylistUri)){
+            Debug.LogError("Config file not found: "+m_PlaylistUri);
+            m_Viewer.showLog = true;
+            return;
+        }
+
+        string _defaultRootLocation = GetParentUriString(new Uri(m_PlaylistUri));
+        string[] _lines = File.ReadAllLines(m_PlaylistUri);
+        
+        // Create list of button based path list
         for(int i = 0; i < _lines.Length; i++)
         {
             GlTFListItem _itm = Instantiate(m_GlTFItemPrefab, m_ListItemLocation);
             
             try
             {
-                Uri uri = new Uri(_lines[i]);
+                string line = _lines[i];
+  
+                Uri uri;
+                if(!Uri.TryCreate(line, UriKind.Absolute, out uri)){
+                    System.UriBuilder uriBuilder = new System.UriBuilder(_defaultRootLocation);
+                    uriBuilder.Path += line;
+                    uri = uriBuilder.Uri;
+                }
+
                 string name = Uri.UnescapeDataString(uri.Segments[uri.Segments.Length - 1]);
 
                 glTFFile _file = new glTFFile
                 {
-                    path = _lines[i],
+                    path = uri.ToString(),
                     name = name
                 };
 
@@ -70,7 +99,7 @@ public class GlTFListLoader : MonoBehaviour
     {
         try
         {
-            m_Viewer.LoadScene(_path);
+            m_Viewer.LoadGltf(_path);
             m_BackBtn.SetActive(true);
             HideList();
         }
