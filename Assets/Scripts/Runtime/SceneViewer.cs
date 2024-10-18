@@ -80,11 +80,6 @@ namespace rt.xr.unity
              * Configure camera[0] as the default camera, otherwise creates a new camera looking at the scene
              */
             var main = GetMainCamera();
-
-            if(main.gameObject.GetComponent<CameraController>() == null)
-            {
-                main.gameObject.AddComponent<CameraController>();
-            }
             
             foreach(var cam in gameObject.GetComponentsInChildren<Camera>())
             {
