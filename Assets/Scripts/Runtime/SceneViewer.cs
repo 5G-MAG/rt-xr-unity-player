@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Text;
 using Unity.Profiling;
+using UnityEngine.XR.ARFoundation;
 
 namespace rt.xr.unity
 {
@@ -43,7 +44,9 @@ namespace rt.xr.unity
         public bool showLog = false;
 
         int sceneIndex = 0;
-        
+
+        bool enableAnchoring = false;
+
 #nullable enable
         SceneImport? gltf;
         List<MediaPlayer>? mediaPlayers = null;
@@ -54,6 +57,23 @@ namespace rt.xr.unity
         private Queue logQueue = new Queue();
 
         public string ConfigFileLocation { get { return m_configFileLocation; } }
+
+        public delegate void GlTFLoadComplete();
+        public GlTFLoadComplete onGlTFLoadComplete;
+
+        public delegate void GlTFLoadError();
+        public GlTFLoadError onGlTFLoadError;
+
+
+        [SerializeField]
+        private GameObject arSessionPrefab;
+
+        [SerializeField]
+        private GameObject arSessionOriginPrefab;
+
+        private GameObject arSessionInstance;
+        private GameObject arSessionOriginInstance;
+
 
         public void ConfigureInitialCamera()
         {
@@ -159,6 +179,32 @@ namespace rt.xr.unity
             }
         }
 
+        public void EnableARSession(){
+            if (arSessionInstance == null && arSessionOriginInstance == null)
+            {
+                arSessionInstance = Instantiate(arSessionPrefab);
+                arSessionOriginInstance = Instantiate(arSessionOriginPrefab);
+            }
+        }
+
+        public void DisableARSession(){
+            if (arSessionInstance != null)
+            {
+                ARSession arSession = arSessionInstance.GetComponent<ARSession>();
+                arSession.enabled = false;
+                arSession.Reset();
+                arSession = null;
+                Destroy(arSessionInstance);
+                arSessionInstance = null;
+            }
+
+            if (arSessionOriginInstance != null)
+            {
+                Destroy(arSessionOriginInstance);
+                arSessionOriginInstance = null;
+            }
+        }
+
         async public void LoadGltf(string filePath)
         {
             Uri path = new Uri(filePath, UriKind.RelativeOrAbsolute);
@@ -175,6 +221,14 @@ namespace rt.xr.unity
             {
 
                 var instantiator = new GameObjectInstantiator(gltf, transform);
+                // extensionRequired implies extensionUsed
+                enableAnchoring = (gltf.GetSourceRoot().extensionsUsed != null) && (Array.IndexOf(gltf.GetSourceRoot().extensionsUsed, "MPEG_anchor") >= 0);
+                if (enableAnchoring){
+                    if (!UnityEngine.XR.XRSettings.enabled){
+                            Debug.LogWarning("this player doesn't support XR mode");
+                    }
+                    EnableARSession();
+                }
                 await gltf.InstantiateSceneAsync(instantiator, sceneIndex);
                 if (autoplayAnimation)
                 {
@@ -191,11 +245,19 @@ namespace rt.xr.unity
 
                 ConfigureInitialCamera();
                 EnsureAudioListenerExists();
+
+                if (onGlTFLoadComplete != null){
+                    onGlTFLoadComplete();
+                }
+
             }
             else
             {
                 UnityEngine.Debug.LogError("Loading glTF failed!");
-                Application.Quit(1);
+                if (onGlTFLoadError != null){
+                    onGlTFLoadError();
+                }
+
             }
         }
 
@@ -216,6 +278,7 @@ namespace rt.xr.unity
                 mediaPlayers.Clear();
                 mediaPlayers = null;
             }
+            DisableARSession();
         }
 
         private void enableMemoryRecorder()

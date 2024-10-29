@@ -532,7 +532,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: -0.000024795532}
-  m_SizeDelta: {x: 0, y: 28}
+  m_SizeDelta: {x: 0, y: 100}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!1 &459630193
 GameObject:
@@ -762,6 +762,8 @@ MonoBehaviour:
   memoryUsageRecorder: 0
   autoplayAnimation: 1
   showLog: 0
+  arSessionPrefab: {fileID: 5203395857757756161, guid: 2afc6aab54d724ecf870ba220e0cfbd7, type: 3}
+  arSessionOriginPrefab: {fileID: 8357273229510242013, guid: 4a7df5db68bbc4bd78655dad66d327a3, type: 3}
 --- !u!1 &690944760
 GameObject:
   m_ObjectHideFlags: 0
@@ -848,7 +850,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 2}
-  m_SizeDelta: {x: 0, y: 150}
+  m_SizeDelta: {x: 0, y: 200}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &799185547
 MonoBehaviour:
@@ -1118,8 +1120,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 14
-  m_fontSizeBase: 14
+  m_fontSize: 26
+  m_fontSizeBase: 26
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -1205,7 +1207,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 20}
+  m_SizeDelta: {x: 0, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1705858847
 MonoBehaviour:
@@ -1419,7 +1421,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: -25, y: -25}
   m_SizeDelta: {x: 200, y: 100}
   m_Pivot: {x: 1, y: 1}
 --- !u!114 &1756898844
@@ -1853,6 +1855,10 @@ PrefabInstance:
     - target: {fileID: 1361461688136842910, guid: 7a992d724ce204711b44cc60a4b3ba43, type: 3}
       propertyPath: m_Name
       value: BackBtn
+      objectReference: {fileID: 0}
+    - target: {fileID: 1361461688136842910, guid: 7a992d724ce204711b44cc60a4b3ba43, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4305082719089555144, guid: 7a992d724ce204711b44cc60a4b3ba43, type: 3}
       propertyPath: m_Pivot.x

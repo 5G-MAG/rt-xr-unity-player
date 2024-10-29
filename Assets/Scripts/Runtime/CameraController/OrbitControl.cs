@@ -20,6 +20,9 @@ public class OrbitControl : MonoBehaviour
     private void SetInitialState()
     {
         cam = Camera.main;
+        if(cam == null){
+            return;
+        }
         Vector3 targetPosition = GetPointOfInterest();
         currentDistance = Vector3.Distance(targetPosition, cam.transform.position);
         Quaternion qr = Quaternion.LookRotation(targetPosition - cam.transform.position, Vector3.up);
@@ -81,6 +84,11 @@ public class OrbitControl : MonoBehaviour
         cam.transform.position = targetPosition - (rotation * Vector3.forward * currentDistance);
         cam.transform.LookAt(targetPosition);
     }
+
+    private void OnEnable(){
+        SetInitialState();
+    }
+
 
     private void OnDisable()
     {

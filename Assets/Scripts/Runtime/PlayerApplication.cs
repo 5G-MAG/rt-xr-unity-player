@@ -20,6 +20,25 @@ public class PlayerApplication : MonoBehaviour
         return uri.AbsoluteUri.Remove(uri.AbsoluteUri.Length - uri.Segments[uri.Segments.Length -1].Length - uri.Query.Length);
     }
 
+    private void Awake()
+    {
+        m_BackBtn.gameObject.SetActive(false);
+        m_CameraControlDropdown.gameObject.SetActive(false);
+        m_Viewer.onGlTFLoadComplete = onGlTFLoadComplete;
+        // m_Viewer.onGlTFLoadError = onGlTFLoadError;
+    }
+
+    public void onGlTFLoadComplete(){
+        Debug.LogWarning("onGlTFLoadComplete");
+        EnableCameraController();
+    }
+
+    /*
+    public void onGlTFLoadError(){
+        Debug.LogWarning("onGlTFLoadError");
+    }
+    */
+
     public static List<glTFFile> ParsePlaylist(string playlistURI)
     {
         var files = new List<glTFFile>();
@@ -71,7 +90,7 @@ public class PlayerApplication : MonoBehaviour
         Debug.LogWarning("Loading xr player config file: "+playlistURI);
 
         if(!System.IO.File.Exists(playlistURI)){
-            Debug.LogError("Config file not found: "+playlistURI);
+            Debug.LogError("Config file not found: " + playlistURI);
             m_Viewer.showLog = true;
             return "";
         }
@@ -82,6 +101,7 @@ public class PlayerApplication : MonoBehaviour
     public void EnableCameraController()
     {
         m_CameraControlDropdown.gameObject.SetActive(true);
+        CameraControlTypeChanged();
     }
 
     public void DisableCameraController()
@@ -123,9 +143,8 @@ public class PlayerApplication : MonoBehaviour
         try
         {
             m_Viewer.LoadGltf(path);
-            m_GlTFListMenu.gameObject.SetActive(false);
+            m_GlTFListMenu.HideList();
             m_BackBtn.gameObject.SetActive(true);
-            EnableCameraController();
         }
         catch (Exception e)
         {
@@ -151,6 +170,7 @@ public class PlayerApplication : MonoBehaviour
         if (playlistURI != ""){
             var items = ParsePlaylist(playlistURI);
             m_GlTFListMenu.PopulateMenu(items);
+            m_GlTFListMenu.ShowList();
         }
     }
 
@@ -161,7 +181,7 @@ public class PlayerApplication : MonoBehaviour
             m_Viewer.UnloadGltfScene();
             m_CameraControlDropdown.gameObject.SetActive(false);
             m_BackBtn.gameObject.SetActive(false);
-            m_GlTFListMenu.gameObject.SetActive(true);
+            m_GlTFListMenu.ShowList();
             DisableCameraController();
         }
         catch (Exception e)

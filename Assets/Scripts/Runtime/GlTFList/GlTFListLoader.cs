@@ -30,7 +30,7 @@ public class GlTFListLoader : MonoBehaviour
         }
     }
 
-    private void ShowList()
+    public void ShowList()
     {
         for (int i = 0; i < m_ListItems.Count; i++)
         {
@@ -38,7 +38,7 @@ public class GlTFListLoader : MonoBehaviour
         }
     }
 
-    private void HideList()
+    public void HideList()
     {
         for(int i = 0; i < m_ListItems.Count; i++)
         {
