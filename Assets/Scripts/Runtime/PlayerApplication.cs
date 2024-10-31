@@ -15,7 +15,28 @@ public class PlayerApplication : MonoBehaviour
     [SerializeField] private GameObject m_BackBtn;
     [SerializeField] private TMPro.TMP_Dropdown m_CameraControlDropdown;
 
-    private static string GetParentUriString(Uri uri)
+    void Start()
+    {
+
+        m_Viewer = FindObjectOfType<SceneViewer>();
+        if(m_Viewer == null)
+        {
+            Debug.LogError("Can't load GlTF list items, Viewer is null");
+            return;
+        }
+        resetCameraBackground();
+
+        m_GlTFListMenu.selected += LoadGlTFAsset;
+
+        string playlistURI = locatePlaylist();
+        if (playlistURI != ""){
+            var items = parsePlaylist(playlistURI);
+            m_GlTFListMenu.PopulateMenu(items);
+            m_GlTFListMenu.ShowList();
+        }
+    }
+
+    private static string getParentUriString(Uri uri)
     {
         return uri.AbsoluteUri.Remove(uri.AbsoluteUri.Length - uri.Segments[uri.Segments.Length -1].Length - uri.Query.Length);
     }
@@ -28,9 +49,18 @@ public class PlayerApplication : MonoBehaviour
         // m_Viewer.onGlTFLoadError = onGlTFLoadError;
     }
 
-    public void onGlTFLoadComplete(){
-        Debug.LogWarning("onGlTFLoadComplete");
-        EnableCameraController();
+    private void resetCameraBackground(){
+        Camera cam = m_Viewer.GetMainCamera();
+        cam.clearFlags = CameraClearFlags.SolidColor;
+        cam.backgroundColor = Color.black;
+    }
+
+    private void onGlTFLoadComplete(){
+        if (!m_Viewer.ARCameraEnabled){
+            enableCameraController();
+        } else {
+            disableCameraController();
+        }
     }
 
     /*
@@ -39,10 +69,10 @@ public class PlayerApplication : MonoBehaviour
     }
     */
 
-    public static List<glTFFile> ParsePlaylist(string playlistURI)
+    private static List<glTFFile> parsePlaylist(string playlistURI)
     {
         var files = new List<glTFFile>();
-        string _defaultRootLocation = GetParentUriString(new Uri(playlistURI));
+        string _defaultRootLocation = getParentUriString(new Uri(playlistURI));
         string[] _lines = File.ReadAllLines(playlistURI);
 
         for(int i = 0; i < _lines.Length; i++)
@@ -76,7 +106,7 @@ public class PlayerApplication : MonoBehaviour
         return files;
     }
 
-    public string LocatePlaylist()
+    private string locatePlaylist()
     {
         string playlistURI = "";
         
@@ -98,13 +128,13 @@ public class PlayerApplication : MonoBehaviour
         return playlistURI;
     }
 
-    public void EnableCameraController()
+    private void enableCameraController()
     {
         m_CameraControlDropdown.gameObject.SetActive(true);
-        CameraControlTypeChanged();
+        cameraControlTypeChanged();
     }
 
-    public void DisableCameraController()
+    private void disableCameraController()
     {
         if (m_CameraControlDropdown.value == 0){
             Destroy(GetComponent<OrbitControl>());
@@ -114,15 +144,15 @@ public class PlayerApplication : MonoBehaviour
         m_CameraControlDropdown.gameObject.SetActive(false);
     }
 
-    public void CameraControlTypeChanged(){
+    private void cameraControlTypeChanged(){
         if (m_CameraControlDropdown.value == 0){
-            AddOrbitCameraComponent();
+            addOrbitCameraComponent();
         } else {
-            AddFpvCameraComponent();
+            addFpvCameraComponent();
         }
     }
 
-    public void AddOrbitCameraComponent(){
+    private void addOrbitCameraComponent(){
         FirstPersonCameraController fpv = GetComponent<FirstPersonCameraController>();
         if (fpv != null){
             Destroy(fpv);
@@ -130,7 +160,7 @@ public class PlayerApplication : MonoBehaviour
         gameObject.AddComponent(typeof(OrbitControl));
     }
 
-    public void AddFpvCameraComponent(){
+    private void addFpvCameraComponent(){
         OrbitControl orbit = GetComponent<OrbitControl>();
         if (orbit != null){
             Destroy(orbit);
@@ -153,27 +183,6 @@ public class PlayerApplication : MonoBehaviour
         }
     }
 
-    // Start is called before the first frame update
-    void Start()
-    {
-
-        m_Viewer = FindObjectOfType<SceneViewer>();
-        if(m_Viewer == null)
-        {
-            Debug.LogError("Can't load GlTF list items, Viewer is null");
-            return;
-        }
-
-        m_GlTFListMenu.selected += LoadGlTFAsset;
-
-        string playlistURI = LocatePlaylist();
-        if (playlistURI != ""){
-            var items = ParsePlaylist(playlistURI);
-            m_GlTFListMenu.PopulateMenu(items);
-            m_GlTFListMenu.ShowList();
-        }
-    }
-
     public void UnloadGlTFAsset()
     {
         try
@@ -182,7 +191,8 @@ public class PlayerApplication : MonoBehaviour
             m_CameraControlDropdown.gameObject.SetActive(false);
             m_BackBtn.gameObject.SetActive(false);
             m_GlTFListMenu.ShowList();
-            DisableCameraController();
+            disableCameraController();
+            resetCameraBackground();
         }
         catch (Exception e)
         {

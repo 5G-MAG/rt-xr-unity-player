@@ -45,7 +45,6 @@ namespace rt.xr.unity
 
         int sceneIndex = 0;
 
-        bool enableAnchoring = false;
 
 #nullable enable
         SceneImport? gltf;
@@ -74,15 +73,15 @@ namespace rt.xr.unity
         private GameObject arSessionInstance;
         private GameObject arSessionOriginInstance;
 
+        bool m_ARCameraEnabled = false;
+        public bool ARCameraEnabled { get { return m_ARCameraEnabled; } }
 
         public void ConfigureInitialCamera()
         {
-            // Check if a camera exists in the scene first
+            // GLTF document may define none or mutliple cameras 
+            // use the first one if any
             Camera[] _cameras = FindObjectsOfType<Camera>();
-
             Camera _currentCamera = null;
-
-            // First camera encountered become the camera for the scene
             for(int i = 0; i < _cameras.Length; i++)
             {
                 if(i == 0)
@@ -90,17 +89,9 @@ namespace rt.xr.unity
                     _currentCamera = _cameras[i];
                     _currentCamera.tag = "MainCamera";
                 }
-                else
-                {
-                    Destroy(_cameras[i].gameObject);
-                }
             }
-
-            /*
-             * Configure camera[0] as the default camera, otherwise creates a new camera looking at the scene
-             */
-            var main = GetMainCamera();
             
+            var main = GetMainCamera();
             foreach(var cam in gameObject.GetComponentsInChildren<Camera>())
             {
                 if (cam != main)
@@ -112,7 +103,6 @@ namespace rt.xr.unity
                     return;
                 }
             }
-
             bounds = Utils.ComputeSceneBounds();
             Utils.LookAt(main, bounds, transform.forward);
         }
@@ -179,15 +169,19 @@ namespace rt.xr.unity
             }
         }
 
-        public void EnableARSession(){
-            if (arSessionInstance == null && arSessionOriginInstance == null)
+        public void EnableARCamera(){
+            if (arSessionInstance == null)
             {
                 arSessionInstance = Instantiate(arSessionPrefab);
+            }
+            if (arSessionOriginInstance == null)
+            {
                 arSessionOriginInstance = Instantiate(arSessionOriginPrefab);
             }
         }
 
-        public void DisableARSession(){
+        public void DisableARCamera(){
+            Debug.LogWarning("SceneViewer - disable XR");
             if (arSessionInstance != null)
             {
                 ARSession arSession = arSessionInstance.GetComponent<ARSession>();
@@ -221,14 +215,15 @@ namespace rt.xr.unity
             {
 
                 var instantiator = new GameObjectInstantiator(gltf, transform);
-                // extensionRequired implies extensionUsed
-                enableAnchoring = (gltf.GetSourceRoot().extensionsUsed != null) && (Array.IndexOf(gltf.GetSourceRoot().extensionsUsed, "MPEG_anchor") >= 0);
-                if (enableAnchoring){
+
+                m_ARCameraEnabled = (gltf.GetSourceRoot().extensionsUsed != null) && (Array.IndexOf(gltf.GetSourceRoot().extensionsUsed, "MPEG_anchor") >= 0);
+                if (m_ARCameraEnabled){
                     if (!UnityEngine.XR.XRSettings.enabled){
                             Debug.LogWarning("this player doesn't support XR mode");
                     }
-                    EnableARSession();
+                    EnableARCamera();
                 }
+
                 await gltf.InstantiateSceneAsync(instantiator, sceneIndex);
                 if (autoplayAnimation)
                 {
@@ -243,7 +238,9 @@ namespace rt.xr.unity
                 CreateVideoTextures(gltf, mediaPlayers);
                 CreateAudioSources(gltf, instantiator, mediaPlayers);
 
-                ConfigureInitialCamera();
+                if (!m_ARCameraEnabled){                
+                    ConfigureInitialCamera();
+                }
                 EnsureAudioListenerExists();
 
                 if (onGlTFLoadComplete != null){
@@ -278,7 +275,10 @@ namespace rt.xr.unity
                 mediaPlayers.Clear();
                 mediaPlayers = null;
             }
-            DisableARSession();
+            if (m_ARCameraEnabled){
+                DisableARCamera();
+            }
+            m_ARCameraEnabled = false;
         }
 
         private void enableMemoryRecorder()
