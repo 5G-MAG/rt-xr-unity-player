@@ -131,7 +131,7 @@ public class PlayerApplication : MonoBehaviour
     private void enableCameraController()
     {
         m_CameraControlDropdown.gameObject.SetActive(true);
-        cameraControlTypeChanged();
+        CameraControlTypeChanged();
     }
 
     private void disableCameraController()
@@ -144,7 +144,7 @@ public class PlayerApplication : MonoBehaviour
         m_CameraControlDropdown.gameObject.SetActive(false);
     }
 
-    private void cameraControlTypeChanged(){
+    public void CameraControlTypeChanged(){
         if (m_CameraControlDropdown.value == 0){
             addOrbitCameraComponent();
         } else {

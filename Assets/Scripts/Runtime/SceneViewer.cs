@@ -78,8 +78,6 @@ namespace rt.xr.unity
 
         public void ConfigureInitialCamera()
         {
-            // GLTF document may define none or mutliple cameras 
-            // use the first one if any
             Camera[] _cameras = FindObjectsOfType<Camera>();
             Camera _currentCamera = null;
             for(int i = 0; i < _cameras.Length; i++)
@@ -94,6 +92,8 @@ namespace rt.xr.unity
             var main = GetMainCamera();
             foreach(var cam in gameObject.GetComponentsInChildren<Camera>())
             {
+                // GLTF document may define none or mutliple cameras 
+                // use the first one if any
                 if (cam != main)
                 {
                     main.CopyFrom(cam);
@@ -181,7 +181,6 @@ namespace rt.xr.unity
         }
 
         public void DisableARCamera(){
-            Debug.LogWarning("SceneViewer - disable XR");
             if (arSessionInstance != null)
             {
                 ARSession arSession = arSessionInstance.GetComponent<ARSession>();
