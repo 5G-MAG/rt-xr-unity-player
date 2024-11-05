@@ -278,6 +278,12 @@ namespace rt.xr.unity
                 DisableARCamera();
             }
             m_ARCameraEnabled = false;
+            Camera[] _cameras = FindObjectsOfType<Camera>();
+            for(int i = 0; i < _cameras.Length; i++)
+            {
+                Destroy(_cameras[i]);
+            }
+
         }
 
         private void enableMemoryRecorder()

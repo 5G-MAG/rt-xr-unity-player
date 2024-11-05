@@ -129,7 +129,8 @@ public class PlayerApplication : MonoBehaviour
             playlistURI = m_Viewer.ConfigFileLocation;
         }
 
-        Debug.LogWarning("Loading xr player config file: "+playlistURI);
+        Debug.Log("\n\n\n\n\n");
+        Debug.Log("Loading xr player config file: "+playlistURI);
 
         if(!System.IO.File.Exists(playlistURI)){
             Debug.LogError("Config file not found: " + playlistURI);
