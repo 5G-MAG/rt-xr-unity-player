@@ -250,6 +250,7 @@ namespace rt.xr.unity
             else
             {
                 UnityEngine.Debug.LogError("Loading glTF failed!");
+                gltf = null; // can't call gltf.Dispose() if we didn't run an instantiator.
                 if (onGlTFLoadError != null){
                     onGlTFLoadError();
                 }
@@ -414,8 +415,12 @@ namespace rt.xr.unity
 
             if (showLog)
             {
-                GUILayout.BeginArea(new Rect(0, 0, Screen.width, Screen.height));
+                int offset = 100;
+                GUILayout.BeginArea(new Rect(0, offset, Screen.width, Screen.height-2*offset));
+                GUILayout.BeginVertical();
+                GUILayout.FlexibleSpace();
                 GUILayout.Label("\n" + string.Join("\n", logQueue.ToArray()));
+                GUILayout.EndVertical();
                 GUILayout.EndArea();
             }
         }

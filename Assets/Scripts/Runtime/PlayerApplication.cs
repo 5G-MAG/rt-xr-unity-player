@@ -58,7 +58,7 @@ public class PlayerApplication : MonoBehaviour
         m_BackBtn.gameObject.SetActive(false);
         m_CameraControlDropdown.gameObject.SetActive(false);
         m_Viewer.onGlTFLoadComplete = onGlTFLoadComplete;
-        // m_Viewer.onGlTFLoadError = onGlTFLoadError;
+        m_Viewer.onGlTFLoadError = onGlTFLoadError;
     }
 
     private void resetCameraBackground(){
@@ -75,11 +75,9 @@ public class PlayerApplication : MonoBehaviour
         }
     }
 
-    /*
     public void onGlTFLoadError(){
-        Debug.LogWarning("onGlTFLoadError");
+        m_Viewer.showLog = true;
     }
-    */
 
     private static List<glTFFile> parsePlaylist(string playlistURI)
     {
@@ -185,6 +183,7 @@ public class PlayerApplication : MonoBehaviour
     {
         try
         {
+            m_Viewer.showLog = false;
             m_Viewer.LoadGltf(path);
             m_GlTFListMenu.HideList();
             m_BackBtn.gameObject.SetActive(true);
@@ -206,6 +205,7 @@ public class PlayerApplication : MonoBehaviour
             m_GlTFListMenu.ShowList();
             disableCameraController();
             resetCameraBackground();
+            m_Viewer.showLog = false;
         }
         catch (Exception e)
         {
