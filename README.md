@@ -5,103 +5,83 @@
   <img src="https://img.shields.io/badge/License-5G--MAG%20Public%20License%20(v1.0)-blue" alt="License">
 </p>
 
+
 ## Introduction
 
 The XR Unity Player is an interactive and XR-capable glTF scene viewer supporting glTF extensions specified in the MPEG-I Scene Description framework ([ISO/IEC 23090-14](https://www.iso.org/standard/86439.html)), implemented in Unity3D. These extensions support features such as video textures, spatial audio sources, interactivity behaviors, AR anchors, ...
 
 Additional information can be found at: https://5g-mag.github.io/Getting-Started/pages/xr-media-integration-in-5g/
 
-### Supported Unity Editor version
-
-The project supports the [Unity3D 2022 LTS editor release](https://unity.com/releases/editor/qa/lts-releases).
 
 
-### Supported platforms
+## Clone the unity project and embedded dependencies
 
-It is currently developped and tested on Android devices.
-If you are interested in supporting other platforms, please contact the 5GMAG working group.
-
-
-## Downloading
-
-The project has dependencies which are not delivered through UPM (Unity's Package Manager), but instead are tracked as git submodules.
-
-**clone the project and fetch all submodules**
 ```
-mkdir gltfsceneviewer && cd gltfsceneviewer
-git clone https://github.com/5G-MAG/rt-xr-unity-player.git .
-git submodule update --init --recursive
+git clone --recursive https://github.com/5G-MAG/rt-xr-unity-player.git
 ```
 
-**update all submodules**
-```
-git submodule update --recursive
-```
+The project has dependency on packages tracked as git submodules:
+- *rt-xr-glTFast*: a fork of unity's glTF support package adding support for MPEG extensions.
+- *rt-xr-maf-native*: media pipelines supporting the MAF API.
 
-## working wwith the submodule dependencies
 
-The project has dependencies which aren't supplied through UPM and are maintained on the 5G-MAG github organization:
+> [!INFO] 
+> When pulling changes, submodules aren't updated by default. It has to be explicitly requested, eg. using: `git pull --recurse-submodules`
 
-- *rt-xr-glTFast*: a fork of `com.atteneder.glTFast` 
-- *rt-xr-maf-native*: C++ media pipelines
 
-> [!IMPORTANT] 
-> **Refer to [this documentation](docs/rt-xr-dependencies)** if you are contributing to these dependencies.
 
-## Building
 
-### Building the Unity project
+## Build the project and install it on an Android device
 
 ![Build the Unity project](docs/images/unity-build-player.png)
 1. Locate the `Build Settings` menu
-2. Review that Android is the selected platform, [change as needed](#changing-the-build-target-platform)
-3. Review the build type
-4. Build 
+2. Make sure that Android is the selected platform, [change as needed](#changing-the-build-target-platform)
+3. Check that Mobile XR is the default scene
+4. Select the device on which the application will be installed
+5. Build & Run
 
 
-## Configuring the project
+## Upload content to an Android device & configure the player
 
-### Configure the main menu's list of gltf documents
+This section assumes adb is installed on the machine, and Android smartphone is connected, with *developer mode* enabled on the phone.
 
-When the player launches, it looks up a configuration file named 'Paths' containing a list of scenes that populates the main menu to allow selecting between scenes.
-
-The list of scenes is a simple text file with each line providing the location of the gltf documents.
-The locations can be local files or ressources available over HTTP.
-A relative path is considered relative to the configuration file.
-
+Clone the `rt-xr-content` repository:
 ```
-/path/to/rt-xr-content/awards/scene.gltf
-https://127.0.0.1:8000/rt-xr-content/awards/scene.gltf
-awards/scene.gltf
+git clone https://github.com/5G-MAG/rt-xr-content.git
 ```
 
-By default the application will look for this file in the platform specific [Application.persistenDataPath](https://docs.unity3d.com/ScriptReference/Application-persistentDataPath.html). 
+Push glTF content to the phone:
+```
+cd rt-xr-content
+adb push ./awards /storage/emulated/0/Android/data/com.fivegmag.rtxrplayer/files/awards
+```
 
-On Android, the path would typically be: `/storage/emulated/0/Android/data/com.fivegmag.rtxrplayer/files/Paths`, which can be confirmed by [inspecting the application's log](https://docs.unity3d.com/Manual/com.unity.mobile.android-logcat.html):
+Create a file named *'Paths'* listing gltf documents to be exposed in the player, one per line:
+```
+/storage/emulated/0/Android/data/com.fivegmag.rtxrplayer/files/awards/scene.gltf
+/storage/emulated/0/Android/data/com.fivegmag.rtxrplayer/files/awards/scene_floor_anchoring.gltf
+```
 
-![logcat player config](docs/images/android-logcat-player-config.png).
-
-To push the configuration file to the device, connect the android device to the workstation with a usb cable and use `adb`:
+Upload the *'Paths'* file to the Android device:
 ```
 adb push ./Paths /storage/emulated/0/Android/data/com.fivegmag.rtxrplayer/files/Paths
 ```
 
-It is also possible to define a custom location for the configuration file, by setting its path in Unity's Editor:
-![set config file location](docs/images/unity-player-config-location.png)
+
+## Supported Unity Editor version
+
+The project supports the [Unity3D 2022 LTS editor release](https://unity.com/releases/editor/qa/lts-releases).
 
 
+## Supported platforms
 
-### Configure an Audio spatializer SDK
+It is currently developped and tested on Android devices.
 
-Support for spatial audio, Unity3D requires an Audio Spatializer has to be configured in the project settings *Edit > Project Settings > Audio > Spatializer Plugin*.
+**By default, the project is compiled for Android 9.0 (API Level 28), targeting arm64 architexture.**
 
-![Audio spatializer configuration](docs/images/unity-audio-spatializer-config.jpeg)
+This can be changed in Unity's *"Player settings"* panel, under the *"Settings for Android"* tab, in the *"Other settings"* section.
 
-**If no audio spatializer plugin is configured, audio will play without spatialization**.
-
-Please refer to Unity's [documentation for details and a list of available plugins](https://docs.unity3d.com/Manual/VRAudioSpatializer.html). 
-
-Unity provides a native audio spatializer SDK with a [simple spatializer implementation](https://docs.unity3d.com/Manual/AudioSpatializerSDK.html).
+Mobile XR scenarios using the *MPEG_anchor* glTF extension are supported on **Android** through the [Google ARCore](https://docs.unity3d.com/Packages/com.unity.xr.arcore@5.1/manual/index.html) plugin. Google maintains a [list of compatible XR devices](https://developers.google.com/ar/devices?hl=fr).
 
 
 ## License
