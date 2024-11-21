@@ -12,6 +12,7 @@
 
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System;
 
 public class OrbitControl : MonoBehaviour
 {
@@ -82,10 +83,10 @@ public class OrbitControl : MonoBehaviour
             float currentTouchDistance = Vector2.Distance(tZero.position, tOne.position);
             float deltaDistance = oldTouchDistance - currentTouchDistance;
             currentDistance  -= deltaDistance * Time.deltaTime;
+            currentDistance = Math.Max(0, currentDistance);
         } else {
             float moveInput = moveAction.ReadValue<Vector2>().y;
             currentDistance -= moveInput * Time.deltaTime;
-
         }
     }
 
