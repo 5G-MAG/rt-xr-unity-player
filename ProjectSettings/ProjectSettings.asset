@@ -142,11 +142,6 @@ PlayerSettings:
   bundleVersion: 1.0.0
   preloadedAssets:
   - {fileID: 0}
-  - {fileID: 6844517856914995655, guid: 95f577457fb19054a9268e63719974b2, type: 2}
-  - {fileID: 11400000, guid: 5eee2a35d33197140906f7cae7353441, type: 2}
-  - {fileID: -4375783576541124924, guid: 9346c020f518c5243a75c1787b2aaeeb, type: 2}
-  - {fileID: 4800000, guid: c9f956787b1d945e7b36e0516201fc76, type: 3}
-  - {fileID: 4800000, guid: 0945859e5a1034c2cb6dce53cb4fb899, type: 3}
   - {fileID: 11400000, guid: aea5e8e3658f9454385f4e61a6ef7f46, type: 2}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
@@ -266,7 +261,7 @@ PlayerSettings:
   useCustomBaseGradleTemplate: 0
   useCustomGradlePropertiesTemplate: 0
   useCustomGradleSettingsTemplate: 0
-  useCustomProguardFile: 1
+  useCustomProguardFile: 0
   AndroidTargetArchitectures: 2
   AndroidTargetDevices: 0
   AndroidSplashScreenScale: 0
