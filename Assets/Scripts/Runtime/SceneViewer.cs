@@ -17,19 +17,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Text;
 using Unity.Profiling;
-
-#nullable enable
+using UnityEngine.XR.ARFoundation;
 
 namespace rt.xr.unity
 {
-
     using GLTFast;
 
     public class SceneViewer : MonoBehaviour
     {
 
-        public string defaultGltfSouceUri = "";
-
+        [SerializeField] private string m_configFileLocation ;
+    
         string statsText = "";
         ProfilerRecorder totalReservedMemoryRecorder;
         ProfilerRecorder gcReservedMemoryRecorder;
@@ -43,56 +41,59 @@ namespace rt.xr.unity
         int maxFps = int.MinValue;
 
         public bool autoplayAnimation = true;
-        bool showLog = false;
+        public bool showLog = false;
 
         int sceneIndex = 0;
+
+
+#nullable enable
         SceneImport? gltf;
         List<MediaPlayer>? mediaPlayers = null;
+#nullable disable
 
-        Bounds bounds;
-        uint maxLogMessages = 15;
-        Queue logQueue = new Queue();
+        private Bounds bounds;
+        private uint maxLogMessages = 15;
+        private Queue logQueue = new Queue();
 
-        public string GetSourceUriFromCommandLineArgs()
-        {
-            string[] args = Environment.GetCommandLineArgs();
-            for (int i = 0; i < args.Length; i++)
-            {
-                if (args[i] == "--log")
-                {
-                    showLog = true;
-                    continue;
-                }
-                int j = i + 1;
-                if (args[i] == "--gltf")
-                {
-                    if (j < args.Length)
-                    {
-                        return args[j];
-                    }
-                    else
-                    {
-                        Debug.LogWarningFormat("--gltf command line option not followed by asset path");
-                    }
-                }
-            }
-            return defaultGltfSouceUri;
-        }
+        public string ConfigFileLocation { get { return m_configFileLocation; } }
+
+        public delegate void GlTFLoadComplete();
+        public GlTFLoadComplete onGlTFLoadComplete;
+
+        public delegate void GlTFLoadError();
+        public GlTFLoadError onGlTFLoadError;
+
+
+        [SerializeField]
+        private GameObject arSessionPrefab;
+
+        [SerializeField]
+        private GameObject arSessionOriginPrefab;
+
+        private GameObject arSessionInstance;
+        private GameObject arSessionOriginInstance;
+
+        bool m_ARCameraEnabled = false;
+        public bool ARCameraEnabled { get { return m_ARCameraEnabled; } }
 
         public void ConfigureInitialCamera()
         {
-            /*
-             * Configure camera[0] as the default camera, otherwise creates a new camera looking at the scene
-             */
-            var main = GetMainCamera();
-
-            if(main.gameObject.GetComponent<CameraController>() == null)
+            Camera[] _cameras = FindObjectsOfType<Camera>();
+            Camera _currentCamera = null;
+            for(int i = 0; i < _cameras.Length; i++)
             {
-                main.gameObject.AddComponent<CameraController>();
+                if(i == 0)
+                {
+                    _currentCamera = _cameras[i];
+                    _currentCamera.tag = "MainCamera";
+                }
             }
             
+            var main = GetMainCamera();
             foreach(var cam in gameObject.GetComponentsInChildren<Camera>())
             {
+                // GLTF document may define none or mutliple cameras 
+                // use the first one if any
                 if (cam != main)
                 {
                     main.CopyFrom(cam);
@@ -102,7 +103,6 @@ namespace rt.xr.unity
                     return;
                 }
             }
-
             bounds = Utils.ComputeSceneBounds();
             Utils.LookAt(main, bounds, transform.forward);
         }
@@ -112,7 +112,7 @@ namespace rt.xr.unity
             var cam = Camera.main;
             if (cam == null)
             {
-                cam = gameObject.AddComponent<Camera>();
+                cam = new GameObject("Created camera").AddComponent<Camera>();
                 cam.enabled = true;
                 cam.tag = "MainCamera";
             }
@@ -125,7 +125,8 @@ namespace rt.xr.unity
             UnityEngine.AudioListener[] listener = GetComponentsInChildren<UnityEngine.AudioListener>();
             if (listener.Length == 0)
             {
-                UnityEngine.Camera.main.gameObject.AddComponent<AudioListener>();
+                Camera c = GetMainCamera();
+                c.gameObject.AddComponent<AudioListener>();
             }
         }
 
@@ -168,34 +169,60 @@ namespace rt.xr.unity
             }
         }
 
+        public void EnableARCamera(){
+            if (arSessionInstance == null)
+            {
+                arSessionInstance = Instantiate(arSessionPrefab);
+            }
+            if (arSessionOriginInstance == null)
+            {
+                arSessionOriginInstance = Instantiate(arSessionOriginPrefab);
+            }
+        }
 
-        async void Start()
+        public void DisableARCamera(){
+            if (arSessionInstance != null)
+            {
+                ARSession arSession = arSessionInstance.GetComponent<ARSession>();
+                arSession.enabled = false;
+                arSession.Reset();
+                arSession = null;
+                Destroy(arSessionInstance);
+                arSessionInstance = null;
+            }
+
+            if (arSessionOriginInstance != null)
+            {
+                Destroy(arSessionOriginInstance);
+                arSessionOriginInstance = null;
+            }
+        }
+
+        async public void LoadGltf(string filePath)
         {
-            string p = GetSourceUriFromCommandLineArgs();
-            Uri path = new Uri(p, UriKind.RelativeOrAbsolute);
+            Uri path = new Uri(filePath, UriKind.RelativeOrAbsolute);
             
             if (!path.IsAbsoluteUri)
-                path = new Uri(System.IO.Directory.GetCurrentDirectory()+"/"+p);
-            Uri baseUri = UriHelper.GetBaseUri(path);
+                path = new Uri(System.IO.Directory.GetCurrentDirectory()+"/"+path);
 
-            if (p == "")
-            {
-                Debug.LogError("Source GLTF document path not configured. Use `--gltf ` command line argument, followed by the document URI.");
-                Application.Quit(1);
-            }
+            Uri baseUri = UriHelper.GetBaseUri(path);
 
             gltf = new SceneImport();
             bool success = await gltf.Load(path);
 
             if (success)
             {
-                if (sceneIndex > (gltf.sceneCount - 1))
-                {
-                    Debug.LogError($"invalid scene index:{sceneIndex }, when document contains {gltf.sceneCount}");
-                    Application.Quit(1);
-                }
 
                 var instantiator = new GameObjectInstantiator(gltf, transform);
+
+                m_ARCameraEnabled = (gltf.GetSourceRoot().extensionsUsed != null) && (Array.IndexOf(gltf.GetSourceRoot().extensionsUsed, "MPEG_anchor") >= 0);
+                if (m_ARCameraEnabled){
+                    if (!UnityEngine.XR.XRSettings.enabled){
+                            Debug.LogWarning("this player doesn't support XR mode");
+                    }
+                    EnableARCamera();
+                }
+
                 await gltf.InstantiateSceneAsync(instantiator, sceneIndex);
                 if (autoplayAnimation)
                 {
@@ -210,14 +237,52 @@ namespace rt.xr.unity
                 CreateVideoTextures(gltf, mediaPlayers);
                 CreateAudioSources(gltf, instantiator, mediaPlayers);
 
-                ConfigureInitialCamera();
+                if (!m_ARCameraEnabled){                
+                    ConfigureInitialCamera();
+                }
                 EnsureAudioListenerExists();
-                
+
+                if (onGlTFLoadComplete != null){
+                    onGlTFLoadComplete();
+                }
+
             }
             else
             {
                 UnityEngine.Debug.LogError("Loading glTF failed!");
-                Application.Quit(1);
+                gltf = null; // can't call gltf.Dispose() if we didn't run an instantiator.
+                if (onGlTFLoadError != null){
+                    onGlTFLoadError();
+                }
+
+            }
+        }
+
+        public void UnloadGltfScene()
+        {
+            VirtualSceneGraph.ResetAll();
+
+            // Destroy all game objects instances
+            gltf?.Dispose();
+
+            // Dispose of all media players
+            if (mediaPlayers != null)
+            {
+                foreach (var mp in mediaPlayers)
+                {
+                    mp.Dispose();
+                }
+                mediaPlayers.Clear();
+                mediaPlayers = null;
+            }
+            if (m_ARCameraEnabled){
+                DisableARCamera();
+            }
+            m_ARCameraEnabled = false;
+            Camera[] _cameras = FindObjectsOfType<Camera>();
+            for(int i = 0; i < _cameras.Length; i++)
+            {
+                Destroy(_cameras[i]);
             }
 
         }
@@ -321,7 +386,6 @@ namespace rt.xr.unity
                     showLog = true;
                 }
             }
-
         }
 
         private void OnDrawGizmos()
@@ -351,12 +415,14 @@ namespace rt.xr.unity
 
             if (showLog)
             {
-                GUILayout.BeginArea(new Rect(0, 0, Screen.width, Screen.height));
+                int offset = 100;
+                GUILayout.BeginArea(new Rect(0, offset, Screen.width, Screen.height-2*offset));
+                GUILayout.BeginVertical();
+                GUILayout.FlexibleSpace();
                 GUILayout.Label("\n" + string.Join("\n", logQueue.ToArray()));
+                GUILayout.EndVertical();
                 GUILayout.EndArea();
             }
         }
-
     }
-
 }
