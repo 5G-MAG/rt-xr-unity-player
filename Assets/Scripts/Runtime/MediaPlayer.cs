@@ -27,8 +27,6 @@ namespace rt.xr.unity
     public class MediaPlayer : MonoBehaviour
     {
 
-        static MediaPipelineFactory factory;
-
         public bool autoPlay = false;
 
         static BufferInfo GetBufferInfo(MediaPipelineConfig cfg, int accessorIdx)
@@ -240,29 +238,6 @@ namespace rt.xr.unity
         public static MediaPlayer Create(Media media, MediaPipelineConfig cfg, GameObject go = null)
         {
             MediaPlayer mp;
-            if (factory == null)
-            {
-                factory = new MediaPipelineFactory();
-                // FIXME: works only on windows for now, some environments may not allow DLL usage (eg. iOS).
-                if (String.IsNullOrEmpty(Environment.GetEnvironmentVariable("MAF_PLUGINS_DIR"))){
-                    string dir = Path.GetFullPath("Packages/rt.xr.maf/x86_64-w64/bin");
-                    if (!Directory.Exists(dir))
-                    {
-
-                        if (Application.platform == RuntimePlatform.WindowsPlayer)
-                        {
-                            dir = Application.dataPath + "/Plugins/x86_64";
-                        }
-                        
-                    }
-                    factory.loadPluginsDir(dir);
-                }
-                else
-                {
-                    factory.loadPluginsDir();
-                }
-                // int found = factory.plugins.Count;
-            }
             try
             {
                 if (go == null)
@@ -336,7 +311,7 @@ namespace rt.xr.unity
             BufferInfoArray bufferInfo = GetMafBufferInfoArray(cfg);
             mediaBuffers = CreateMediaBuffers(cfg, bufferInfo);
             mediaInfo = GetMafMediaInfo(media, cfg);
-            pipeline = factory.createMediaPipeline(mediaInfo, bufferInfo);
+            pipeline = MediaPipelineFactory.createMediaPipeline(mediaInfo, bufferInfo);
             if (pipeline == null)
             {
                 throw new Exception("Unsupported media type - failed to create maf pipeline.");
@@ -383,7 +358,8 @@ namespace rt.xr.unity
                 audioReaders[aSrc.BufferId] = new AudioFilterReader(handler, handler.BufferInfo, aSrc.SampleRate);
 #endif
             }
-                audioReaders[aSrc.BufferId].AddAudioSource(aSrc);
+            
+            audioReaders[aSrc.BufferId].AddAudioSource(aSrc);
             if (audioSync == null)
             {
                 audioSync = audioReaders[aSrc.BufferId];
@@ -471,7 +447,7 @@ namespace rt.xr.unity
                 {
                     CurrentTime += Time.deltaTime;
                 }
-
+                
                 foreach (var mb in mediaBuffers.Values)
                 {
                     if ((videoTextures != null) && videoTextures.ContainsKey(mb.bufferId))
