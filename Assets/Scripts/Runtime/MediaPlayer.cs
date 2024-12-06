@@ -311,7 +311,7 @@ namespace rt.xr.unity
             BufferInfoArray bufferInfo = GetMafBufferInfoArray(cfg);
             mediaBuffers = CreateMediaBuffers(cfg, bufferInfo);
             mediaInfo = GetMafMediaInfo(media, cfg);
-            pipeline = MediaPipelineFactory.createMediaPipeline(mediaInfo, bufferInfo);
+            pipeline = MediaPipelineFactory.getInstance().createMediaPipeline(mediaInfo, bufferInfo);
             if (pipeline == null)
             {
                 throw new Exception("Unsupported media type - failed to create maf pipeline.");
