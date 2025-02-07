@@ -1,0 +1,10 @@
+.ignore
+**/*.meta
+!dependencies/**/*.meta
+!dependencies/**/*.meta
+dependencies/**/*.so
+dependencies/**/*.dll
+dependencies/**/*.dylib
+!**/bin/*.meta
+./
+.DS_Store
