@@ -38,7 +38,9 @@ namespace rt.xr.unity
             var bi = new BufferInfo();
             bi.bufferId = bv.buffer;
             bi.offset = ac.byteOffset + bv.byteOffset;
-            bi.stride = bv.byteStride;
+            // NOTE: When two or more accessors use the same buffer view, this field MUST be defined. No sanity check performed here. 
+            // When 'byteStride' is not defined, data is tightly packed.
+            bi.stride = bv.byteStride > 0 ? bv.byteStride : 0;
 
             switch (ac.componentType)
             {
@@ -308,6 +310,9 @@ namespace rt.xr.unity
 
         private void createPipeline(Media media, MediaPipelineConfig cfg)
         {
+            // MediaPipelineFactoryPlugin.RegisterAll();
+            AvPipelinePlugin.RegisterMediaPipelineFactoryPlugin();
+
             BufferInfoArray bufferInfo = GetMafBufferInfoArray(cfg);
             mediaBuffers = CreateMediaBuffers(cfg, bufferInfo);
             mediaInfo = GetMafMediaInfo(media, cfg);
