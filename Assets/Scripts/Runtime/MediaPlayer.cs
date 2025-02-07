@@ -310,8 +310,7 @@ namespace rt.xr.unity
 
         private void createPipeline(Media media, MediaPipelineConfig cfg)
         {
-            // MediaPipelineFactoryPlugin.RegisterAll();
-            AvPipelinePlugin.RegisterMediaPipelineFactoryPlugin();
+            MediaPipelineFactoryPlugin.RegisterAll();
 
             BufferInfoArray bufferInfo = GetMafBufferInfoArray(cfg);
             mediaBuffers = CreateMediaBuffers(cfg, bufferInfo);
