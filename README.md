@@ -13,7 +13,7 @@ The XR Unity Player is an interactive and XR-capable glTF scene viewer implement
 The project has dependencies integrated as [Unity embedded packages](https://docs.unity3d.com/Manual/upm-embed.html).
 
 - **rt-xr-glTFast** : This package supports MPEG-I glTF extensions, it is installed as a git submodule : [github.com/5G-MAG/rt-xr-maf-native](https://github.com/5G-MAG/rt-xr-maf-native)
-- **rt-xr-maf-native**: Supports media pipelines implementing the MAF API. It must be compiled and installed manually : [github.com/5G-MAG/rt-xr-maf-native](https://github.com/5G-MAG/rt-xr-maf-native)
+- **rt-xr-maf-native**: Supports media pipeline plugins, see the package's [README](./Packages/rt.xr.maf/README.md) for details. It must be compiled and installed manually : [github.com/5G-MAG/rt-xr-maf-native](https://github.com/5G-MAG/rt-xr-maf-native)
 
 
 Additional information can be found at: https://5g-mag.github.io/Getting-Started/pages/xr-media-integration-in-5g/
@@ -35,7 +35,7 @@ git clone --recursive https://github.com/5G-MAG/rt-xr-unity-player.git
 
 ### Supported platforms
 
-It is currently developed and tested on Android devices.
+While the project is currently primarly developed for and tested on Android devices, it can be compiled and on Windows, Mac OS, and Linux. 
 
 **By default, the project is compiled for Android 9.0 (API Level 28), targeting arm64 architexture.**
 
@@ -43,29 +43,38 @@ This can be changed in Unity's *"Player settings"* panel, under the *"Settings f
 
 Mobile XR scenarios using the *MPEG_anchor* glTF extension are supported on **Android** through the [Google ARCore](https://docs.unity3d.com/Packages/com.unity.xr.arcore@5.1/manual/index.html) plugin. When you enable the Google ARCore XR Plug-in in Project Settings > XR Plug-in Management, Unity automatically installs this package if necessary.  Google maintains a [list of compatible XR devices](https://developers.google.com/ar/devices?hl=fr).
 
+
+#### Spatial audio support
+
+Support for audio spatialization requires the installation of an audio spatializer plugin. 
+When an audio plugin is not installed, audio play but will not be spatialized.
+
+See the related [documentation](./docs/audio-spatializer.md)
+
+
 ### Compiling *rt-xr-maf-native*
 
-#### Android
+**Android**
 
-the easiest way is to compile is by using the Dockerfile: 
+The easiest way is to compile the media pipeline plugins is by using the Dockerfile: 
 ```
 git clone git@github.com:5G-MAG/rt-xr-maf-native.git
 cd rt-xr-maf-native
 docker build -t rtxrmaf:builder .
 ```
 
-then install the build artifacts into the unity project:
+Then install the build artifacts into the unity project:
 ```
 cd rt-xr-unity-package
 docker run --mount=type=bind,source=$(pwd)/Packages/rt.xr.maf,target=/install -it maf:builder
 ```
 
-#### Other platforms
+**Other platforms**
 
 Refer to the [git repository](https://github.com/5G-MAG/rt-xr-maf-native/tree/feature/android) for more informations on the build process.
 
 
-### Building and running the unity project
+### Building and running the Unity project
 
 ![Build the Unity project](docs/images/unity-build-player.png)
 
