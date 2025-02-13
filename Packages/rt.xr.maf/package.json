@@ -1,0 +1,14 @@
+{
+    "name": "rt.xr.maf",
+    "version": "0.0.5",
+    "description": "A C++ implementation of the Media Access Function API specified by in ISOIEC 23090-14.",
+    "displayName": "rt.xr.maf",
+    "unity": "2022.3",
+    "author": {
+        "name": "Nils Duval",
+        "email": "nils.duval@motionspell.com"
+    },
+    "type": "library",
+    "license": "LICENSE.md",
+    "licensesUrl": "https://www.5g-mag.com/license"
+}

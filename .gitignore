@@ -3,6 +3,13 @@
 .DS_Store
 .vscode
 bin/
+AndroidProject/
+.run/
+Build*/
+Assets/Resources/MetaXR*
+Assets/Plugins/
+Assets/Plugins/Android/
+Assets/Plugins/SteamAudio/
 
 # This .gitignore file should be placed at the root of your Unity project directory
 #
