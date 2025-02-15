@@ -27,7 +27,7 @@ git clone --recursive https://github.com/5G-MAG/rt-xr-unity-player.git
 ```
 
 > [!NOTE]
-> When pulling changes, submodules aren't updated by default. It has to be explicitly requested, eg. using: `git pull --recurse-submodules`
+> When pulling changes, submodules aren't updated by default. This has to be explicitly requested, eg. using: `git pull --recurse-submodules`
 
 
 ## Build the project and install it on an Android device
@@ -35,7 +35,7 @@ git clone --recursive https://github.com/5G-MAG/rt-xr-unity-player.git
 
 ### Supported platforms
 
-While the project is currently primarly developed for and tested on Android devices, it can be compiled and on Windows, Mac OS, and Linux. 
+While the project is currently primarly developed for and tested on Android devices, it can be compiled on Windows, Mac OS, and Linux. 
 
 **By default, the project is compiled for Android 9.0 (API Level 28), targeting arm64 architexture.**
 
@@ -65,7 +65,7 @@ docker build -t rtxrmaf:builder .
 
 Then install the build artifacts into the unity project:
 ```
-cd rt-xr-unity-package
+cd rt-xr-unity-player
 docker run --mount=type=bind,source=$(pwd)/Packages/rt.xr.maf,target=/install -it maf:builder
 ```
 
@@ -100,10 +100,9 @@ cd rt-xr-content
 adb push ./awards /storage/emulated/0/Android/data/com.fivegmag.rtxrplayer/files/awards
 ```
 
-Create a file named *'Paths'* listing gltf documents to be exposed in the player, one per line:
+Create a file named *'Paths'* listing gltf documents to be exposed in the player, one per line (see an example for awards.gltf):
 ```
-/storage/emulated/0/Android/data/com.fivegmag.rtxrplayer/files/awards/scene.gltf
-/storage/emulated/0/Android/data/com.fivegmag.rtxrplayer/files/awards/scene_floor_anchoring.gltf
+/storage/emulated/0/Android/data/com.fivegmag.rtxrplayer/files/awards/awards.gltf
 ```
 
 Upload the *'Paths'* file to the Android device:
@@ -114,4 +113,3 @@ adb push ./Paths /storage/emulated/0/Android/data/com.fivegmag.rtxrplayer/files/
 ## License
 
 This project is developed under 5G-MAG's Public License. For the full license terms, please see the LICENSE file distributed along with the repository or retrieve it from [here](https://drive.google.com/file/d/1cinCiA778IErENZ3JN52VFW-1ffHpx7Z/view).
-
