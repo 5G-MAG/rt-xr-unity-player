@@ -8,34 +8,78 @@
 
 ## Introduction
 
-The XR Unity Player is an interactive and XR-capable glTF scene viewer supporting glTF extensions specified in the MPEG-I Scene Description framework ([ISO/IEC 23090-14](https://www.iso.org/standard/86439.html)), implemented in Unity3D. These extensions support features such as video textures, spatial audio sources, interactivity behaviors, AR anchors, ...
+The XR Unity Player is an interactive and XR-capable glTF scene viewer implemented in Unity3D. It supports glTF extensions specified in the MPEG-I Scene Description framework ([ISO/IEC 23090-14](https://www.iso.org/standard/86439.html)). These extensions support features such as video textures, spatial audio sources, interactivity behaviors, XR anchors,...
+
+The project has dependencies integrated as [Unity embedded packages](https://docs.unity3d.com/Manual/upm-embed.html).
+
+- **rt-xr-glTFast** : This package supports MPEG-I glTF extensions, it is installed as a git submodule : [github.com/5G-MAG/rt-xr-maf-native](https://github.com/5G-MAG/rt-xr-maf-native)
+- **rt-xr-maf-native**: Supports media pipeline plugins, see the package's [README](./Packages/rt.xr.maf/README.md) for details. It must be compiled and installed manually : [github.com/5G-MAG/rt-xr-maf-native](https://github.com/5G-MAG/rt-xr-maf-native)
+
 
 Additional information can be found at: https://5g-mag.github.io/Getting-Started/pages/xr-media-integration-in-5g/
 
 
+## Clone the Unity project
 
-## Clone the unity project and embedded dependencies
-
+When cloning the project, use the *--recursive* flag to pull *rt-xr-glTFast*.
 ```
 git clone --recursive https://github.com/5G-MAG/rt-xr-unity-player.git
 ```
 
-The project has dependency on packages tracked as git submodules:
-- *rt-xr-glTFast*: a fork of unity's glTF support package adding support for MPEG extensions.
-- *rt-xr-maf-native*: media pipelines supporting the MAF API.
-
-
-> [!INFO] 
+> [!NOTE]
 > When pulling changes, submodules aren't updated by default. It has to be explicitly requested, eg. using: `git pull --recurse-submodules`
-
-
 
 
 ## Build the project and install it on an Android device
 
+
+### Supported platforms
+
+While the project is currently primarly developed for and tested on Android devices, it can be compiled and on Windows, Mac OS, and Linux. 
+
+**By default, the project is compiled for Android 9.0 (API Level 28), targeting arm64 architexture.**
+
+This can be changed in Unity's *"Player settings"* panel, under the *"Settings for Android"* tab, in the *"Other settings"* section.
+
+Mobile XR scenarios using the *MPEG_anchor* glTF extension are supported on **Android** through the [Google ARCore](https://docs.unity3d.com/Packages/com.unity.xr.arcore@5.1/manual/index.html) plugin. When you enable the Google ARCore XR Plug-in in Project Settings > XR Plug-in Management, Unity automatically installs this package if necessary.  Google maintains a [list of compatible XR devices](https://developers.google.com/ar/devices?hl=fr).
+
+
+#### Spatial audio support
+
+Support for audio spatialization requires the installation of an audio spatializer plugin. 
+When an audio plugin is not installed, audio play but will not be spatialized.
+
+See the related [documentation](./docs/audio-spatializer.md)
+
+
+### Compiling *rt-xr-maf-native*
+
+**Android**
+
+The easiest way is to compile the media pipeline plugins is by using the Dockerfile: 
+```
+git clone git@github.com:5G-MAG/rt-xr-maf-native.git
+cd rt-xr-maf-native
+docker build -t rtxrmaf:builder .
+```
+
+Then install the build artifacts into the unity project:
+```
+cd rt-xr-unity-package
+docker run --mount=type=bind,source=$(pwd)/Packages/rt.xr.maf,target=/install -it maf:builder
+```
+
+**Other platforms**
+
+Refer to the [git repository](https://github.com/5G-MAG/rt-xr-maf-native/tree/feature/android) for more informations on the build process.
+
+
+### Building and running the Unity project
+
 ![Build the Unity project](docs/images/unity-build-player.png)
+
 1. Locate the `Build Settings` menu
-2. Make sure that Android is the selected platform, [change as needed](#changing-the-build-target-platform)
+2. Make sure that Android is the selected platform, change as needed.
 3. Check that Mobile XR is the default scene
 4. Select the device on which the application will be installed
 5. Build & Run
@@ -66,23 +110,6 @@ Upload the *'Paths'* file to the Android device:
 ```
 adb push ./Paths /storage/emulated/0/Android/data/com.fivegmag.rtxrplayer/files/Paths
 ```
-
-
-## Supported Unity Editor version
-
-The project supports the [Unity3D 2022 LTS editor release](https://unity.com/releases/editor/qa/lts-releases).
-
-
-## Supported platforms
-
-It is currently developped and tested on Android devices.
-
-**By default, the project is compiled for Android 9.0 (API Level 28), targeting arm64 architexture.**
-
-This can be changed in Unity's *"Player settings"* panel, under the *"Settings for Android"* tab, in the *"Other settings"* section.
-
-Mobile XR scenarios using the *MPEG_anchor* glTF extension are supported on **Android** through the [Google ARCore](https://docs.unity3d.com/Packages/com.unity.xr.arcore@5.1/manual/index.html) plugin. Google maintains a [list of compatible XR devices](https://developers.google.com/ar/devices?hl=fr).
-
 
 ## License
 
