@@ -10,6 +10,7 @@ Assets/Resources/MetaXR*
 Assets/Plugins/
 Assets/Plugins/Android/
 Assets/Plugins/SteamAudio/
+.utmp/
 
 # This .gitignore file should be placed at the root of your Unity project directory
 #
