@@ -21,10 +21,17 @@ namespace rt.xr.unity
 {
     using GLTFast;
 
+    enum ArSessionInitialization {
+        DISABLED,
+        ENABLED,
+        AUTO
+    }
+
     public class SceneViewer : MonoBehaviour
     {
 
-        public bool autoplayAnimation = true;
+        [SerializeField]
+        private bool autoplayAnimation = true;
 
         int sceneIndex = 0;
 
@@ -42,18 +49,35 @@ namespace rt.xr.unity
         public delegate void GlTFLoadError();
         public GlTFLoadError onGlTFLoadError;
 
+        [SerializeField]
+        private ArSessionInitialization m_Passthrough = ArSessionInitialization.AUTO;
 
         [SerializeField]
-        private GameObject arSessionPrefab;
+        
+        private GameObject m_ARSessionPrefab;
+        private GameObject m_arSessionInstance;
 
         [SerializeField]
-        private GameObject arSessionOriginPrefab;
+        private GameObject m_XROriginPrefab;
+        private GameObject m_xrOriginInstance;
 
-        private GameObject arSessionInstance;
-        private GameObject arSessionOriginInstance;
-
-        bool m_ARCameraEnabled = false;
-        public bool ARCameraEnabled { get { return m_ARCameraEnabled; } }
+        public bool PassThroughEnabled { 
+            get { 
+                switch (m_Passthrough) {
+                    case ArSessionInitialization.DISABLED:
+                        return false;
+                    case ArSessionInitialization.ENABLED:
+                        return (m_XROriginPrefab != null) && (m_ARSessionPrefab != null);
+                    default: // ArSessionInitialization.AUTO
+                        if ((m_XROriginPrefab == null) || (m_ARSessionPrefab == null)){
+                            return false;                            
+                        }
+                        var MPEG_anchor_extensionsUsed = (gltf.GetSourceRoot().extensionsUsed != null) &&
+                            (Array.IndexOf(gltf.GetSourceRoot().extensionsUsed, "MPEG_anchor") >= 0);
+                        return MPEG_anchor_extensionsUsed;
+                }
+            }
+        }
 
         public void ConfigureInitialCamera()
         {
@@ -149,31 +173,31 @@ namespace rt.xr.unity
         }
 
         public void EnableARCamera(){
-            if (arSessionInstance == null)
+            if (m_arSessionInstance == null)
             {
-                arSessionInstance = Instantiate(arSessionPrefab);
+                m_arSessionInstance = Instantiate(m_ARSessionPrefab);
             }
-            if (arSessionOriginInstance == null)
+            if (m_xrOriginInstance == null)
             {
-                arSessionOriginInstance = Instantiate(arSessionOriginPrefab);
+                m_xrOriginInstance = Instantiate(m_XROriginPrefab);
             }
         }
 
         public void DisableARCamera(){
-            if (arSessionInstance != null)
+            if (m_arSessionInstance != null)
             {
-                ARSession arSession = arSessionInstance.GetComponent<ARSession>();
+                ARSession arSession = m_arSessionInstance.GetComponent<ARSession>();
                 arSession.enabled = false;
                 arSession.Reset();
                 arSession = null;
-                Destroy(arSessionInstance);
-                arSessionInstance = null;
+                Destroy(m_arSessionInstance);
+                m_arSessionInstance = null;
             }
 
-            if (arSessionOriginInstance != null)
+            if (m_xrOriginInstance != null)
             {
-                Destroy(arSessionOriginInstance);
-                arSessionOriginInstance = null;
+                Destroy(m_xrOriginInstance);
+                m_xrOriginInstance = null;
             }
         }
 
@@ -195,14 +219,13 @@ namespace rt.xr.unity
 
                 var instantiator = new GameObjectInstantiator(gltf, transform);
 
-                // m_ARCameraEnabled = (gltf.GetSourceRoot().extensionsUsed != null) && (Array.IndexOf(gltf.GetSourceRoot().extensionsUsed, "MPEG_anchor") >= 0);
-                // if (m_ARCameraEnabled){
-                //     Debug.LogWarning("Scene requires passthrough camera");
-                //     if (!UnityEngine.XR.XRSettings.enabled){
-                //             Debug.LogWarning("this player doesn't support XR mode");
-                //     }
-                //     EnableARCamera();
-                // }
+                if (this.PassThroughEnabled){
+                    if (UnityEngine.XR.XRSettings.enabled){
+                        EnableARCamera();
+                    } else {
+                        Debug.LogWarning("XR not available");
+                    }
+                }
 
                 await gltf.InstantiateSceneAsync(instantiator, sceneIndex);
                 if (autoplayAnimation)
@@ -218,9 +241,9 @@ namespace rt.xr.unity
                 CreateVideoTextures(gltf, mediaPlayers);
                 CreateAudioSources(gltf, instantiator, mediaPlayers);
 
-                if (!m_ARCameraEnabled){                
-                    ConfigureInitialCamera();
-                }
+                // if (!this.PassThroughEnabled){                
+                //     ConfigureInitialCamera();
+                // }
                 EnsureAudioListenerExists();
 
                 Debug.LogWarning("glTF load complete");
@@ -258,10 +281,9 @@ namespace rt.xr.unity
                 mediaPlayers.Clear();
                 mediaPlayers = null;
             }
-            if (m_ARCameraEnabled){
+            if (this.PassThroughEnabled){
                 DisableARCamera();
             }
-            m_ARCameraEnabled = false;
             Camera[] _cameras = FindObjectsByType(typeof(Camera), FindObjectsSortMode.None) as Camera[];
             for(int i = 0; i < _cameras.Length; i++)
             {

@@ -224,6 +224,30 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2483171112407822886, guid: f54012181eacade4ea242c65f804720f, type: 3}
+      propertyPath: dynamicResolutionVersion
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2483171112407822886, guid: f54012181eacade4ea242c65f804720f, type: 3}
+      propertyPath: isInsightPassthroughEnabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2483171112407822886, guid: f54012181eacade4ea242c65f804720f, type: 3}
+      propertyPath: quest2MaxDynamicResolutionScale
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2483171112407822886, guid: f54012181eacade4ea242c65f804720f, type: 3}
+      propertyPath: quest2MinDynamicResolutionScale
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2483171112407822886, guid: f54012181eacade4ea242c65f804720f, type: 3}
+      propertyPath: quest3MaxDynamicResolutionScale
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2483171112407822886, guid: f54012181eacade4ea242c65f804720f, type: 3}
+      propertyPath: quest3MinDynamicResolutionScale
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2514675399181695721, guid: f54012181eacade4ea242c65f804720f, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -285,7 +309,7 @@ GameObject:
   - component: {fileID: 1090285962}
   - component: {fileID: 1090285960}
   m_Layer: 0
-  m_Name: gltfSceneViewer
+  m_Name: glTFSceneViewer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -304,8 +328,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   autoplayAnimation: 1
-  arSessionPrefab: {fileID: 0}
-  arSessionOriginPrefab: {fileID: 0}
+  m_Passthrough: 0
+  m_ARSessionPrefab: {fileID: 0}
+  m_XROriginPrefab: {fileID: 0}
 --- !u!4 &1090285961
 Transform:
   m_ObjectHideFlags: 0
@@ -333,7 +358,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9841c45cdf6f493884feac4e0a62c30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_gltfSceneLocation: /storage/emulated/0/Android/data/com.fivegmag.rtxrplayer/files/dev/video_plane.gltf
+  m_gltfSceneLocation: /Users/ndvx/code/5gmag/rt-xr-content/studio_apartment/studio_apartment.gltf
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

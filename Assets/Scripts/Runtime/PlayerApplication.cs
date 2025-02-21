@@ -70,10 +70,10 @@ public class PlayerApplication : MonoBehaviour
     }
 
     private void onGlTFLoadComplete(){
-        if (!m_Viewer.ARCameraEnabled){
-            enableCameraController();
-        } else {
+        if (m_Viewer.PassThroughEnabled){
             disableCameraController();
+        } else {
+            enableCameraController();
         }
     }
 
