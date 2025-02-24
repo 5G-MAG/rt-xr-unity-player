@@ -665,8 +665,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cea80562dd241d4fb1fd51e3b93a10f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  autoplayAnimation: 1
-  m_ARPrefabs: 2
+  autoplayAnimation: 0
+  m_Passthrough: 1
   m_ARSessionPrefab: {fileID: 5203395857757756161, guid: 2afc6aab54d724ecf870ba220e0cfbd7, type: 3}
   m_XROriginPrefab: {fileID: 8357273229510242013, guid: 4a7df5db68bbc4bd78655dad66d327a3, type: 3}
 --- !u!1 &690944760

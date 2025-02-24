@@ -22,16 +22,16 @@ namespace rt.xr.unity
     using GLTFast;
 
     enum ArSessionInitialization {
-        DISABLED,
-        ENABLED,
-        AUTO
+        DISABLED = 0,
+        ENABLED = 1,
+        AUTO = 2
     }
 
     public class SceneViewer : MonoBehaviour
     {
 
         [SerializeField]
-        private bool autoplayAnimation = true;
+        private bool autoplayAnimation = false;
 
         int sceneIndex = 0;
 
