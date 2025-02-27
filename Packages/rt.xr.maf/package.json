@@ -1,6 +1,6 @@
 {
     "name": "rt.xr.maf",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "description": "A C++ implementation of the Media Access Function API specified by in ISOIEC 23090-14.",
     "displayName": "rt.xr.maf",
     "unity": "2022.3",
