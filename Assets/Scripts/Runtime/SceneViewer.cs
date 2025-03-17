@@ -22,6 +22,7 @@ using UnityEngine.XR.ARFoundation;
 namespace rt.xr.unity
 {
     using GLTFast;
+    // using GLTFast.Mpeg;
 
     public class SceneViewer : MonoBehaviour
     {
@@ -47,8 +48,7 @@ namespace rt.xr.unity
 
 
 #nullable enable
-        SceneImport? gltf;
-        List<MediaPlayer>? mediaPlayers = null;
+        MpegGltfImport? mpegGltfImport;
 #nullable disable
 
         private Bounds bounds;
@@ -75,6 +75,32 @@ namespace rt.xr.unity
 
         bool m_ARCameraEnabled = false;
         public bool ARCameraEnabled { get { return m_ARCameraEnabled; } }
+
+        public Camera GetMainCamera()
+        {
+            var cam = Camera.main;
+            if (cam == null)
+            {
+                cam = new GameObject("Created camera").AddComponent<Camera>();
+                cam.enabled = true;
+                cam.tag = "MainCamera";
+            }
+            return cam;
+        }
+
+        /*
+        void EnsureAudioListener()
+        {
+            // add a default listener
+            UnityEngine.AudioListener[] listener = GetComponentsInChildren<UnityEngine.AudioListener>();
+            if (listener.Length == 0)
+            {
+                Debug.Log("glTF scene doesn't specify an audio listener.");
+                Camera c = GetMainCamera();
+                c.gameObject.AddComponent<AudioListener>();
+            }
+        }
+        */
 
         public void ConfigureInitialCamera()
         {
@@ -105,68 +131,6 @@ namespace rt.xr.unity
             }
             bounds = Utils.ComputeSceneBounds();
             Utils.LookAt(main, bounds, transform.forward);
-        }
-
-        public Camera GetMainCamera()
-        {
-            var cam = Camera.main;
-            if (cam == null)
-            {
-                cam = new GameObject("Created camera").AddComponent<Camera>();
-                cam.enabled = true;
-                cam.tag = "MainCamera";
-            }
-            return cam;
-        }
-
-        public void EnsureAudioListenerExists()
-        {
-            // add a default listener
-            UnityEngine.AudioListener[] listener = GetComponentsInChildren<UnityEngine.AudioListener>();
-            if (listener.Length == 0)
-            {
-                Camera c = GetMainCamera();
-                c.gameObject.AddComponent<AudioListener>();
-            }
-        }
-
-        static List<MediaPlayer> CreateMediaPlayers(SceneImport gltfImport, Uri baseUri)
-        {
-            List<MediaPipelineConfig> configs = gltfImport.GetMediaPipelineConfigs(); // one config per media
-            var players = new List<MediaPlayer>(configs.Count);
-            for (var c = 0; c < configs.Count; c++)
-            {
-                var mp = MediaPlayer.Create(gltfImport.GetMedia(c, baseUri), configs[c]);
-                if (mp == null)
-                {
-                    throw new Exception("failed to create media player");
-                }
-                players.Add(mp);
-            }
-            return players;
-        }
-
-        static void CreateVideoTextures(SceneImport gltfImport, List<MediaPlayer> mediaPlayers)
-        {
-            List<VideoTexture> videoTextures = gltfImport.CreateVideoTextures();
-            foreach (VideoTexture vt in videoTextures)
-            {
-                int mediaIdx = gltfImport.GetBufferSourceMediaIndex(vt.bufferId);
-                mediaPlayers[mediaIdx].AddVideoTexture(vt);
-            }
-        }
-
-        static void CreateAudioSources(SceneImport gltfImport, GameObjectInstantiator instantiator, List<MediaPlayer> mediaPlayers)
-        {
-            if (instantiator.sceneInstance.audioSources is null)
-            {
-                return;
-            }
-            foreach (SpatialAudioSource aSrc in instantiator.sceneInstance.audioSources)
-            {
-                int mediaIdx = gltfImport.GetBufferSourceMediaIndex(aSrc.BufferId);
-                mediaPlayers[mediaIdx].AddAudioSource(aSrc);
-            }
         }
 
         public void EnableARCamera(){
@@ -200,47 +164,33 @@ namespace rt.xr.unity
 
         async public void LoadGltf(string filePath)
         {
-            Uri path = new Uri(filePath, UriKind.RelativeOrAbsolute);
-            
-            if (!path.IsAbsoluteUri)
-                path = new Uri(System.IO.Directory.GetCurrentDirectory()+"/"+path);
-
-            Uri baseUri = UriHelper.GetBaseUri(path);
-
-            gltf = new SceneImport();
-            bool success = await gltf.Load(path);
+            mpegGltfImport = new MpegGltfImport();
+            bool success = await mpegGltfImport.LoadGltfAsync(filePath);
 
             if (success)
             {
-
-                var instantiator = new GameObjectInstantiator(gltf, transform);
-
-                m_ARCameraEnabled = (gltf.GetSourceRoot().extensionsUsed != null) && (Array.IndexOf(gltf.GetSourceRoot().extensionsUsed, "MPEG_anchor") >= 0);
-                if (m_ARCameraEnabled){
+                if (m_ARCameraEnabled || mpegGltfImport.IsImplicitXrPassthrough()){
                     if (!UnityEngine.XR.XRSettings.enabled){
-                            Debug.LogWarning("this player doesn't support XR mode");
+                        Debug.LogWarning("this player doesn't support XR mode");
                     }
                     EnableARCamera();
                 }
+                await mpegGltfImport.InstantiateMainSceneAsync(transform);
 
-                await gltf.InstantiateSceneAsync(instantiator, sceneIndex);
+/*
                 if (autoplayAnimation)
                 {
-                    var legacyAnimation = instantiator.sceneInstance.legacyAnimation;
+                    var legacyAnimation = instantiator.SceneInstance.legacyAnimation;
                     if (legacyAnimation != null)
                     {
                         legacyAnimation.Play();
                     }
                 }
+*/
 
-                mediaPlayers = CreateMediaPlayers(gltf, baseUri);
-                CreateVideoTextures(gltf, mediaPlayers);
-                CreateAudioSources(gltf, instantiator, mediaPlayers);
-
-                if (!m_ARCameraEnabled){                
+                if (!m_ARCameraEnabled){
                     ConfigureInitialCamera();
                 }
-                EnsureAudioListenerExists();
 
                 if (onGlTFLoadComplete != null){
                     onGlTFLoadComplete();
@@ -250,7 +200,7 @@ namespace rt.xr.unity
             else
             {
                 UnityEngine.Debug.LogError("Loading glTF failed!");
-                gltf = null; // can't call gltf.Dispose() if we didn't run an instantiator.
+                mpegGltfImport = null; // can't call gltf.Dispose() if we didn't run an instantiator.
                 if (onGlTFLoadError != null){
                     onGlTFLoadError();
                 }
@@ -263,17 +213,16 @@ namespace rt.xr.unity
             VirtualSceneGraph.ResetAll();
 
             // Destroy all game objects instances
-            gltf?.Dispose();
+            mpegGltfImport?.Dispose();
 
             // Dispose of all media players
-            if (mediaPlayers != null)
+            if (MediaImport.MediaPlayers != null)
             {
-                foreach (var mp in mediaPlayers)
+                foreach (var mp in MediaImport.MediaPlayers)
                 {
                     mp.Dispose();
                 }
-                mediaPlayers.Clear();
-                mediaPlayers = null;
+                MediaImport.MediaPlayers.Clear();
             }
             if (m_ARCameraEnabled){
                 DisableARCamera();
@@ -362,9 +311,11 @@ namespace rt.xr.unity
                     disposeMemoryRecorder();
             }
 
-            if (mediaPlayers != null)
+
+
+            if (MediaImport.MediaPlayers.Count > 0)
             {
-                foreach (var mp in mediaPlayers)
+                foreach (var mp in MediaImport.MediaPlayers)
                 {
                     if (mp.autoPlay)
                     {
@@ -399,13 +350,14 @@ namespace rt.xr.unity
 
         void OnDestroy()
         {
-            if (mediaPlayers != null)
+            if (MediaImport.MediaPlayers != null)
             {
-                foreach (var mp in mediaPlayers)
+                foreach (var mp in MediaImport.MediaPlayers)
                 {
                     mp.Dispose();
                 }
             }
+            
         }
 
         void OnGUI()
