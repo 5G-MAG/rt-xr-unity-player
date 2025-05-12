@@ -1,5 +1,5 @@
 [submodule "Packages/com.atteneder.gltfast"]
-	path = Packages/com.atteneder.gltfast
+	path = Packages/rt.xr.gltfast
 	url = https://github.com/5G-MAG/rt-xr-gITFast.git
 	branch = dev/iso-23090-14
 [submodule "Packages/com.google.ar.core.arfoundation.extensions"]
