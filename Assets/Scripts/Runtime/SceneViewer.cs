@@ -44,8 +44,6 @@ namespace rt.xr.unity
         public bool autoplayAnimation = true;
         public bool showLog = false;
 
-        int sceneIndex = 0;
-
 
 #nullable enable
         MpegGltfImport? mpegGltfImport;
