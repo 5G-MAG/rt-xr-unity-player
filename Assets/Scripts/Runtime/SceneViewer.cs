@@ -41,7 +41,7 @@ namespace rt.xr.unity
         int minFps = int.MaxValue;
         int maxFps = int.MinValue;
 
-        public bool autoplayAnimation = true;
+        public bool autoplayAnimation = false;
         public bool showLog = false;
 
 
