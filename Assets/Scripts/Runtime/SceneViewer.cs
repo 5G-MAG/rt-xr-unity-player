@@ -167,7 +167,8 @@ namespace rt.xr.unity
 
             if (success)
             {
-                if (m_ARCameraEnabled || mpegGltfImport.IsImplicitXrPassthrough()){
+                m_ARCameraEnabled = mpegGltfImport.IsImplicitXrPassthrough();
+                if (m_ARCameraEnabled){
                     if (!UnityEngine.XR.XRSettings.enabled){
                         Debug.LogWarning("this player doesn't support XR mode");
                     }
