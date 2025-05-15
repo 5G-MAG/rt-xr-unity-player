@@ -63,7 +63,7 @@ cd rt-xr-maf-native
 docker build -t rtxrmaf:builder .
 ```
 
-Then install the build artifacts into the unity project:
+Then install the build artifacts into the unity project's `Package/rt.xr.maf` directory:
 ```
 cd rt-xr-unity-player
 docker run --mount=type=bind,source=$(pwd)/Packages/rt.xr.maf,target=/install -it maf:builder
