@@ -1,20 +1,5 @@
 {
   "dependencies": {
-    "com.atteneder.gltfast": {
-      "version": "file:com.atteneder.gltfast",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {
-        "com.unity.modules.jsonserialize": "1.0.0",
-        "com.unity.modules.unitywebrequest": "1.0.0",
-        "com.unity.mathematics": "1.2.6",
-        "com.unity.inputsystem": "1.7.0",
-        "com.unity.burst": "1.6.6",
-        "com.unity.xr.arcore": "4.2.10",
-        "com.unity.xr.arfoundation": "4.2.10",
-        "com.google.ar.core.arfoundation.extensions": "1.41.0"
-      }
-    },
     "com.google.ar.core.arfoundation.extensions": {
       "version": "file:com.google.ar.core.arfoundation.extensions",
       "depth": 0,
@@ -32,6 +17,16 @@
       "dependencies": {
         "com.unity.mathematics": "1.2.1",
         "com.unity.modules.jsonserialize": "1.0.0"
+      },
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.collections": {
+      "version": "1.2.4",
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.burst": "1.6.6",
+        "com.unity.test-framework": "1.1.31"
       },
       "url": "https://packages.unity.com"
     },
@@ -212,6 +207,22 @@
         "com.unity.xr.legacyinputhelpers": "2.1.2"
       },
       "url": "https://packages.unity.com"
+    },
+    "rt.xr.gltfast": {
+      "version": "file:rt.xr.gltfast/Packages/com.unity.cloud.gltfast",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {
+        "com.unity.modules.jsonserialize": "1.0.0",
+        "com.unity.modules.unitywebrequest": "1.0.0",
+        "com.unity.mathematics": "1.2.6",
+        "com.unity.inputsystem": "1.7.0",
+        "com.unity.xr.arcore": "4.2.10",
+        "com.unity.xr.arfoundation": "4.2.10",
+        "com.google.ar.core.arfoundation.extensions": "1.41.0",
+        "com.unity.burst": "1.8.4",
+        "com.unity.collections": "1.2.4"
+      }
     },
     "rt.xr.maf": {
       "version": "file:rt.xr.maf",
