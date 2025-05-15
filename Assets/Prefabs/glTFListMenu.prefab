@@ -85,7 +85,7 @@ MonoBehaviour:
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
-  m_PresetInfoIsWorld: 1
+  m_PresetInfoIsWorld: 0
 --- !u!114 &4773774913780227111
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -117,7 +117,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_GlTFItemPrefab: {fileID: 7641794529857378841, guid: 53eec5b9f2d067b4a90db7c5ba90e892, type: 3}
   m_ListItemLocation: {fileID: 4361050352776026659}
-  m_BackBtn: {fileID: 0}
 --- !u!1 &1327704944035884057
 GameObject:
   m_ObjectHideFlags: 0
