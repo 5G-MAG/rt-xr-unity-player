@@ -24,6 +24,7 @@ Additional information can be found at: https://5g-mag.github.io/Getting-Started
 Clone the project, checkout a branch, update submodules :
 ```
 git clone https://github.com/5G-MAG/rt-xr-unity-player.git rt-xr-unity-player
+cd rt-xr-unity-player
 git checkout development
 git submodule update --init --recursive
 ```
