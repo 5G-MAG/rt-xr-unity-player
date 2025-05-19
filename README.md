@@ -21,9 +21,12 @@ Additional information can be found at: https://5g-mag.github.io/Getting-Started
 
 ## Clone the Unity project
 
-When cloning the project, use the *--recursive* flag to pull *rt-xr-glTFast*.
+Clone the project, checkout a branch, update submodules :
 ```
-git clone --recursive https://github.com/5G-MAG/rt-xr-unity-player.git
+git clone https://github.com/5G-MAG/rt-xr-unity-player.git rt-xr-unity-player
+cd rt-xr-unity-player
+git checkout development
+git submodule update --init --recursive
 ```
 
 > [!NOTE]
