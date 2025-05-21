@@ -24,8 +24,8 @@ namespace rt.xr
 
         public static Bounds ComputeSceneBounds()
         {
-            var renderers = Object.FindObjectsOfType<Renderer>();
-            if (renderers.Length == 0)
+            var renderers = Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None);
+            if (renderers == null || renderers.Length == 0)
             {
                 return new Bounds(Vector3.zero, Vector3.one);
             }
@@ -75,7 +75,7 @@ namespace rt.xr
         {
 #if UNITY_ANDROID
             List<XRDisplaySubsystem> xrDisplaySubSystems = new List<XRDisplaySubsystem>();
-            SubsystemManager.GetInstances(xrDisplaySubSystems);
+            SubsystemManager.GetSubsystems(xrDisplaySubSystems);
 
             for(int i = 0; i < xrDisplaySubSystems.Count; i++)
             {

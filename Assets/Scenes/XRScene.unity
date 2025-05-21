@@ -666,12 +666,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cea80562dd241d4fb1fd51e3b93a10f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_configFileLocation: 
-  memoryUsageRecorder: 0
-  autoplayAnimation: 0
-  showLog: 0
-  arSessionPrefab: {fileID: 5203395857757756161, guid: 2afc6aab54d724ecf870ba220e0cfbd7, type: 3}
-  arSessionOriginPrefab: {fileID: 8357273229510242013, guid: 4a7df5db68bbc4bd78655dad66d327a3, type: 3}
+  m_Passthrough: 2
+  m_ARSessionPrefab: {fileID: 5203395857757756161, guid: 2afc6aab54d724ecf870ba220e0cfbd7, type: 3}
+  m_XROriginPrefab: {fileID: 8357273229510242013, guid: 4a7df5db68bbc4bd78655dad66d327a3, type: 3}
 --- !u!1 &690944760
 GameObject:
   m_ObjectHideFlags: 0
@@ -705,6 +702,8 @@ MonoBehaviour:
   m_Viewer: {fileID: 690098358}
   m_BackBtn: {fileID: 1369510519}
   m_CameraControlDropdown: {fileID: 1756898844}
+  m_configFileLocation: 
+  m_logHandler: {fileID: 0}
 --- !u!4 &690944762
 Transform:
   m_ObjectHideFlags: 0
