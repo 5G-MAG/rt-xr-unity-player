@@ -17,14 +17,14 @@ public class RtXrQuestApplication : MonoBehaviour
         m_Viewer = FindFirstObjectByType<SceneViewer>();
         if(m_Viewer == null)
         {
-            Debug.LogError("Can't load GlTF list items, Viewer is null");
+            Debug.LogError("RtXrQuestApp - SceneViewer component missing");
             return;
         }
 
         if (m_gltfSceneLocation == ""){
             m_gltfSceneLocation = Path.Combine(Application.persistentDataPath, "default.gltf");
         }
-
+        Debug.Log("RtXrQuestApp - Loading " + m_gltfSceneLocation);
         m_Viewer.LoadGltf(m_gltfSceneLocation);
    
     }

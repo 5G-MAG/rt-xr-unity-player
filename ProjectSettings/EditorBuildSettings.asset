@@ -5,10 +5,14 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
-    path: Assets/Scenes/XRScene.unity
+  - enabled: 0
+    path: Assets/Scenes/MobileXR.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
+  - enabled: 1
+    path: Assets/Scenes/MetaQuestARF.unity
+    guid: 450446ab6c8a84b48b106807b5ac556b
   m_configObjects:
+    Unity.XR.Oculus.Settings: {fileID: 11400000, guid: b38c6bc2b33aa47d7a110da63b1e18dc, type: 2}
     UnityEditor.XR.ARCore.ARCoreSettings: {fileID: 11400000, guid: 1d5ffd580165960468e7ec22ffdd24f0, type: 2}
     UnityEditor.XR.ARKit.ARKitSettings: {fileID: 11400000, guid: cd380a6b870244e4f903400091c41f95, type: 2}
     com.unity.xr.arfoundation.simulation_settings: {fileID: 11400000, guid: 5eee2a35d33197140906f7cae7353441, type: 2}
