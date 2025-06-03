@@ -439,7 +439,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -0.0000076293945}
+  m_AnchoredPosition: {x: 0, y: -0.000022888184}
   m_SizeDelta: {x: 0, y: 100}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!1 &459630193
@@ -668,7 +668,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_configFileLocation: 
   memoryUsageRecorder: 0
-  autoplayAnimation: 1
+  autoplayAnimation: 0
   showLog: 0
   arSessionPrefab: {fileID: 5203395857757756161, guid: 2afc6aab54d724ecf870ba220e0cfbd7, type: 3}
   arSessionOriginPrefab: {fileID: 8357273229510242013, guid: 4a7df5db68bbc4bd78655dad66d327a3, type: 3}

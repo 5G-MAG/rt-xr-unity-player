@@ -69,9 +69,16 @@ cd rt-xr-unity-player
 docker run --mount=type=bind,source=$(pwd)/Packages/rt.xr.maf,target=/install -it maf:builder
 ```
 
-**Other platforms**
+If you are building the container on an ARM host (eg. Snapdragon X Elite, Apple silicon), use [podman](https://podman.io/) instead of docker with the [--arch](https://docs.podman.io/en/latest/markdown/podman-run.1.html#arch-arch) option: 
+```
+podman build -t rtxrmaf:builder .
+podman run --arch=amd64 --mount=type=bind,source=$(pwd)/Packages/rt.xr.maf,target=/install -it maf:builder
+```
 
-Refer to the [git repository](https://github.com/5G-MAG/rt-xr-maf-native/tree/feature/android) for more informations on the build process.
+**Building the player for other platforms:**
+
+Refer to the [git repository](https://github.com/5G-MAG/rt-xr-maf-native) for more informations on the build process.
+Configure the Unity project for your target platform. Most features are implemented with Unity's framework, and as such are XR runtime agnostic.
 
 
 ### Building and running the Unity project
