@@ -134,7 +134,7 @@ namespace rt.xr.unity
             Assert.IsTrue((SystemInfo.copyTextureSupport & CopyTextureSupport.RTToTexture) == CopyTextureSupport.RTToTexture);
 
             // loads raw maf buffer to a texture prior to further processing
-            texSrc = new Texture2D(width, height, TextureFormat.RGB24, false, true);
+            texSrc = new Texture2D(width, height, TextureFormat.RGB24, false, false);
 
             // texOut = new RenderTexture(texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
             texOut = new RenderTexture(width, height, 0, DefaultFormat.LDR);
