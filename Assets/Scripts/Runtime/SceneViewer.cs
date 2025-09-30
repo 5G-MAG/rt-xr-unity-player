@@ -181,7 +181,7 @@ namespace rt.xr.unity
             }
             else
             {
-                UnityEngine.Debug.LogError("Loading glTF failed!");
+                UnityEngine.Debug.LogError("Loading glTF failed! " + filePath);
                 mpegGltfImport = null; // can't call gltf.Dispose() if we didn't run an instantiator.
                 if (onGlTFLoadError != null){
                     onGlTFLoadError();

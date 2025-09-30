@@ -1,0 +1,26 @@
+# Build and deploy to the Meta Quest platform
+
+Building for the Meta Quest platform is akin to the Android platform, with the following differences:
+- a specific scene is configured
+- Unity's AR foundation and XR interaction toolkit are configured for the Meta Quest platform 
+
+The following steps assume a Meta Quest device is configured for development and connected to the computer over USB.
+
+1. Configure the gltf asset to be loaded by the player:
+
+![Meta Quest scene configuration](images/dev-meta-quest-scene-configuration.png)
+
+in this case: `/storage/emulated/0/Android/data/com.fivegmag.rtxrplayer/files/studio_apartment/studio_apartment.gltf`
+
+2. Select the **MetaQuestARFScene** scene in the 'Build Settings' menu:
+![Meta Quest build settings](images/dev-meta-quest-build-settings.png)
+
+
+## Troubleshooting
+
+Ensure the project is configured for OpenXR with Meta Quest support:
+![Unity project XR configuration](images/dev-meta-quest-openxr-features-settings.png)
+
+Ensure the Meta Quest interaction profiles are configured:
+![Meta Quest XR configuration](images/dev-meta-quest-openxr-project-settings.png)
+

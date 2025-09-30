@@ -79,7 +79,7 @@ PlayerSettings:
   androidAutoRotationBehavior: 1
   defaultIsNativeResolution: 1
   macRetinaSupport: 1
-  runInBackground: 0
+  runInBackground: 1
   captureSingleScreen: 0
   muteOtherAudioSources: 0
   Prepare IOS For Recording: 0
@@ -139,13 +139,10 @@ PlayerSettings:
   loadStoreDebugModeEnabled: 0
   visionOSBundleVersion: 1.0
   tvOSBundleVersion: 1.0
-  bundleVersion: 1.1.0
+  bundleVersion: 1.2.0
   preloadedAssets:
   - {fileID: 0}
   - {fileID: 0}
-  - {fileID: 6844517856914995655, guid: 95f577457fb19054a9268e63719974b2, type: 2}
-  - {fileID: 11400000, guid: 5eee2a35d33197140906f7cae7353441, type: 2}
-  - {fileID: -4375783576541124924, guid: 9346c020f518c5243a75c1787b2aaeeb, type: 2}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   m_HolographicPauseOnTrackingLoss: 1
