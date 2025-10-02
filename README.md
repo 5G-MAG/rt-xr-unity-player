@@ -61,7 +61,7 @@ See the related [documentation](./docs/audio-spatializer.md)
 
 The easiest way is to compile the media pipeline plugins is by using the Dockerfile: 
 ```
-git clone git@github.com:5G-MAG/rt-xr-maf-native.git
+git clone https://github.com/5G-MAG/rt-xr-maf-native.git rt-xr-maf-native
 cd rt-xr-maf-native
 docker build -t rtxrmaf:builder .
 ```
@@ -123,4 +123,5 @@ adb push ./Paths /storage/emulated/0/Android/data/com.fivegmag.rtxrplayer/files/
 ## License
 
 This project is developed under 5G-MAG's Public License. For the full license terms, please see the LICENSE file distributed along with the repository or retrieve it from [here](https://drive.google.com/file/d/1cinCiA778IErENZ3JN52VFW-1ffHpx7Z/view).
+
 
