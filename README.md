@@ -24,6 +24,7 @@ Additional information can be found at: https://5g-mag.github.io/Getting-Started
 Clone the project, checkout a branch, update submodules :
 ```
 git clone --recurse-submodules https://github.com/5G-MAG/rt-xr-unity-player.git rt-xr-unity-player
+cd rt-xr-unity-player
 git config submodule.recurse true
 ```
 
@@ -122,3 +123,4 @@ adb push ./Paths /storage/emulated/0/Android/data/com.fivegmag.rtxrplayer/files/
 ## License
 
 This project is developed under 5G-MAG's Public License. For the full license terms, please see the LICENSE file distributed along with the repository or retrieve it from [here](https://drive.google.com/file/d/1cinCiA778IErENZ3JN52VFW-1ffHpx7Z/view).
+
