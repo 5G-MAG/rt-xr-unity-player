@@ -1,6 +1,3 @@
-[submodule "Packages/com.google.ar.core.arfoundation.extensions"]
-	path = Packages/com.google.ar.core.arfoundation.extensions
-	url = https://github.com/google-ar/arcore-unity-extensions.git
 [submodule "Packages/rt.xr.gltfast"]
 	path = Packages/rt.xr.gltfast
 	url = https://github.com/5G-MAG/rt-xr-gITFast.git
