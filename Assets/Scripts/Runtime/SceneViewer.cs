@@ -159,21 +159,6 @@ namespace rt.xr.unity
                 }
                 await mpegGltfImport.InstantiateMainSceneAsync(transform);
 
-/*
-                if (autoplayAnimation)
-                {
-                    var legacyAnimation = instantiator.sceneInstance.legacyAnimation;
-                    if (legacyAnimation != null)
-                    {
-                        legacyAnimation.Play();
-                    }
-                }
-*/
-
-                // if (!this.PassThroughEnabled){                
-                //     ConfigureInitialCamera();
-                // }
-
                 if (onGlTFLoadComplete != null){
                     onGlTFLoadComplete();
                 }
@@ -192,21 +177,18 @@ namespace rt.xr.unity
 
         public void UnloadGltfScene()
         {
+            // Dispose of all media players
+            foreach (var mp in VirtualSceneGraph.GetAllMediaPlayers())
+            {
+                mp.Dispose();
+            }
+
             VirtualSceneGraph.ResetAll();
 
-            // Destroy all game objects instances
             mpegGltfImport?.Dispose();
 
-            // Dispose of all media players
-            if (MediaImport.MediaPlayers != null)
+            if (this.PassThroughEnabled)
             {
-                foreach (var mp in MediaImport.MediaPlayers)
-                {
-                    mp.Dispose();
-                }
-                MediaImport.MediaPlayers.Clear();
-            }
-            if (this.PassThroughEnabled){
                 DisableARCamera();
             }
             Camera[] _cameras = FindObjectsByType(typeof(Camera), FindObjectsSortMode.None) as Camera[];
@@ -219,35 +201,21 @@ namespace rt.xr.unity
 
         void Update()
         {
-
-            if (MediaImport.MediaPlayers.Count > 0)
+            foreach (var mp in VirtualSceneGraph.GetAllMediaPlayers())
             {
-                foreach (var mp in MediaImport.MediaPlayers)
+                if (mp.autoPlay)
                 {
-                    if (mp.autoPlay)
-                    {
-                        mp.Play();
-                    }
+                    mp.Play();
                 }
             }
-
-            // if (Input.GetKeyDown(KeyCode.Tab))
-            // {
-            //     ConfigureInitialCamera();
-            // }
-
         }
 
         void OnDestroy()
         {
-            if (MediaImport.MediaPlayers != null)
+            foreach (var mp in VirtualSceneGraph.GetAllMediaPlayers())
             {
-                foreach (var mp in MediaImport.MediaPlayers)
-                {
-                    mp.Dispose();
-                }
-            }
-            
+                mp.Dispose();
+            }            
         }
 
 
