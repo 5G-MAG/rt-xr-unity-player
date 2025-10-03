@@ -59,24 +59,7 @@ See the related [documentation](./docs/audio-spatializer.md)
 
 **Android**
 
-The easiest way is to compile the media pipeline plugins is by using the Dockerfile: 
-```
-git clone https://github.com/5G-MAG/rt-xr-maf-native.git rt-xr-maf-native
-cd rt-xr-maf-native
-docker build -t rtxrmaf:builder .
-```
-
-Then install the build artifacts into the unity project's `Package/rt.xr.maf` directory:
-```
-cd rt-xr-unity-player
-docker run --mount=type=bind,source=$(pwd)/Packages/rt.xr.maf,target=/install -it maf:builder
-```
-
-If you are building the container on an ARM host (eg. Snapdragon X Elite, Apple silicon), use [podman](https://podman.io/) instead of docker with the [--arch](https://docs.podman.io/en/latest/markdown/podman-run.1.html#arch-arch) option: 
-```
-podman build -t rtxrmaf:builder .
-podman run --arch=amd64 --mount=type=bind,source=$(pwd)/Packages/rt.xr.maf,target=/install -it maf:builder
-```
+Refere to [this tutorial](https://github.com/jordijoangimenez/Getting-Started/blob/main/pages/xr-media-integration-in-5g/tutorials/xr-player-android.md) to compile the project and its native plugins for Android.
 
 **Building the player for other platforms:**
 
