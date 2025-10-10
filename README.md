@@ -55,11 +55,16 @@ When an audio plugin is not installed, audio play but will not be spatialized.
 See the related [documentation](./docs/audio-spatializer.md)
 
 
-### Compiling *rt-xr-maf-native*
+### Compiling 
 
-**Android**
+**Android handeld devices**
 
-Refere to [this tutorial](https://github.com/jordijoangimenez/Getting-Started/blob/main/pages/xr-media-integration-in-5g/tutorials/xr-player-android.md) to compile the project and its native plugins for Android.
+Refer to [this tutorial](https://5g-mag.github.io/Getting-Started/pages/xr-media-integration-in-5g/tutorials/xr-player-android.html) to compile the project and its native plugins to Android handeld devices.
+
+**Build and deploy to the Meta Quest3**
+
+Refer to [this tutorial](https://jordijoangimenez.github.io/Getting-Started/pages/xr-media-integration-in-5g/tutorials/xr-player-metaquest3.html) to compile and deploy to the Meta Quest 3 platform.
+
 
 **Building the player for other platforms:**
 
