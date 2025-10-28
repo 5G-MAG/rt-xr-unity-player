@@ -26,11 +26,13 @@ public class PlayerApplication : MonoBehaviour
     [SerializeField] private SceneViewer m_Viewer;
     [SerializeField] private GameObject m_BackBtn;
     [SerializeField] private TMPro.TMP_Dropdown m_CameraControlDropdown;
+    [SerializeField] private string m_configFileLocation ;
+    [SerializeField] private LogHandler m_logHandler;
 
     void Start()
     {
-
-        m_Viewer = FindObjectOfType<SceneViewer>();
+        m_logHandler = gameObject.AddComponent<LogHandler>();
+        m_Viewer = FindFirstObjectByType<SceneViewer>();
         if(m_Viewer == null)
         {
             Debug.LogError("Can't load GlTF list items, Viewer is null");
@@ -68,15 +70,15 @@ public class PlayerApplication : MonoBehaviour
     }
 
     private void onGlTFLoadComplete(){
-        if (!m_Viewer.ARCameraEnabled){
-            enableCameraController();
-        } else {
+        if (m_Viewer.PassThroughEnabled){
             disableCameraController();
+        } else {
+            enableCameraController();
         }
     }
 
     public void onGlTFLoadError(){
-        m_Viewer.showLog = true;
+        m_logHandler.showLog = true;
     }
 
     private static List<glTFFile> parsePlaylist(string playlistURI)
@@ -120,11 +122,11 @@ public class PlayerApplication : MonoBehaviour
     {
         string playlistURI = "";
         
-        if(m_Viewer.ConfigFileLocation == "")
+        if(m_configFileLocation == "")
         {
             playlistURI = Path.Combine(Application.persistentDataPath, "Paths");
         } else {
-            playlistURI = m_Viewer.ConfigFileLocation;
+            playlistURI = m_configFileLocation;
         }
 
         Debug.Log("\n\n\n\n\n");
@@ -132,7 +134,7 @@ public class PlayerApplication : MonoBehaviour
 
         if(!System.IO.File.Exists(playlistURI)){
             Debug.LogError("Config file not found: " + playlistURI);
-            m_Viewer.showLog = true;
+            m_logHandler.showLog = true;
             return "";
         }
 
@@ -183,14 +185,14 @@ public class PlayerApplication : MonoBehaviour
     {
         try
         {
-            m_Viewer.showLog = false;
+            m_logHandler.showLog = false;
             m_Viewer.LoadGltf(path);
             m_GlTFListMenu.HideList();
             m_BackBtn.gameObject.SetActive(true);
         }
         catch (Exception e)
         {
-            m_Viewer.showLog = true;
+            m_logHandler.showLog = true;
             UnityEngine.Debug.LogError(e);
         }
     }
@@ -205,11 +207,11 @@ public class PlayerApplication : MonoBehaviour
             m_GlTFListMenu.ShowList();
             disableCameraController();
             resetCameraBackground();
-            m_Viewer.showLog = false;
+            m_logHandler.showLog = false;
         }
         catch (Exception e)
         {
-            m_Viewer.showLog = true;
+            m_logHandler.showLog = true;
             UnityEngine.Debug.LogError(e);
         }
     }

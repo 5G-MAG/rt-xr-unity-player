@@ -15,34 +15,21 @@ using System.Collections;
 using System.Collections.Generic;
 
 using UnityEngine;
-using System.Text;
-using Unity.Profiling;
 using UnityEngine.XR.ARFoundation;
 
 namespace rt.xr.unity
 {
     using GLTFast;
-    // using GLTFast.Mpeg;
+
+    enum ArSessionInitialization {
+        DISABLED = 0,
+        ENABLED = 1,
+        AUTO = 2
+    }
 
     public class SceneViewer : MonoBehaviour
     {
 
-        [SerializeField] private string m_configFileLocation ;
-    
-        string statsText = "";
-        ProfilerRecorder totalReservedMemoryRecorder;
-        ProfilerRecorder gcReservedMemoryRecorder;
-        ProfilerRecorder systemUsedMemoryRecorder;
-
-        public bool memoryUsageRecorder; // should not be editable at runtime
-        bool memoryUsageRecording;
-        int avgFpsTotal = 0;
-        int avgFpsCount = 0;
-        int minFps = int.MaxValue;
-        int maxFps = int.MinValue;
-
-        public bool autoplayAnimation = false;
-        public bool showLog = false;
 
 
 #nullable enable
@@ -50,10 +37,6 @@ namespace rt.xr.unity
 #nullable disable
 
         private Bounds bounds;
-        private uint maxLogMessages = 15;
-        private Queue logQueue = new Queue();
-
-        public string ConfigFileLocation { get { return m_configFileLocation; } }
 
         public delegate void GlTFLoadComplete();
         public GlTFLoadComplete onGlTFLoadComplete;
@@ -61,18 +44,17 @@ namespace rt.xr.unity
         public delegate void GlTFLoadError();
         public GlTFLoadError onGlTFLoadError;
 
+        [SerializeField]
+        private ArSessionInitialization m_Passthrough = ArSessionInitialization.AUTO;
 
         [SerializeField]
-        private GameObject arSessionPrefab;
+        
+        private GameObject m_ARSessionPrefab;
+        private GameObject m_arSessionInstance;
 
         [SerializeField]
-        private GameObject arSessionOriginPrefab;
-
-        private GameObject arSessionInstance;
-        private GameObject arSessionOriginInstance;
-
-        bool m_ARCameraEnabled = false;
-        public bool ARCameraEnabled { get { return m_ARCameraEnabled; } }
+        private GameObject m_XROriginPrefab;
+        private GameObject m_xrOriginInstance;
 
         public Camera GetMainCamera()
         {
@@ -86,23 +68,25 @@ namespace rt.xr.unity
             return cam;
         }
 
-        /*
-        void EnsureAudioListener()
-        {
-            // add a default listener
-            UnityEngine.AudioListener[] listener = GetComponentsInChildren<UnityEngine.AudioListener>();
-            if (listener.Length == 0)
-            {
-                Debug.Log("glTF scene doesn't specify an audio listener.");
-                Camera c = GetMainCamera();
-                c.gameObject.AddComponent<AudioListener>();
+        public bool PassThroughEnabled { 
+            get { 
+                switch (m_Passthrough) {
+                    case ArSessionInitialization.DISABLED:
+                        return false;
+                    case ArSessionInitialization.ENABLED:
+                        return (m_XROriginPrefab != null) && (m_ARSessionPrefab != null);
+                    default: // ArSessionInitialization.AUTO
+                        if ((m_XROriginPrefab == null) || (m_ARSessionPrefab == null)){
+                            return false;                            
+                        }
+                        return mpegGltfImport.IsImplicitXrPassthrough();
+                }
             }
         }
-        */
 
         public void ConfigureInitialCamera()
         {
-            Camera[] _cameras = FindObjectsOfType<Camera>();
+            Camera[] _cameras = FindObjectsByType(typeof(Camera), FindObjectsSortMode.None) as Camera[];
             Camera _currentCamera = null;
             for(int i = 0; i < _cameras.Length; i++)
             {
@@ -132,31 +116,31 @@ namespace rt.xr.unity
         }
 
         public void EnableARCamera(){
-            if (arSessionInstance == null)
+            if (m_arSessionInstance == null)
             {
-                arSessionInstance = Instantiate(arSessionPrefab);
+                m_arSessionInstance = Instantiate(m_ARSessionPrefab);
             }
-            if (arSessionOriginInstance == null)
+            if (m_xrOriginInstance == null)
             {
-                arSessionOriginInstance = Instantiate(arSessionOriginPrefab);
+                m_xrOriginInstance = Instantiate(m_XROriginPrefab);
             }
         }
 
         public void DisableARCamera(){
-            if (arSessionInstance != null)
+            if (m_arSessionInstance != null)
             {
-                ARSession arSession = arSessionInstance.GetComponent<ARSession>();
+                ARSession arSession = m_arSessionInstance.GetComponent<ARSession>();
                 arSession.enabled = false;
                 arSession.Reset();
                 arSession = null;
-                Destroy(arSessionInstance);
-                arSessionInstance = null;
+                Destroy(m_arSessionInstance);
+                m_arSessionInstance = null;
             }
 
-            if (arSessionOriginInstance != null)
+            if (m_xrOriginInstance != null)
             {
-                Destroy(arSessionOriginInstance);
-                arSessionOriginInstance = null;
+                Destroy(m_xrOriginInstance);
+                m_xrOriginInstance = null;
             }
         }
 
@@ -167,29 +151,13 @@ namespace rt.xr.unity
 
             if (success)
             {
-                m_ARCameraEnabled = mpegGltfImport.IsImplicitXrPassthrough();
-                if (m_ARCameraEnabled){
+                if (this.PassThroughEnabled){
                     if (!UnityEngine.XR.XRSettings.enabled){
-                        Debug.LogWarning("this player doesn't support XR mode");
+                        Debug.LogWarning("XR not available");
                     }
                     EnableARCamera();
                 }
                 await mpegGltfImport.InstantiateMainSceneAsync(transform);
-
-/*
-                if (autoplayAnimation)
-                {
-                    var legacyAnimation = instantiator.SceneInstance.legacyAnimation;
-                    if (legacyAnimation != null)
-                    {
-                        legacyAnimation.Play();
-                    }
-                }
-*/
-
-                if (!m_ARCameraEnabled){
-                    ConfigureInitialCamera();
-                }
 
                 if (onGlTFLoadComplete != null){
                     onGlTFLoadComplete();
@@ -198,7 +166,7 @@ namespace rt.xr.unity
             }
             else
             {
-                UnityEngine.Debug.LogError("Loading glTF failed!");
+                UnityEngine.Debug.LogError("Loading glTF failed! " + filePath);
                 mpegGltfImport = null; // can't call gltf.Dispose() if we didn't run an instantiator.
                 if (onGlTFLoadError != null){
                     onGlTFLoadError();
@@ -209,25 +177,21 @@ namespace rt.xr.unity
 
         public void UnloadGltfScene()
         {
+            // Dispose of all media players
+            foreach (var mp in VirtualSceneGraph.GetAllMediaPlayers())
+            {
+                mp.Dispose();
+            }
+
             VirtualSceneGraph.ResetAll();
 
-            // Destroy all game objects instances
             mpegGltfImport?.Dispose();
 
-            // Dispose of all media players
-            if (MediaImport.MediaPlayers != null)
+            if (this.PassThroughEnabled)
             {
-                foreach (var mp in MediaImport.MediaPlayers)
-                {
-                    mp.Dispose();
-                }
-                MediaImport.MediaPlayers.Clear();
-            }
-            if (m_ARCameraEnabled){
                 DisableARCamera();
             }
-            m_ARCameraEnabled = false;
-            Camera[] _cameras = FindObjectsOfType<Camera>();
+            Camera[] _cameras = FindObjectsByType(typeof(Camera), FindObjectsSortMode.None) as Camera[];
             for(int i = 0; i < _cameras.Length; i++)
             {
                 Destroy(_cameras[i]);
@@ -235,145 +199,25 @@ namespace rt.xr.unity
 
         }
 
-        private void enableMemoryRecorder()
-        {
-            if (memoryUsageRecording)
-            {
-                return;
-            }
-            totalReservedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Total Reserved Memory");
-            gcReservedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Reserved Memory");
-            systemUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "System Used Memory");
-            memoryUsageRecording = true;
-        }
-
-        private void disposeMemoryRecorder()
-        {
-            if (!memoryUsageRecording)
-            {
-                return;
-            }
-            totalReservedMemoryRecorder.Dispose();
-            gcReservedMemoryRecorder.Dispose();
-            systemUsedMemoryRecorder.Dispose();
-            memoryUsageRecording = false;
-        }
-
-        void HandleLog(string logString, string stackTrace, LogType type)
-        {
-            logQueue.Enqueue("[" + type + "] : " + logString);
-            if (type == LogType.Exception)
-                logQueue.Enqueue(stackTrace);
-            while (logQueue.Count > maxLogMessages)
-                logQueue.Dequeue();
-        }
-
-        void OnEnable()
-        {
-            Application.logMessageReceived += HandleLog;
-        }
-
-        private void OnDisable()
-        {
-            Application.logMessageReceived -= HandleLog;
-            disposeMemoryRecorder();
-        }
-
         void Update()
         {
-            if (memoryUsageRecorder)
+            foreach (var mp in VirtualSceneGraph.GetAllMediaPlayers())
             {
-                if (!memoryUsageRecording)
-                    enableMemoryRecorder();
-                var sb = new StringBuilder(800);
-
-                // int currentFps = (int)(1f / Time.unscaledDeltaTime);
-                int currentFps = (int)(1f / Time.deltaTime);
-                avgFpsTotal += currentFps;
-                avgFpsCount++;
-                if (currentFps != 0)
+                if (mp.autoPlay)
                 {
-                    minFps = Math.Min(minFps, currentFps);
-                }
-                maxFps = Math.Max(maxFps, currentFps);
-
-                sb.AppendLine($"FPS: {avgFpsTotal/avgFpsCount} | {minFps} ~ {maxFps} ");
-                if (totalReservedMemoryRecorder.Valid)
-                    sb.AppendLine($"Total Reserved Memory: {totalReservedMemoryRecorder.LastValue}");
-                if (gcReservedMemoryRecorder.Valid)
-                    sb.AppendLine($"GC Reserved Memory: {gcReservedMemoryRecorder.LastValue}");
-                if (systemUsedMemoryRecorder.Valid)
-                    sb.AppendLine($"System Used Memory: {systemUsedMemoryRecorder.LastValue}");
-                statsText = sb.ToString();
-            } else {
-                if (memoryUsageRecording)
-                    disposeMemoryRecorder();
-            }
-
-
-
-            if (MediaImport.MediaPlayers.Count > 0)
-            {
-                foreach (var mp in MediaImport.MediaPlayers)
-                {
-                    if (mp.autoPlay)
-                    {
-                        mp.Play();
-                    }
+                    mp.Play();
                 }
             }
-
-            if (Input.GetKeyDown(KeyCode.Tab))
-            {
-                ConfigureInitialCamera();
-            }
-
-            if (Input.GetKeyDown(KeyCode.L))
-            {
-                if(showLog){
-                    showLog = false;
-                } else {
-                    showLog = true;
-                }
-            }
-        }
-
-        private void OnDrawGizmos()
-        {
-            Gizmos.color = new Color(1, 0, 0, 0.75f);
-            Gizmos.DrawCube(bounds.center, bounds.size);
-
-            Gizmos.color = new Color(0, 1, 0, 0.75f);
-            Gizmos.DrawCube(new Vector3(0, 0, 0), new Vector3(5, 5, 5));
         }
 
         void OnDestroy()
         {
-            if (MediaImport.MediaPlayers != null)
+            foreach (var mp in VirtualSceneGraph.GetAllMediaPlayers())
             {
-                foreach (var mp in MediaImport.MediaPlayers)
-                {
-                    mp.Dispose();
-                }
-            }
-            
+                mp.Dispose();
+            }            
         }
 
-        void OnGUI()
-        {
-            if (memoryUsageRecorder)
-                GUI.TextArea(new Rect(10, 30, 250, 50), statsText);
 
-            if (showLog)
-            {
-                int offset = 100;
-                GUILayout.BeginArea(new Rect(0, offset, Screen.width, Screen.height-2*offset));
-                GUILayout.BeginVertical();
-                GUILayout.FlexibleSpace();
-                GUILayout.Label("\n" + string.Join("\n", logQueue.ToArray()));
-                GUILayout.EndVertical();
-                GUILayout.EndArea();
-            }
-        }
     }
 }

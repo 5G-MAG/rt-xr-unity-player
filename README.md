@@ -23,11 +23,11 @@ Additional information can be found at: https://5g-mag.github.io/Getting-Started
 
 Clone the project, checkout a branch, update submodules :
 ```
-git clone https://github.com/5G-MAG/rt-xr-unity-player.git rt-xr-unity-player
+git clone --recurse-submodules https://github.com/5G-MAG/rt-xr-unity-player.git rt-xr-unity-player
 cd rt-xr-unity-player
-git checkout development
-git submodule update --init --recursive
+git config submodule.recurse true
 ```
+
 
 > [!NOTE]
 > When pulling changes, submodules aren't updated by default. This has to be explicitly requested, eg. using: `git pull --recurse-submodules`
@@ -55,28 +55,16 @@ When an audio plugin is not installed, audio play but will not be spatialized.
 See the related [documentation](./docs/audio-spatializer.md)
 
 
-### Compiling *rt-xr-maf-native*
+### Compiling 
 
-**Android**
+**Android handeld devices**
 
-The easiest way is to compile the media pipeline plugins is by using the Dockerfile: 
-```
-git clone git@github.com:5G-MAG/rt-xr-maf-native.git
-cd rt-xr-maf-native
-docker build -t rtxrmaf:builder .
-```
+Refer to [this tutorial](https://5g-mag.github.io/Getting-Started/pages/xr-media-integration-in-5g/tutorials/xr-player-android.html) to compile the project and its native plugins to Android handeld devices.
 
-Then install the build artifacts into the unity project's `Package/rt.xr.maf` directory:
-```
-cd rt-xr-unity-player
-docker run --mount=type=bind,source=$(pwd)/Packages/rt.xr.maf,target=/install -it maf:builder
-```
+**Build and deploy to the Meta Quest3**
 
-If you are building the container on an ARM host (eg. Snapdragon X Elite, Apple silicon), use [podman](https://podman.io/) instead of docker with the [--arch](https://docs.podman.io/en/latest/markdown/podman-run.1.html#arch-arch) option: 
-```
-podman build -t rtxrmaf:builder .
-podman run --arch=amd64 --mount=type=bind,source=$(pwd)/Packages/rt.xr.maf,target=/install -it maf:builder
-```
+Refer to [this tutorial](https://jordijoangimenez.github.io/Getting-Started/pages/xr-media-integration-in-5g/tutorials/xr-player-metaquest3.html) to compile and deploy to the Meta Quest 3 platform.
+
 
 **Building the player for other platforms:**
 
@@ -123,3 +111,5 @@ adb push ./Paths /storage/emulated/0/Android/data/com.fivegmag.rtxrplayer/files/
 ## License
 
 This project is developed under 5G-MAG's Public License. For the full license terms, please see the LICENSE file distributed along with the repository or retrieve it from [here](https://drive.google.com/file/d/1cinCiA778IErENZ3JN52VFW-1ffHpx7Z/view).
+
+
