@@ -114,7 +114,7 @@ runtime.
 
 1. Locate the `Build Settings` menu
 2. Make sure that Android is the selected platform, change as needed.
-3. Check that Mobile XR is the default scene
+3. Under *Scenes In Build*, enable `Assets/Scenes/MobileXR.unity` and disable `Assets/Scenes/MetaQuestARF.unity` (the Meta Quest 3 scene). The project is saved with only the Meta Quest 3 scene enabled
 4. Select the device on which the application will be installed
 5. Build & Run
 
