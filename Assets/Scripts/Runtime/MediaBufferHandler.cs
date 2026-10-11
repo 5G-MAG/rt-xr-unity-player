@@ -147,6 +147,9 @@ namespace rt.xr.unity
             return Handler.readFrame(); ;
         }
 
+        public int Count { get { return (int)Handler.count(); } }
+        public int Capacity { get { return (int)Handler.capacity(); } }
+
         public bool IsFull()
         {
             return Handler.count() == Handler.capacity();

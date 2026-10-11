@@ -22,6 +22,8 @@ namespace rt.xr.unity
 
     public class SceneImport : GLTFast.GltfImport
     {
+        public SceneImport() : base(logger: new GLTFast.Logging.ConsoleLogger()) { }
+
 
         public static void ApplyBaseUri(Media m, Uri baseUri)
         {
@@ -215,6 +217,11 @@ namespace rt.xr.unity
                             // accessor should supply scalar unsigned bytes
                             map[tex.accessor] = maf.AttributeType.TEXTURE_GBR_3PLANE_420_UNORM;
                         }
+                        else if (VideoBufferFormat.TryGetAttributeType(tex.format, out maf.AttributeType formatType))
+                        {
+                            // RED, GREEN, BLUE, RG, RGBA, BGR, BGRA, DEPTH_COMPONENT
+                            map[tex.accessor] = formatType;
+                        }
                         /*
                          * else
                         {
@@ -296,6 +303,46 @@ namespace rt.xr.unity
                     m.accessorAttributeType[k] = accessorAttribTypeMap[k];
                 }
             }
+            // maximum picture size of the video textures and target sample rate of the audio sources, by accessor
+            GLTFast.Schema.Texture[] sourceVideoTextures = GetSourceRoot().textures;
+            if (sourceVideoTextures != null)
+            {
+                foreach (GLTFast.Schema.Texture vt in sourceVideoTextures)
+                {
+                    MpegTextureVideo tv = vt?.extensions?.MPEG_texture_video;
+                    if (tv != null && m.accessors.ContainsKey(tv.accessor))
+                    {
+                        m.textureMaxSize[tv.accessor] = new Vector2Int(tv.width, tv.height);
+                    }
+                }
+            }
+            GLTFast.Schema.Node[] sourceNodes = GetSourceRoot().nodes;
+            if (sourceNodes != null)
+            {
+                foreach (GLTFast.Schema.Node sn in sourceNodes)
+                {
+                    MpegAudioSpatialSource[] audioSources = sn?.extensions?.MPEG_audio_spatial?.sources;
+                    if (audioSources == null)
+                    {
+                        continue;
+                    }
+                    foreach (MpegAudioSpatialSource audioSource in audioSources)
+                    {
+                        if (audioSource == null || audioSource.accessors == null || audioSource.targetSampleRate <= 0)
+                        {
+                            continue;
+                        }
+                        foreach (int audioAccessor in audioSource.accessors)
+                        {
+                            if (m.accessors.ContainsKey(audioAccessor))
+                            {
+                                m.targetSampleRate[audioAccessor] = audioSource.targetSampleRate;
+                                m.playbackSpeed[audioAccessor] = audioSource.playbackSpeed;
+                            }
+                        }
+                    }
+                }
+            }
             if (m.accessors.Count == 0)
             {
                 Debug.LogWarningFormat("no accessor found referencing media[%d]", mediaIndex);
@@ -329,37 +376,45 @@ namespace rt.xr.unity
 
             var texExt = tex.extensions.MPEG_texture_video;
             GLTFast.Schema.Accessor acc = gltf.accessors[texExt.accessor];
-            MpegAccessorTimed extAccessor = acc.extensions.MPEG_accessor_timed;
-            if (!extAccessor.immutable)
+            MpegAccessorTimed extAccessor = acc.extensions?.MPEG_accessor_timed;
+            if (extAccessor == null)
             {
-                Debug.LogWarning("VideoTexture: unsupported MPEG_accessor_timed.immutable != 1");
-            }
-            if (extAccessor.bufferView >= 0)
-            {
-                Debug.LogWarning("VideoTexture: unsupported MPEG_accessor_timed.bufferView != null");
+                throw new Exception("MPEG_texture_video.accessor must refer to an accessor with the MPEG_accessor_timed extension");
             }
 
             GLTFast.Schema.BufferView bv = gltf.bufferViews[acc.bufferView];
             GLTFast.Schema.Buffer buff = gltf.buffers[bv.buffer];
             /* 
              * Current implementation is limited to one texture per buffer frame,
-             * with the buffer frame as whole being used by the texture.
+             * the picture is stored without padding between its pixels.
              */
-            if ((bv.byteOffset + acc.byteOffset) > 0)
+            int components = VideoBufferFormat.ComponentCount(texExt.format);
+            if (VideoBufferFormat.IsMultiPlanarFormat(texExt.format))
             {
-                throw new NotImplementedException("VideoTexture: byteOffset != 0");
+                Debug.LogWarning("VideoTexture: format " + texExt.format + " is converted to RGB by the media pipeline, MPEG_sampler_YCbCr is not applied");
             }
-            if (bv.byteStride > 0)
+            else
             {
-                throw new NotImplementedException("VideoTexture: byteStride != 0");
+                if (acc.componentType != GLTFComponentType.UnsignedByte)
+                {
+                    throw new NotImplementedException("VideoTexture: only accessors with UNSIGNED_BYTE components are supported");
+                }
+                if (acc.typeEnum != VideoBufferFormat.AccessorType(components))
+                {
+                    throw new Exception("MPEG_texture_video format " + texExt.format + " has " + components + " component(s), the accessor type is " + acc.typeEnum);
+                }
             }
-            if (bv.byteLength != buff.byteLength)
+            if (bv.byteStride > 0 && bv.byteStride != components)
             {
-                throw new NotImplementedException("VideoTexture: bufferView.byteLength != buffer.byteLength");
+                throw new NotImplementedException("VideoTexture: byteStride != size of a pixel");
+            }
+            if ((long)bv.byteOffset + bv.byteLength > buff.byteLength)
+            {
+                throw new Exception("VideoTexture: bufferView exceeds the buffer");
             }
 
-            // We should get the format from the gltf document, and pass it to MAF
-            return new VideoTexture(tex2D, bv.buffer, texExt.width, texExt.height, texExt.format);
+            // the media pipeline gets the format through the attribute type of the accessor
+            return new VideoTexture(tex2D, bv.buffer, texExt.width, texExt.height, texExt.format, false, extAccessor.bufferView >= 0, extAccessor.immutable, bv.byteOffset + acc.byteOffset);
         }
 
         public List<VideoTexture> CreateVideoTextures()
@@ -396,7 +451,13 @@ namespace rt.xr.unity
         public Dictionary<int, BufferView> bufferViews { get; } = new Dictionary<int, BufferView>();
         public Dictionary<int, Accessor> accessors { get; } = new Dictionary<int, Accessor>();
         public Dictionary<int, maf.AttributeType> accessorAttributeType { get; } = new Dictionary<int, maf.AttributeType>();
-        
+        // MPEG_texture_video width and height (maximum picture size) of the texture using the accessor
+        public Dictionary<int, Vector2Int> textureMaxSize { get; } = new Dictionary<int, Vector2Int>();
+        // MPEG_audio_spatial targetSampleRate of the audio source using the accessor
+        public Dictionary<int, int> targetSampleRate { get; } = new Dictionary<int, int>();
+        // MPEG_audio_spatial playbackSpeed of the audio source using the accessor
+        public Dictionary<int, float> playbackSpeed { get; } = new Dictionary<int, float>();
+
         public float GetSuggestedUpdateRate(int bufferId)
         {
             float suggestedUpdateRate = -1;

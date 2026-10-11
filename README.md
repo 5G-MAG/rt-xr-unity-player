@@ -1,10 +1,36 @@
-<h1 align="center">XR Unity Player</h1>
 <p align="center">
-  <img src="https://img.shields.io/badge/Status-Under_Development-yellow" alt="Under Development">
-  <img src="https://img.shields.io/github/v/tag/5G-MAG/rt-xr-unity-player?label=version" alt="Version">
-  <img src="https://img.shields.io/badge/License-5G--MAG%20Public%20License%20(v1.0)-blue" alt="License">
+  <img src=".github/banner.svg" width="100%" alt="Reference Tools · XR/3D Scenes with MPEG-I Scene Description: XR Unity Player">
 </p>
 
+<p align="center">
+  An interactive, XR-capable glTF scene viewer built in Unity, supporting the glTF extensions of
+  MPEG-I Scene Description (ISO/IEC 23090-14).
+</p>
+
+<p align="center">
+  <img alt="Status: Under Development"
+    src="https://img.shields.io/badge/Status-Under%20Development-e67e22">
+  <a href="https://github.com/5G-MAG/rt-xr-unity-player/releases"><img alt="Version"
+    src="https://img.shields.io/github/v/release/5G-MAG/rt-xr-unity-player?label=Version"></a>
+  <a href="LICENSE"><img alt="License: 5G-MAG Public License v1.0"
+    src="https://img.shields.io/badge/License-5G--MAG%20PL%20v1.0-blue"></a>
+</p>
+
+<p align="center">
+  <a href="https://www.5g-mag.com/reference-tools/xr/">Project page</a> &nbsp;&middot;&nbsp;
+  <a href="docs/xr-scene-player.md">Documentation</a> &nbsp;&middot;&nbsp;
+  <a href="https://github.com/5G-MAG/rt-xr-unity-player/issues">Issues</a> &nbsp;&middot;&nbsp;
+  <a href="https://www.5g-mag.com/contributing">Contributing</a>
+</p>
+
+---
+
+## At a glance
+
+|  |  |
+|---|---|
+| **Implements** | glTF extensions of MPEG-I Scene Description, [ISO/IEC 23090-14](https://www.iso.org/standard/86439.html) (the repository does not state an edition) |
+| **Part of** | [XR/3D Scenes with MPEG-I Scene Description](https://www.5g-mag.com/reference-tools/xr/), alongside [rt-xr-gITFast](https://github.com/5G-MAG/rt-xr-gITFast), [rt-xr-maf-native](https://github.com/5G-MAG/rt-xr-maf-native), [rt-xr-content](https://github.com/5G-MAG/rt-xr-content) and [rt-xr-blender-exporter](https://github.com/5G-MAG/rt-xr-blender-exporter) |
 
 ## Introduction
 

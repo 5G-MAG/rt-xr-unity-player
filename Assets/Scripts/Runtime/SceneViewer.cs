@@ -76,6 +76,13 @@ namespace rt.xr.unity
         bool m_ARCameraEnabled = false;
         public bool ARCameraEnabled { get { return m_ARCameraEnabled; } }
 
+        // set by the app before loading a scene that uses MPEG_anchor, to open it as a flat preview without an AR session
+        public bool PreviewWithoutAR = false;
+        // true when the scene lists MPEG_anchor, whether or not an AR session was started for it
+        public bool SceneUsesAnchors { get; private set; }
+        public IReadOnlyList<MediaPlayer> MediaPlayers { get { return mediaPlayers; } }
+        public SceneImport CurrentImport { get { return gltf; } }
+
         public void ConfigureInitialCamera()
         {
             Camera[] _cameras = FindObjectsOfType<Camera>();
@@ -90,6 +97,17 @@ namespace rt.xr.unity
             }
             
             var main = GetMainCamera();
+            // MPEG_viewport_recommended: the camera object that has recommended viewport data becomes the view
+            var recommended = GLTFast.MpegViewportRecommendedRuntime.PreferredCamera;
+            if (recommended != null && recommended != main)
+            {
+                main.CopyFrom(recommended);
+                main.clearFlags = CameraClearFlags.Color;
+                main.backgroundColor = Color.black;
+                recommended.enabled = false;
+                GLTFast.MpegViewportRecommendedRuntime.SetMirrorTarget(main);
+                return;
+            }
             foreach(var cam in gameObject.GetComponentsInChildren<Camera>())
             {
                 // GLTF document may define none or mutliple cameras 
@@ -198,7 +216,18 @@ namespace rt.xr.unity
             }
         }
 
+        // an exception while loading reports an error to the caller instead of leaving it waiting
         async public void LoadGltf(string filePath)
+        {
+            try { await LoadGltfAsync(filePath); }
+            catch (Exception e)
+            {
+                UnityEngine.Debug.LogError("Loading glTF failed: " + e.Message + " " + e.StackTrace);
+                if (onGlTFLoadError != null) onGlTFLoadError();
+            }
+        }
+
+        private async System.Threading.Tasks.Task LoadGltfAsync(string filePath)
         {
             Uri path = new Uri(filePath, UriKind.RelativeOrAbsolute);
             
@@ -216,6 +245,15 @@ namespace rt.xr.unity
                 var instantiator = new GameObjectInstantiator(gltf, transform);
 
                 m_ARCameraEnabled = (gltf.GetSourceRoot().extensionsUsed != null) && (Array.IndexOf(gltf.GetSourceRoot().extensionsUsed, "MPEG_anchor") >= 0);
+                SceneUsesAnchors = m_ARCameraEnabled;
+                if (m_ARCameraEnabled && PreviewWithoutAR){
+                    m_ARCameraEnabled = false;
+                }
+                if (m_ARCameraEnabled && QuestRig.Active){
+                    // a headset session has no ARCore plane detection: MPEG_anchor nodes stay where the scene puts them
+                    Debug.LogWarning("MPEG_anchor is not resolved on a headset");
+                    m_ARCameraEnabled = false;
+                }
                 if (m_ARCameraEnabled){
                     if (!UnityEngine.XR.XRSettings.enabled){
                             Debug.LogWarning("this player doesn't support XR mode");
@@ -236,8 +274,20 @@ namespace rt.xr.unity
                 mediaPlayers = CreateMediaPlayers(gltf, baseUri);
                 CreateVideoTextures(gltf, mediaPlayers);
                 CreateAudioSources(gltf, instantiator, mediaPlayers);
+                // timed metadata for the MPEG scene extensions (animation timing, viewport, mesh linking, lights)
+                // Init on every load clears the buffer layouts cached for the previous scene
+                var timedBridge = gameObject.GetComponent<TimedMetadataBridge>();
+                if (timedBridge == null)
+                {
+                    timedBridge = gameObject.AddComponent<TimedMetadataBridge>();
+                }
+                timedBridge.Init(this);
+                // 4.3: an object that has timed media components shall not be rendered until T0 + Tinit
+                var gate = gameObject.GetComponent<TimedObjectGate>();
+                if (gate == null) gate = gameObject.AddComponent<TimedObjectGate>();
+                gate.Init(this);
 
-                if (!m_ARCameraEnabled){                
+                if (!m_ARCameraEnabled && !QuestRig.Active){
                     ConfigureInitialCamera();
                 }
                 EnsureAudioListenerExists();
@@ -270,7 +320,11 @@ namespace rt.xr.unity
             {
                 foreach (var mp in mediaPlayers)
                 {
+                    if (mp == null) continue;
+                    var holder = mp.gameObject;
                     mp.Dispose();
+                    // the object that was created only to hold the player goes with it
+                    if (holder != null && holder.GetComponents<Component>().Length <= 2) Destroy(holder);
                 }
                 mediaPlayers.Clear();
                 mediaPlayers = null;
@@ -364,13 +418,8 @@ namespace rt.xr.unity
 
             if (mediaPlayers != null)
             {
-                foreach (var mp in mediaPlayers)
-                {
-                    if (mp.autoPlay)
-                    {
-                        mp.Play();
-                    }
-                }
+                // media with autoplay start as soon as they are ready, the media of an autoplayGroup together
+                MediaPlayer.UpdateAutoplay(mediaPlayers);
             }
 
             if (Input.GetKeyDown(KeyCode.Tab))
