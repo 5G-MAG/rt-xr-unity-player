@@ -93,6 +93,21 @@ namespace rt.xr.unity.app
         // ------------------------------------------------------------------ player hooks
 
         // Test aid: the state of the scene's nodes a few seconds after it opened, one line per node, so runs can be compared without a screenshot.
+        // test aid: three pixels of a texture, read back from the GPU
+        private static string SampleTex(Texture t)
+        {
+            if (t == null) return "null";
+            var rt = RenderTexture.GetTemporary(t.width, t.height, 0, RenderTextureFormat.ARGB32);
+            Graphics.Blit(t, rt);
+            var prev = RenderTexture.active; RenderTexture.active = rt;
+            var tmp = new Texture2D(t.width, t.height, TextureFormat.RGBA32, false);
+            tmp.ReadPixels(new Rect(0, 0, t.width, t.height), 0, 0); tmp.Apply();
+            RenderTexture.active = prev; RenderTexture.ReleaseTemporary(rt);
+            string o = tmp.GetPixel(t.width / 2, t.height / 2) + " " + tmp.GetPixel(t.width / 4, t.height / 4) + " " + tmp.GetPixel(3 * t.width / 4, 3 * t.height / 4);
+            Destroy(tmp);
+            return o;
+        }
+
         private IEnumerator LogSceneState(SceneEntry e)
         {
             float waited = 0f;
@@ -106,7 +121,7 @@ namespace rt.xr.unity.app
                 foreach (var r in FindObjectsOfType<Renderer>())
                 {
                     if (r == null || !GLTFast.VirtualSceneGraph.IsNodeGameObject(r.gameObject)) continue;
-                    sb.Append(" | " + r.gameObject.name + "<" + r.GetType().Name + ">" + (r.enabled && r.gameObject.activeInHierarchy ? (r.forceRenderingOff ? " gated " : " on ") : " off ") + r.transform.position.ToString("0.00") + " rot=" + r.transform.eulerAngles.ToString("0") + " b=" + r.bounds.center.ToString("0.00") + " size=" + r.bounds.size.ToString("0.0") + " vis=" + r.isVisible + " layer=" + r.gameObject.layer + " mat=" + (r.sharedMaterial != null ? r.sharedMaterial.shader.name : "none"));
+                    sb.Append(" | " + r.gameObject.name + "<" + r.GetType().Name + ">" + (r.enabled && r.gameObject.activeInHierarchy ? (r.forceRenderingOff ? " gated " : " on ") : " off ") + r.transform.position.ToString("0.00") + " rot=" + r.transform.eulerAngles.ToString("0") + " b=" + r.bounds.center.ToString("0.00") + " size=" + r.bounds.size.ToString("0.0") + " vis=" + r.isVisible + " layer=" + r.gameObject.layer + " mat=" + (r.sharedMaterial != null ? r.sharedMaterial.shader.name : "none") + (r.sharedMaterial != null && r.sharedMaterial.HasProperty("baseColorTexture") ? " tex=" + (r.sharedMaterial.GetTexture("baseColorTexture") != null ? r.sharedMaterial.GetTexture("baseColorTexture").width + "x" + r.sharedMaterial.GetTexture("baseColorTexture").height : "null") : "") + " mainTex=" + (r.sharedMaterial != null && r.sharedMaterial.mainTexture != null ? r.sharedMaterial.mainTexture.width + "x" + r.sharedMaterial.mainTexture.height : "null") + " baseColor=" + (r.sharedMaterial != null && r.sharedMaterial.HasProperty("baseColorFactor") ? r.sharedMaterial.GetColor("baseColorFactor").ToString() : "?") + " texpix=" + SampleTex(r.sharedMaterial != null ? r.sharedMaterial.mainTexture : null));
                 }
                 foreach (var mp in FindObjectsOfType<rt.xr.unity.MediaPlayer>())
                     sb.Append(" | media " + mp.name + " pipeline=" + mp.HasPipeline + " started=" + mp.Started + " t=" + mp.CurrentTime.ToString("0.0") + " err=" + mp.Error + " auto=" + mp.autoPlay + " fin=" + mp.Finished + " pipe=" + mp.DebugState);

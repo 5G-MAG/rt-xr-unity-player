@@ -420,7 +420,7 @@ namespace rt.xr.unity.app
             if (Mathf.Abs(p.y - y) > 1f) m_rail.anchoredPosition = new Vector2(p.x, y);
         }
 
-        private static Material s_planeMat, s_planeMatFloor, s_planeMatWall;
+        private static Material s_planeMat;
 
         private Button m_arLockBtn;
         private Button m_wallBtn;
@@ -850,26 +850,57 @@ namespace rt.xr.unity.app
                 bool wanted = !placed && (vertical == m_placeOnWall);
                 if (plane.gameObject.activeSelf != wanted) plane.gameObject.SetActive(wanted);
                 if (!wanted) continue;
-                var mr = plane.GetComponent<MeshRenderer>();
-                if (mr != null)
+                DrawSurface(plane, vertical);
+            }
+            // surfaces that are no longer wanted lose their drawing
+            foreach (var kv in m_surfaceViz.ToList())
+            {
+                if (kv.Key == null || !kv.Key.gameObject.activeSelf) { if (kv.Value != null) kv.Value.SetActive(false); }
+            }
+        }
+
+        // Each detected surface is drawn by the app itself: a translucent flat mesh over its boundary, green for horizontal and blue for
+        // vertical surfaces (the prefab's own drawing was not visible on the test phone).
+        private readonly Dictionary<ARPlane, GameObject> m_surfaceViz = new Dictionary<ARPlane, GameObject>();
+        private readonly Dictionary<ARPlane, int> m_surfaceVizCount = new Dictionary<ARPlane, int>();
+        private void DrawSurface(ARPlane plane, bool vertical)
+        {
+            var pmr = plane.GetComponent<MeshRenderer>();
+            if (pmr != null) pmr.enabled = false;
+            GameObject viz;
+            if (!m_surfaceViz.TryGetValue(plane, out viz) || viz == null)
+            {
+                viz = new GameObject("SurfaceViz");
+                viz.transform.SetParent(plane.transform, false);
+                viz.transform.localPosition = new Vector3(0f, 0.004f, 0f);
+                viz.AddComponent<MeshFilter>();
+                var mr2 = viz.AddComponent<MeshRenderer>();
+                if (s_planeMat == null) { var sh = Shader.Find("Sprites/Default") ?? Shader.Find("UI/Default"); if (sh != null) s_planeMat = new Material(sh); }
+                var mat = new Material(s_planeMat) { color = vertical ? new Color(0.25f, 0.6f, 1f, 0.45f) : new Color(0.2f, 0.85f, 0.45f, 0.45f) };
+                mr2.sharedMaterial = mat;
+                mr2.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                mr2.receiveShadows = false;
+                m_surfaceViz[plane] = viz; m_surfaceVizCount[plane] = -1;
+            }
+            viz.SetActive(true);
+            var b = plane.boundary;
+            if (b.Length < 3) return;
+            int last; m_surfaceVizCount.TryGetValue(plane, out last);
+            if (last != b.Length || Time.frameCount % 30 == 0)
+            {
+                var verts = new Vector3[b.Length + 1]; var tris = new int[b.Length * 3 * 2];
+                Vector2 c = Vector2.zero; for (int i = 0; i < b.Length; i++) c += b[i]; c /= b.Length;
+                verts[b.Length] = new Vector3(c.x, 0, c.y);
+                for (int i = 0; i < b.Length; i++)
                 {
-                    mr.enabled = true;
-                    if (s_planeMat == null)
-                    {
-                        var sh = Shader.Find("Sprites/Default") ?? Shader.Find("UI/Default");
-                        if (sh != null) s_planeMat = new Material(sh);
-                    }
-                    if (s_planeMat != null)
-                    {
-                        var pm2 = vertical ? s_planeMatWall : s_planeMatFloor;
-                        if (pm2 == null)
-                        {
-                            pm2 = new Material(s_planeMat) { color = vertical ? new Color(0.25f, 0.6f, 1f, 0.40f) : new Color(0.2f, 0.85f, 0.45f, 0.40f) };
-                            if (vertical) s_planeMatWall = pm2; else s_planeMatFloor = pm2;
-                        }
-                        if (mr.sharedMaterial != pm2) mr.sharedMaterial = pm2;
-                    }
+                    verts[i] = new Vector3(b[i].x, 0, b[i].y);
+                    int n = (i + 1) % b.Length;
+                    tris[i * 6] = i; tris[i * 6 + 1] = n; tris[i * 6 + 2] = b.Length;
+                    tris[i * 6 + 3] = i; tris[i * 6 + 4] = b.Length; tris[i * 6 + 5] = n;   // both sides
                 }
+                var mf = viz.GetComponent<MeshFilter>(); if (mf.sharedMesh == null) mf.sharedMesh = new Mesh();
+                var mesh = mf.sharedMesh; mesh.Clear(); mesh.vertices = verts; mesh.triangles = tris; mesh.RecalculateBounds();
+                m_surfaceVizCount[plane] = b.Length;
             }
         }
 

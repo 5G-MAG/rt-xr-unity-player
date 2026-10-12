@@ -32,6 +32,8 @@ namespace rt.xr.unity
         /// <summary>Number of renderers waiting for their media (test aid).</summary>
         public int Waiting { get { int n = 0; foreach (var g in gated) if (!g.Shown) n++; return n; } }
         public int Count { get { return gated.Count; } }
+        /// <summary>The renderers that show a video texture.</summary>
+        public System.Collections.Generic.List<Renderer> VideoRenderers() { var l = new System.Collections.Generic.List<Renderer>(); foreach (var g in gated) if (g.Renderer != null) l.Add(g.Renderer); return l; }
 
         public void Init(SceneViewer sceneViewer)
         {

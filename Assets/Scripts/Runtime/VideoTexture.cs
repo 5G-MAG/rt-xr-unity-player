@@ -156,6 +156,9 @@ namespace rt.xr.unity
     public class VideoTexture
     {
 
+        // brightness factor applied to the picture (application setting, 1 leaves the picture as it is)
+        public static float Gain = 1f;
+
         public UnityEngine.Texture texture;
         public int bufferId;
         public string bufferFormat;
@@ -337,7 +340,8 @@ namespace rt.xr.unity
             if (target.width != width || target.height != height)
             {
                 // the texture takes the size of the picture
-                target.Reinitialize(width, height);
+                // without a mip chain: the picture is copied into level 0 only, and the static image of the scene may be of another size
+                target.Reinitialize(width, height, target.format, false);
                 target.Apply(false, false);
             }
 
@@ -350,11 +354,12 @@ namespace rt.xr.unity
             shader.SetInt("width", width);
             shader.SetInt("height", height);
             shader.SetInt("mode", shaderMode);
+            shader.SetFloat("gain", Gain);
             shader.SetTexture(kernel, "texSrc", texSrc);
             shader.SetTexture(kernel, "texOut", texOut);
             // FIXME; yuv to rgb conversion
             shader.Dispatch(kernel, (width + 7) / 8, (height + 7) / 8, 1);
-            Graphics.CopyTexture(texOut, target);
+            Graphics.CopyTexture(texOut, 0, 0, target, 0, 0);
         }
 
     }
@@ -429,4 +434,4 @@ namespace rt.xr.unity
 
     }
 
-}
+}

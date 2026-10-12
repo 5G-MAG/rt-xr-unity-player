@@ -7,6 +7,8 @@ int height;
 int width;
 // 0 pass through, 1 swap red and blue, 2 red only, 3 green only, 4 blue only, 5 red and green, 6 one component as grey
 int mode;
+// brightness factor of the picture (an app setting, not part of the specification)
+float gain;
 
 [numthreads(8,8,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
@@ -41,5 +43,6 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     {
         c = float4(c.r, c.r, c.r, 1);
     }
+    c.rgb = saturate(c.rgb * gain);
     texOut[id.xy] = c;
 }

@@ -124,6 +124,7 @@ namespace rt.xr.unity.app
             var e = Catalog.Entries.FirstOrDefault(x => x.FileName.ToLowerInvariant().Contains(parts[0].Trim().ToLowerInvariant()));
             if (e == null) { Debug.Log("autoopen: no scene matches " + parts[0]); yield break; }
             m_testSceneCam = flags.Contains("scenecam");
+            m_testAutoplay = flags.Contains("autoplay");
             rt.xr.unity.TimedObjectGate.Enabled = !flags.Contains("nogate");
             m_cleanShot = flags.Contains("clean");
             OpenScene(e, flags.Contains("flat"));
@@ -131,6 +132,7 @@ namespace rt.xr.unity.app
 
         // test aid (flag scenecam): the interactivity test scenes assume the camera node of the scene from the first frame
         private bool m_testSceneCam;
+        private bool m_testAutoplay;   // test aid: media start by themselves
         // test aid (flag clean): no controls and no statistics on the screen, for the thumbnails of the catalog
         private bool m_cleanShot;
 
@@ -289,7 +291,8 @@ namespace rt.xr.unity.app
             GLTFast.AnchorPlacement.AnchorToPlane = PlayerPrefs.GetInt("set.planeanchor", 0) == 1;
             GLTFast.AnchorPlacement.PlaceOnAnySurface = PlayerPrefs.GetInt("set.anysurface", 0) == 1;
             GLTFast.AnchorPlacement.GroundOnPlacement = PlayerPrefs.GetInt("set.groundplace", 0) == 1;
-            rt.xr.unity.MediaPlayer.HoldAutoplay = PlayerPrefs.GetInt("set.holdplay", 1) == 1 && !m_testSceneCam;
+            rt.xr.unity.MediaPlayer.HoldAutoplay = PlayerPrefs.GetInt("set.holdplay", 1) == 1 && !m_testSceneCam && !m_testAutoplay;
+            rt.xr.unity.VideoTexture.Gain = PlayerPrefs.GetInt("set.brightvideo", 1) == 1 ? 2f : 1f;
             rt.xr.unity.MediaPlayer.ContentShown = false;
             rt.xr.unity.MediaPlayer.AwaitContentShown = !noAR && e.UsesAnchor && !m_testSceneCam;
             AudioListener.volume = rt.xr.unity.MediaPlayer.AwaitContentShown ? 0f : 1f;
