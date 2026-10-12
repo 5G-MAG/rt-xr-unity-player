@@ -351,3 +351,27 @@ namespace rt.xr.unity.app
         public static Coroutine Start(IEnumerator routine) { return Instance.StartCoroutine(routine); }
     }
 }
+
+
+namespace rt.xr.unity.app
+{
+    // Application feature, not part of ISO/IEC 23090-14: a media address the user gave for a scene replaces the one in the scene file
+    // when the scene is opened. The scene file is not changed. Stored per scene address and media index.
+    public static class MediaSourceStore
+    {
+        private static string Key(string scene, int i) { return "media|" + scene + "|" + i; }
+        public static string Get(string scene, int i) { return UnityEngine.PlayerPrefs.GetString(Key(scene, i), ""); }
+        public static void Set(string scene, int i, string address)
+        {
+            if (string.IsNullOrWhiteSpace(address)) UnityEngine.PlayerPrefs.DeleteKey(Key(scene, i));
+            else UnityEngine.PlayerPrefs.SetString(Key(scene, i), address.Trim());
+            UnityEngine.PlayerPrefs.Save();
+        }
+        public static System.Collections.Generic.Dictionary<int, string> For(string scene, int count)
+        {
+            var d = new System.Collections.Generic.Dictionary<int, string>();
+            for (int i = 0; i < count; i++) { var v = Get(scene, i); if (v.Length > 0) d[i] = v; }
+            return d;
+        }
+    }
+}

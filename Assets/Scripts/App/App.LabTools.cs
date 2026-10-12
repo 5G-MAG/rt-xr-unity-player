@@ -96,7 +96,7 @@ namespace rt.xr.unity.app
         private IEnumerator LogSceneState(SceneEntry e)
         {
             float waited = 0f;
-            foreach (float at in new[] { 3f, 5f, 8f, 11f })
+            foreach (float at in new[] { 3f, 5f, 8f, 11f, 20f, 30f, 45f, 60f, 90f })
             {
                 yield return new WaitForSecondsRealtime(at - waited);
                 waited = at;

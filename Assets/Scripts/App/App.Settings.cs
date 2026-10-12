@@ -52,10 +52,10 @@ namespace rt.xr.unity.app
             Toggle(player, "Hide the controls by themselves", "They come back when you tap the scene.", "set.autohide", true);
             Toggle(player, "Light scenes that have no light", "Adds a soft light so such scenes are not dark.", "set.filllight", true);
             Toggle(player, "Start in the Walk camera", "Instead of Orbit.", "set.walk", false);
-            Toggle(player, "Tap to place AR scenes", "Not part of the specification. On: choose the surface and the spot yourself, resize and turn the scene. Off: the scene is placed where its anchor says (the detected floor or plane).", "set.taptoplace", false);
+            Toggle(player, "Tap to place AR scenes", "Not part of the specification. On: choose the surface and the spot yourself, resize and turn the scene. Off: the scene is placed where its anchor says (the detected floor or plane).", "set.taptoplace2", true);
             Toggle(player, "Sit the scene on the surface", "Not part of the specification, only with tap to place. On: the scene stands on the spot you tap, ignoring the height its file gives it. Off: the file's own offset is kept.", "set.groundplace", false);
-            Toggle(player, "Start media only when I press play", "Not part of the specification, which says a media with autoplay true starts by itself. On: videos and sounds wait for the play button.", "set.holdplay", false);
-            Toggle(player, "Show media controls in every scene", "The specification asks for controls when a media has controls true. On: they are shown in every scene that has media.", "set.alwayscontrols", false);
+            Toggle(player, "Start media only when I press play", "Not part of the specification, which says a media with autoplay true starts by itself. On: videos and sounds wait for the play button.", "set.holdplay", true);
+            Toggle(player, "Show media controls in every scene", "The specification asks for controls when a media has controls true. On: they are shown in every scene that has media.", "set.alwayscontrols", true);
             Toggle(player, "Show the log on the screen", "For developers: prints the app's log over the scene.", "set.showlog", false);
             Toggle(player, "Hide the marker picture in marker scenes", "Some marker scenes also draw the marker image as content. On: it is not drawn, so only the real marker and the content anchored to it show.", "set.hidemarkerpicture", true);
             var mw = Ui.Pill(player, MarkerWidthLabel(), null, Ui.BtnStyle.Ghost, null, 32, 96);

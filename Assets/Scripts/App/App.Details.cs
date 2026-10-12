@@ -136,8 +136,10 @@ namespace rt.xr.unity.app
             if (e.Media.Count > 0)
             {
                 var ms = Section("Media");
-                foreach (var m in e.Media)
+                for (int mi = 0; mi < e.Media.Count; mi++)
                 {
+                    var m = e.Media[mi];
+                    int mediaIndex = mi;
                     var row = Ui.R("Media", ms);
                     Ui.VBox(row, 2, 0);
                     string f = Uri.UnescapeDataString(m.Uri.Substring(m.Uri.LastIndexOf('/') + 1));
@@ -147,8 +149,11 @@ namespace rt.xr.unity.app
                     Ui.Size(nm.gameObject, -1, -1, 1);
                     if (m.Status == "missing") Ui.Chip(h, "Not found", Ui.Warn, false, 24);
                     else if (m.Status == "found") Ui.Chip(h, "Found", Ui.Good, false, 24);
-                    Ui.Label(row, m.Uri, 24, Ui.Regular, Ui.Dim, TextAnchor.UpperLeft, true);
+                    string replaced = MediaSourceStore.Get(e.Uri, mediaIndex);
+                    Ui.Label(row, replaced.Length > 0 ? replaced + "  (replaced by you)" : m.Uri, 24, Ui.Regular, replaced.Length > 0 ? Ui.Good : Ui.Dim, TextAnchor.UpperLeft, true);
+                    AddMediaSourceEditor(row, e, mediaIndex);
                 }
+                Ui.Label(ms, "Replacing an address is an app feature, not part of the specification. The scene file is not changed. It applies the next time the scene is opened: a file, a DASH (.mpd), an HLS (.m3u8) or an MP4 address.", 24, Ui.Regular, Ui.Dim, TextAnchor.UpperLeft, true);
             }
 
             // content notes
@@ -211,6 +216,40 @@ namespace rt.xr.unity.app
                 foreach (Transform child in m_viewer.transform) AddTreeRow(t, child, 0, ref count);
                 if (count >= 300) Ui.Label(t, "Showing the first 300 nodes.", 26, Ui.Regular, Ui.Dim);
             }
+        }
+
+        private void AddMediaSourceEditor(RectTransform parent, SceneEntry e, int index)
+        {
+            var inputBox = Ui.Box(parent, Ui.Raised, 36f, "MediaInput");
+            Ui.Size(inputBox.gameObject, -1, 96, 1);
+            Ui.HBox(inputBox.transform, 12, 0, TextAnchor.MiddleLeft);
+            inputBox.GetComponent<HorizontalLayoutGroup>().padding = new RectOffset(30, 30, 0, 0);
+            var area = Ui.R("InputArea", inputBox.transform);
+            Ui.Size(area.gameObject, -1, -1, 1, 1);
+            var input = area.gameObject.AddComponent<InputField>();
+            var txt = Ui.Label(area, "", 30, Ui.Regular, Color.white, TextAnchor.MiddleLeft, false, "Text");
+            Ui.Stretch((RectTransform)txt.transform); txt.raycastTarget = true;
+            var ph = Ui.Label(area, "New address for this media", 30, Ui.Regular, new Color(1, 1, 1, 0.4f), TextAnchor.MiddleLeft, false, "Placeholder");
+            Ui.Stretch((RectTransform)ph.transform);
+            input.textComponent = txt; input.placeholder = ph; input.lineType = InputField.LineType.SingleLine;
+            input.keyboardType = TouchScreenKeyboardType.URL;
+            var row = Ui.R("MediaButtons", parent);
+            Ui.HBox(row, 12, 0, TextAnchor.MiddleLeft);
+            Ui.Size(row.gameObject, -1, 96, 1);
+            Action apply = () =>
+            {
+                string v = input.text.Trim();
+                if (v.Length == 0) { Toast("Type or paste an address first."); return; }
+                MediaSourceStore.Set(e.Uri, index, v);
+                Toast("Saved. It applies when the scene is opened again.", 3f);
+                RebuildDetails();
+            };
+            var use = Ui.Pill(row, "Use", apply, Ui.BtnStyle.Primary, null, 30, 96);
+            Ui.Size(use.gameObject, -1, 96, 1);
+            var paste = Ui.Pill(row, "Paste", () => { var c = GUIUtility.systemCopyBuffer; if (!string.IsNullOrEmpty(c)) input.text = c.Trim(); }, Ui.BtnStyle.Ghost, null, 30, 96);
+            Ui.Size(paste.gameObject, -1, 96, 1);
+            var reset = Ui.Pill(row, "Reset", () => { MediaSourceStore.Set(e.Uri, index, ""); Toast("Back to the address in the scene.", 3f); RebuildDetails(); }, Ui.BtnStyle.Ghost, null, 30, 96);
+            Ui.Size(reset.gameObject, -1, 96, 1);
         }
 
         private void AddTreeRow(RectTransform parent, Transform tr, int depth, ref int count)

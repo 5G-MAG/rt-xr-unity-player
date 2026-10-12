@@ -34,6 +34,12 @@ namespace rt.xr.unity
         /// The specification says autoplay media start as soon as they are ready, so this is an application choice.
         /// </summary>
         public static bool HoldAutoplay = false;
+        // ISO/IEC 23090-14:2024(E), clause 4.3: "The scene activation time of that document may be set externally or may be determined by the user and
+        // is considered the presentation time T0". In an AR scene the user activates the scene by having it anchored or placed: the media of such a
+        // scene are neither shown (TimedObjectGate) nor heard (AudioListener.volume) until its content is shown. They are not started later: a
+        // live stream started late delivers no picture.
+        public static bool AwaitContentShown = false;
+        public static bool ContentShown = false;
 
         static BufferInfo GetBufferInfo(MediaPipelineConfig cfg, int accessorIdx)
         {

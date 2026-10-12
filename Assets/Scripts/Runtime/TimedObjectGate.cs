@@ -56,6 +56,13 @@ namespace rt.xr.unity
             foreach (var g in gated)
             {
                 if (g.Shown || g.Renderer == null) continue;
+                // media that wait for the user's play are not started, so their object shows its static image meanwhile
+                if (MediaPlayer.HoldAutoplay && (!MediaPlayer.AwaitContentShown || MediaPlayer.ContentShown))
+                {
+                    g.Renderer.forceRenderingOff = false;
+                    g.Shown = true;
+                    continue;
+                }
                 bool ready = true;
                 foreach (var mp in g.Media)
                 {
@@ -68,6 +75,7 @@ namespace rt.xr.unity
                         ready = false; break;
                     }
                 }
+                if (ready && MediaPlayer.AwaitContentShown && !MediaPlayer.ContentShown) ready = false;
                 if (ready)
                 {
                     g.Renderer.forceRenderingOff = false;

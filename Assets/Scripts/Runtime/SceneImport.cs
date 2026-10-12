@@ -41,12 +41,34 @@ namespace rt.xr.unity
             }
         }
 
+        /// <summary>Addresses the user gave to replace the media of the scene being opened, by media index.</summary>
+        public static Dictionary<int, string> MediaOverrides = new Dictionary<int, string>();
+
+        public static string MimeFor(string uri, string fallback)
+        {
+            string u = uri.Split('?')[0].ToLowerInvariant();
+            if (u.EndsWith(".mpd")) return "application/dash+xml";
+            if (u.EndsWith(".m3u8")) return "application/vnd.apple.mpegurl";
+            bool audioBefore = fallback != null && fallback.StartsWith("audio/");
+            if (u.EndsWith(".mp4") || u.EndsWith(".m4v") || u.EndsWith(".mov")) return audioBefore ? fallback : "video/mp4";
+            if (u.EndsWith(".m4a") || u.EndsWith(".aac")) return "audio/aac";
+            if (u.EndsWith(".mp3")) return "audio/mpeg";
+            return fallback ?? "video/mp4";
+        }
+
         public GLTFast.Schema.Media GetMedia(int index, Uri baseUri = null)
         {
             GLTFast.Schema.Media m = GetSourceRoot().extensions.MPEG_media.media[index];
             if (baseUri != null)
             {
                 ApplyBaseUri(m, baseUri);
+            }
+            // application feature, not part of ISO/IEC 23090-14: the user may replace the address of a media (see MediaOverrides)
+            string over;
+            if (MediaOverrides != null && MediaOverrides.TryGetValue(index, out over) && !string.IsNullOrEmpty(over))
+            {
+                string oldMime = m.alternatives != null && m.alternatives.Length > 0 ? m.alternatives[0].mimeType : null;
+                m.alternatives = new[] { new MediaAlternative { uri = over, mimeType = MimeFor(over, oldMime) } };
             }
             return m;
         }

@@ -78,7 +78,7 @@ namespace rt.xr.unity.app
 
             // right rail
             m_rail = Ui.R("Rail", m_hudRoot);
-            Ui.Place(m_rail, new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(1, 0.5f), new Vector2(-32, 120), new Vector2(104, 0));
+            Ui.Place(m_rail, new Vector2(1, 0), new Vector2(1, 0), new Vector2(1, 0), new Vector2(-32, 520), new Vector2(104, 0));
             Ui.VBox(m_rail, 20, 0, TextAnchor.MiddleCenter, false);
             Ui.Fit(m_rail.gameObject);
             Ui.IconButton(m_rail, "eye", 104, () => { m_hudVisible = false; });
@@ -134,7 +134,7 @@ namespace rt.xr.unity.app
             m_playerGroup.blocksRaycasts = false;
             m_mediaStatus.Clear(); m_mediaIcon.Clear(); m_mediaPlaying.Clear(); m_lastTime.Clear(); m_mediaStopped.Clear(); m_mediaAll = new List<MediaPlayer>();
             m_anims.Clear();
-            AudioListener.volume = 1f; m_muted = false;
+            AudioListener.volume = (rt.xr.unity.MediaPlayer.AwaitContentShown && !rt.xr.unity.MediaPlayer.ContentShown) ? 0f : 1f; m_muted = false;
             CloseDetails();
             OnPlayerLeft();
         }
@@ -173,7 +173,7 @@ namespace rt.xr.unity.app
             var medias = SafeMedias();
             // Table 4, controls: "Specifies that media controls should be displayed (such as a play/pause button etc)." Default false: the
             // controls are shown for a scene that has a media with controls true, or when the setting asks for them in every scene.
-            m_mediaControls = PlayerPrefs.GetInt("set.alwayscontrols", 0) == 1 || (medias != null && medias.Any(m => m != null && m.controls));
+            m_mediaControls = PlayerPrefs.GetInt("set.alwayscontrols", 1) == 1 || (medias != null && medias.Any(m => m != null && m.controls));
             Debug.Log("XRTEST media controls shown=" + (players.Count > 0 && m_mediaControls) + " media=" + players.Count + " controlsFlag=" + (medias != null && medias.Any(m => m != null && m.controls)));
             if (players.Count > 0 && m_mediaControls)
             {
@@ -299,6 +299,9 @@ namespace rt.xr.unity.app
             var all = m_mediaAll.Where(p => p != null).ToList();
             if (all.Any(p => m_mediaStopped.Contains(p))) { RestartScene(); return; }
             bool playing = m_mediaPlaying.ContainsKey(clicked) && m_mediaPlaying[clicked];
+            // the user's choice wins for a moment: the clock of a media that was just paused still moves for a few frames
+            m_userToggleAt = Time.unscaledTime;
+            m_lastAdvance.Clear();
             foreach (var mp in all)
             {
                 try
@@ -387,22 +390,57 @@ namespace rt.xr.unity.app
                 var modeRow = Ui.R("ModeRow", card.transform);
                 Ui.HBox(modeRow, 16, 0, TextAnchor.MiddleLeft);
                 Ui.Size(modeRow.gameObject, -1, 100, 1);
-                m_wallBtn = Ui.Pill(modeRow, "Place on: Floor", ToggleSurfaceMode, Ui.BtnStyle.Ghost);
+                m_floorBtn = Ui.Pill(modeRow, "On the floor", () => SetSurfaceMode(false), Ui.BtnStyle.Ghost);
+                Ui.Size(m_floorBtn.gameObject, -1, 100, 1);
+                m_wallBtn = Ui.Pill(modeRow, "On a wall", () => SetSurfaceMode(true), Ui.BtnStyle.Ghost);
                 Ui.Size(m_wallBtn.gameObject, -1, 100, 1);
+                m_modeHelp = Ui.Label(card.transform, "", 28, Ui.Regular, Ui.Dim, TextAnchor.MiddleLeft, false);
+                SetSurfaceMode(false);
             }
         }
+
+        // In AR a placed scene faces the user, not a fixed direction: the fill light shines from the viewer's side, so the front of a surface
+        // is lit and not its back.
+        private void FillLightFollowsCamera()
+        {
+            if (m_viewer == null || !m_viewer.ARCameraEnabled || Camera.main == null) return;
+            var fl = GameObject.Find("FillLight");
+            if (fl == null) return;
+            fl.transform.rotation = Camera.main.transform.rotation * Quaternion.Euler(18f, -18f, 0f);
+        }
+
+        // The side buttons sit above the bottom panel, whatever its height (it grows with the AR placement rows).
+        private void KeepRailAboveBottomPanel()
+        {
+            if (m_rail == null || m_bottom == null) return;
+            float h = LayoutUtility.GetPreferredHeight(m_bottom);
+            if (h < 1f) h = ((RectTransform)m_bottom).rect.height;
+            var p = m_rail.anchoredPosition;
+            float y = h + 28f;
+            if (Mathf.Abs(p.y - y) > 1f) m_rail.anchoredPosition = new Vector2(p.x, y);
+        }
+
+        private static Material s_planeMat, s_planeMatFloor, s_planeMatWall;
 
         private Button m_arLockBtn;
         private Button m_wallBtn;
         private bool m_placeOnWall;
         private bool m_scanAgain;
 
-        private void ToggleSurfaceMode()
+        private Button m_floorBtn;
+        private Text m_modeHelp;
+        // Floor: the scene stands on a horizontal surface (floor, table). Wall: it hangs upright on a vertical surface. The detected
+        // surfaces are drawn green (horizontal) and blue (vertical), and only the kind that matches the choice is drawn.
+        private void SetSurfaceMode(bool wall)
         {
-            m_placeOnWall = !m_placeOnWall;
-            var label = m_wallBtn != null ? m_wallBtn.GetComponentInChildren<Text>() : null;
-            if (label != null) label.text = m_placeOnWall ? "Place on: Wall" : "Place on: Floor";
-            Toast(m_placeOnWall ? "Wall: tap where the scene should hang. It stands upright facing you." : "Floor: tap a floor or table.", 3f);
+            m_placeOnWall = wall;
+            if (m_floorBtn != null) m_floorBtn.GetComponent<Image>().color = wall ? new Color(1, 1, 1, 0.12f) : Ui.Accent;
+            if (m_wallBtn != null) m_wallBtn.GetComponent<Image>().color = wall ? Ui.Accent : new Color(1, 1, 1, 0.12f);
+            if (m_floorBtn != null) { var t = m_floorBtn.GetComponentInChildren<Text>(); if (t != null) t.color = wall ? Color.white : Ui.OnAccent; }
+            if (m_wallBtn != null) { var t = m_wallBtn.GetComponentInChildren<Text>(); if (t != null) t.color = wall ? Ui.OnAccent : Color.white; }
+            if (m_modeHelp != null) m_modeHelp.text = wall
+                ? "On a wall: tap a blue area. The scene hangs upright, facing you."
+                : "On the floor: tap a green area. The scene stands on the floor or a table.";
         }
         private float m_userScale = 1f, m_userYaw = 0f;
         private bool m_gestActive;
@@ -478,6 +516,8 @@ namespace rt.xr.unity.app
                     if (t.phase != TouchPhase.Ended && t.phase != TouchPhase.Canceled && t.fingerId != m_tapFinger && m_tapFinger >= 0) m_tapFinger = -1;
                 }
             }
+            KeepRailAboveBottomPanel();
+            FillLightFollowsCamera();
             if (m_xr) { m_hudVisible = true; m_hudLast = Time.unscaledTime; }
             if (m_toolsOpen || m_detailsOpen || m_dlgOpen) m_hudLast = Time.unscaledTime;
             if (m_hudVisible && PlayerPrefs.GetInt("set.autohide", 1) == 1 && Time.unscaledTime - m_hudLast > 7f && !m_viewer.ARCameraEnabled) m_hudVisible = false;
@@ -503,22 +543,29 @@ namespace rt.xr.unity.app
                 if (mp == null) continue;
                 double last;
                 m_lastTime.TryGetValue(mp, out last);
-                bool advancing = mp.CurrentTime > last + 0.001;
+                // the clock moves in steps of frames and the poll runs at its own pace: the media is called advancing when its time moved
+                // within the last second, so the status does not flip between playing and buffering on every poll
+                if (mp.CurrentTime > last + 0.001) m_lastAdvance[mp] = Time.unscaledTime;
+                float la; m_lastAdvance.TryGetValue(mp, out la);
+                bool advancing = Time.unscaledTime - la < 1f && la > 0f;
                 m_lastTime[mp] = mp.CurrentTime;
                 string s;
                 if (m_mediaStopped.Contains(mp)) s = "Stopped";
                 else if (mp.Error) s = "Error in the media pipeline";
                 else if (!mp.Started) s = "Ready, press play";
                 else if (mp.CurrentTime < 0) s = "Starting";
+                else if (Time.unscaledTime - m_userToggleAt < 2.5f && m_mediaPlaying.ContainsKey(mp)) s = m_mediaPlaying[mp] ? "Playing " + FormatTime(mp.CurrentTime) : "Paused at " + FormatTime(Math.Max(0, mp.CurrentTime));
                 else if (advancing) s = "Playing " + FormatTime(mp.CurrentTime);
                 else s = m_mediaPlaying.ContainsKey(mp) && m_mediaPlaying[mp] ? "Buffering " + FormatTime(mp.CurrentTime) : "Paused at " + FormatTime(Math.Max(0, mp.CurrentTime));
                 kv.Value.text = s;
                 kv.Value.color = mp.Error ? Ui.Bad : Ui.Dim;
                 if (m_playLabel != null) m_playLabel.text = AnyMediaPlaying() ? "Pause" : "Play";
-                if (advancing && m_mediaPlaying.ContainsKey(mp) && !m_mediaPlaying[mp]) { m_mediaPlaying[mp] = true; if (m_mediaIcon.ContainsKey(mp)) m_mediaIcon[mp].sprite = Ui.Icon("pause"); }
+                if (advancing && Time.unscaledTime - m_userToggleAt > 2.5f && m_mediaPlaying.ContainsKey(mp) && !m_mediaPlaying[mp]) { m_mediaPlaying[mp] = true; if (m_mediaIcon.ContainsKey(mp)) m_mediaIcon[mp].sprite = Ui.Icon("pause"); }
             }
         }
 
+        private float m_userToggleAt = -10f;
+        private readonly Dictionary<MediaPlayer, float> m_lastAdvance = new Dictionary<MediaPlayer, float>();
         private static string FormatTime(double t) { int s = (int)Math.Max(0, t); return (s / 60) + ":" + (s % 60).ToString("00"); }
 
         // The AR session of the viewer detects planes but has no raycast component: add one to the XR Origin so taps can hit them.
@@ -798,7 +845,31 @@ namespace rt.xr.unity.app
             bool placed = !GLTFast.AnchorPlacement.AnyAwaiting && !m_scanAgain;
             foreach (var plane in pm.trackables)
             {
-                if (plane != null && plane.gameObject.activeSelf == placed) plane.gameObject.SetActive(!placed);
+                if (plane == null) continue;
+                bool vertical = plane.alignment == PlaneAlignment.Vertical;
+                bool wanted = !placed && (vertical == m_placeOnWall);
+                if (plane.gameObject.activeSelf != wanted) plane.gameObject.SetActive(wanted);
+                if (!wanted) continue;
+                var mr = plane.GetComponent<MeshRenderer>();
+                if (mr != null)
+                {
+                    mr.enabled = true;
+                    if (s_planeMat == null)
+                    {
+                        var sh = Shader.Find("Sprites/Default") ?? Shader.Find("UI/Default");
+                        if (sh != null) s_planeMat = new Material(sh);
+                    }
+                    if (s_planeMat != null)
+                    {
+                        var pm2 = vertical ? s_planeMatWall : s_planeMatFloor;
+                        if (pm2 == null)
+                        {
+                            pm2 = new Material(s_planeMat) { color = vertical ? new Color(0.25f, 0.6f, 1f, 0.40f) : new Color(0.2f, 0.85f, 0.45f, 0.40f) };
+                            if (vertical) s_planeMatWall = pm2; else s_planeMatFloor = pm2;
+                        }
+                        if (mr.sharedMaterial != pm2) mr.sharedMaterial = pm2;
+                    }
+                }
             }
         }
 
@@ -829,6 +900,8 @@ namespace rt.xr.unity.app
             if (st == ARSessionState.SessionTracking && Time.unscaledTime > m_arNextProbe)
             {
                 m_arNextProbe = Time.unscaledTime + 1f;
+                var pmg = FindObjectOfType<ARPlaneManager>();
+                if (pmg != null) { int act = 0, tot = 0; foreach (var pl in pmg.trackables) { tot++; if (pl.gameObject.activeSelf) act++; } Debug.Log("App: planes " + act + " of " + tot + " active, awaiting=" + GLTFast.AnchorPlacement.AnyAwaiting + " scanAgain=" + m_scanAgain + " prefab=" + (pmg.planePrefab != null)); }
                 foreach (var a in FindObjectsOfType<UnityEngine.XR.ARFoundation.ARAnchor>())
                 {
                     if (a.transform.childCount > 0) m_arPlaced = true;
@@ -836,6 +909,14 @@ namespace rt.xr.unity.app
                     var cm = Camera.main;
                     Debug.Log("App: anchor " + a.trackableId + " " + a.trackingState + " pos=" + a.transform.position.ToString("0.000") + " cam=" + (cm != null ? cm.transform.position.ToString("0.000") : "-"));
                 }
+            }
+            // the scene is shown once it is anchored, or once the user has chosen the spot: only then do its media start (clause 4.3, T0)
+            if (rt.xr.unity.MediaPlayer.AwaitContentShown && !rt.xr.unity.MediaPlayer.ContentShown
+                && (m_arPlaced || (GLTFast.AnchorPlacement.TapToPlace && GLTFast.AnchorPlacement.HasPlaceable && !GLTFast.AnchorPlacement.AnyAwaiting)))
+            {
+                rt.xr.unity.MediaPlayer.ContentShown = true;
+                AudioListener.volume = 1f;
+                Debug.Log("App: content shown");
             }
             if (m_arPlaced && st == ARSessionState.SessionTracking) text = "Scene placed on the floor. Look around to find it.";
             if (st != m_arLastState) { m_arLastState = st; Debug.Log("App: AR session state " + st); }

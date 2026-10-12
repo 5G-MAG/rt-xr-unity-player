@@ -284,14 +284,18 @@ namespace rt.xr.unity.app
 
             m_viewer.PreviewWithoutAR = noAR;
             GLTFast.AnchorPlacement.Clear();
-            GLTFast.AnchorPlacement.TapToPlace = !noAR && e.UsesAnchor && PlayerPrefs.GetInt("set.taptoplace", 0) == 1;
+            GLTFast.AnchorPlacement.TapToPlace = !noAR && e.UsesAnchor && PlayerPrefs.GetInt("set.taptoplace2", 1) == 1;
             GLTFast.AnchorPlacement.FaceUserOnPlacement = PlayerPrefs.GetInt("set.faceuser", 0) == 1;
             GLTFast.AnchorPlacement.AnchorToPlane = PlayerPrefs.GetInt("set.planeanchor", 0) == 1;
             GLTFast.AnchorPlacement.PlaceOnAnySurface = PlayerPrefs.GetInt("set.anysurface", 0) == 1;
             GLTFast.AnchorPlacement.GroundOnPlacement = PlayerPrefs.GetInt("set.groundplace", 0) == 1;
-            rt.xr.unity.MediaPlayer.HoldAutoplay = PlayerPrefs.GetInt("set.holdplay", 0) == 1 && !m_testSceneCam;
+            rt.xr.unity.MediaPlayer.HoldAutoplay = PlayerPrefs.GetInt("set.holdplay", 1) == 1 && !m_testSceneCam;
+            rt.xr.unity.MediaPlayer.ContentShown = false;
+            rt.xr.unity.MediaPlayer.AwaitContentShown = !noAR && e.UsesAnchor && !m_testSceneCam;
+            AudioListener.volume = rt.xr.unity.MediaPlayer.AwaitContentShown ? 0f : 1f;
             if (noAR && e.UsesAnchor) MakePreviewOrigin();
             if (!noAR && e.UsesAnchor) { SetStep(2, StepState.Working, "camera"); yield return EnsureCameraPermission(); }
+            SceneImport.MediaOverrides = MediaSourceStore.For(e.Uri, e.Media.Count);
             m_viewer.LoadGltf(e.Uri);
             float guard = 0f;
             while (!m_loadDone && !m_loadFailed && guard < 180f) { guard += Time.unscaledDeltaTime; yield return null; }

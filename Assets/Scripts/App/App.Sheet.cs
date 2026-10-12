@@ -314,6 +314,11 @@ namespace rt.xr.unity.app
         {
             if (m_toastText == null) return;
             m_toastText.text = text;
+            // a long message wraps inside the screen: the toast is at most the screen width less a margin
+            m_toastText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            var le = m_toastText.GetComponent<LayoutElement>() ?? m_toastText.gameObject.AddComponent<LayoutElement>();
+            float maxW = Mathf.Max(300f, ((RectTransform)m_root).rect.width - 2f * 60f - 96f);
+            le.preferredWidth = Mathf.Min(m_toastText.preferredWidth, maxW);
             m_toastUntil = Time.unscaledTime + seconds;
             m_toastGroup.alpha = 1f;
         }
