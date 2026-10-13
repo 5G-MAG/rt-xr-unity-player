@@ -136,22 +136,29 @@ namespace rt.xr.unity.app
             if (e.Media.Count > 0)
             {
                 var ms = Section("Media");
+                // media entries with the same address (one stream whose tracks feed several buffers) are shown once, with their track count
+                var groups = new List<List<int>>();
                 for (int mi = 0; mi < e.Media.Count; mi++)
                 {
-                    var m = e.Media[mi];
-                    int mediaIndex = mi;
+                    var g = groups.FirstOrDefault(x => e.Media[x[0]].Uri == e.Media[mi].Uri);
+                    if (g == null) { g = new List<int>(); groups.Add(g); }
+                    g.Add(mi);
+                }
+                foreach (var grp in groups)
+                {
+                    var m = e.Media[grp[0]];
                     var row = Ui.R("Media", ms);
                     Ui.VBox(row, 2, 0);
                     string f = Uri.UnescapeDataString(m.Uri.Substring(m.Uri.LastIndexOf('/') + 1));
                     var h = Ui.R("Head", row);
                     Ui.HBox(h, 16, 0, TextAnchor.MiddleLeft);
-                    var nm = Ui.Label(h, f, 32, Ui.Medium, Color.white, TextAnchor.MiddleLeft, true);
+                    var nm = Ui.Label(h, f + (grp.Count > 1 ? ", " + grp.Count + " tracks" : ""), 32, Ui.Medium, Color.white, TextAnchor.MiddleLeft, true);
                     Ui.Size(nm.gameObject, -1, -1, 1);
                     if (m.Status == "missing") Ui.Chip(h, "Not found", Ui.Warn, false, 24);
                     else if (m.Status == "found") Ui.Chip(h, "Found", Ui.Good, false, 24);
-                    string replaced = MediaSourceStore.Get(e.Uri, mediaIndex);
+                    string replaced = MediaSourceStore.Get(e.Uri, grp[0]);
                     Ui.Label(row, replaced.Length > 0 ? replaced + "  (replaced by you)" : m.Uri, 24, Ui.Regular, replaced.Length > 0 ? Ui.Good : Ui.Dim, TextAnchor.UpperLeft, true);
-                    AddMediaSourceEditor(row, e, mediaIndex);
+                    AddMediaSourceEditor(row, e, grp);
                 }
                 Ui.Label(ms, "Replacing an address is an app feature, not part of the specification. The scene file is not changed. It applies the next time the scene is opened: a file, a DASH (.mpd), an HLS (.m3u8) or an MP4 address.", 24, Ui.Regular, Ui.Dim, TextAnchor.UpperLeft, true);
             }
@@ -218,7 +225,7 @@ namespace rt.xr.unity.app
             }
         }
 
-        private void AddMediaSourceEditor(RectTransform parent, SceneEntry e, int index)
+        private void AddMediaSourceEditor(RectTransform parent, SceneEntry e, List<int> indexes)
         {
             var inputBox = Ui.Box(parent, Ui.Raised, 36f, "MediaInput");
             Ui.Size(inputBox.gameObject, -1, 96, 1);
@@ -240,7 +247,7 @@ namespace rt.xr.unity.app
             {
                 string v = input.text.Trim();
                 if (v.Length == 0) { Toast("Type or paste an address first."); return; }
-                MediaSourceStore.Set(e.Uri, index, v);
+                foreach (var ix in indexes) MediaSourceStore.Set(e.Uri, ix, v);
                 Toast("Saved. It applies when the scene is opened again.", 3f);
                 RebuildDetails();
             };
@@ -248,7 +255,7 @@ namespace rt.xr.unity.app
             Ui.Size(use.gameObject, -1, 96, 1);
             var paste = Ui.Pill(row, "Paste", () => { var c = GUIUtility.systemCopyBuffer; if (!string.IsNullOrEmpty(c)) input.text = c.Trim(); }, Ui.BtnStyle.Ghost, null, 30, 96);
             Ui.Size(paste.gameObject, -1, 96, 1);
-            var reset = Ui.Pill(row, "Reset", () => { MediaSourceStore.Set(e.Uri, index, ""); Toast("Back to the address in the scene.", 3f); RebuildDetails(); }, Ui.BtnStyle.Ghost, null, 30, 96);
+            var reset = Ui.Pill(row, "Reset", () => { foreach (var ix in indexes) MediaSourceStore.Set(e.Uri, ix, ""); Toast("Back to the address in the scene.", 3f); RebuildDetails(); }, Ui.BtnStyle.Ghost, null, 30, 96);
             Ui.Size(reset.gameObject, -1, 96, 1);
         }
 

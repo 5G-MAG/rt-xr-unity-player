@@ -191,7 +191,7 @@ namespace rt.xr.unity.app
                     {
                         string f = m_current.Media[i].Uri; name = Uri.UnescapeDataString(f.Substring(f.LastIndexOf('/') + 1));
                     }
-                    if (players.Count > 1) name += "  (+" + (players.Count - 1) + (players.Count == 2 ? " track)" : " tracks)");
+                    if (players.Count > 1) name += ", " + players.Count + " tracks";
                     var info = Ui.R("Info", card.transform);
                     Ui.VBox(info, 0, 0, TextAnchor.MiddleCenter);
                     Ui.Size(info.gameObject, -1, 84, 1);
