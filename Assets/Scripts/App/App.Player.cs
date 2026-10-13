@@ -376,7 +376,7 @@ namespace rt.xr.unity.app
             if (uses.Count > 0) Ui.Label(card.transform, "Uses: " + string.Join(", ", uses), 28, Ui.Regular, Ui.Dim, TextAnchor.UpperLeft, true);
             var pv = Ui.Pill(card.transform, "Preview without AR", () => { var e = m_current; LeavePlayer(); OpenScene(e, true); }, Ui.BtnStyle.Ghost, "eye");
             Ui.Size(pv.gameObject, -1, 100, 1);
-            m_arTrackingSince = -1f; m_arPlaced = false;
+            m_arTrackingSince = -1f; m_arPlaced = false; m_oldPlanes.Clear();
             m_userScale = 1f; m_userYaw = 0f; m_gestActive = false; m_placeOnWall = false; m_scanAgain = false;
             if (GLTFast.AnchorPlacement.TapToPlace && GLTFast.AnchorPlacement.HasPlaceable)
             {
@@ -422,6 +422,18 @@ namespace rt.xr.unity.app
 
         private static Material s_planeMat;
 
+        // Surfaces known when the user pressed Unlock are not offered again: placing anew needs surfaces scanned since then.
+        private readonly HashSet<UnityEngine.XR.ARSubsystems.TrackableId> m_oldPlanes = new HashSet<UnityEngine.XR.ARSubsystems.TrackableId>();
+        private int FreshSurfaceCount(bool vertical)
+        {
+            var pm = FindObjectOfType<ARPlaneManager>();
+            if (pm == null) return 0;
+            int n = 0;
+            foreach (var plane in pm.trackables)
+                if (plane != null && !m_oldPlanes.Contains(plane.trackableId) && (plane.alignment == PlaneAlignment.Vertical) == vertical) n++;
+            return n;
+        }
+
         private Button m_arLockBtn;
         private Button m_wallBtn;
         private bool m_placeOnWall;
@@ -452,7 +464,13 @@ namespace rt.xr.unity.app
             var label = m_arLockBtn != null ? m_arLockBtn.GetComponentInChildren<Text>() : null;
             if (label != null) label.text = GLTFast.AnchorPlacement.Locked ? "Unlock" : "Lock in place";
             if (GLTFast.AnchorPlacement.Locked) { HideReticle(); m_scanAgain = false; }
-            else { HideReticle(); m_scanAgain = true; }   // unlocked: the surfaces are scanned and drawn again until the scene is placed
+            else
+            {
+                HideReticle(); m_scanAgain = true;
+                // new surfaces must be scanned: the ones known now are set aside
+                var pmU = PlayerPrefs.GetInt("set.unlockscan", 1) == 1 ? FindObjectOfType<ARPlaneManager>() : null;
+                if (pmU != null) foreach (var pl in pmU.trackables) if (pl != null) m_oldPlanes.Add(pl.trackableId);
+            }   // unlocked: the surfaces are scanned and drawn again until the scene is placed
             Toast(GLTFast.AnchorPlacement.Locked ? "Locked. The scene stays where it is." : "Unlocked. Move the phone to scan the surfaces, then tap where the scene should go.", 3.5f);
         }
 
@@ -588,6 +606,8 @@ namespace rt.xr.unity.app
             if (GLTFast.AnchorPlacement.Locked && !GLTFast.AnchorPlacement.AnyAwaiting) { Toast("The scene is fixed. Press Unlock to move it.", 2.5f); return true; }
             var rm = EnsureRaycastManager();
             if (rm == null) { Toast("This phone gave no surfaces to tap on.", 3f); return true; }
+            // nothing is placed before a surface has been found
+            if (!m_placeOnWall && FreshSurfaceCount(false) == 0) { Toast("Move the phone slowly over the floor first. Tap when green surfaces show.", 3.5f); return true; }
             var cam = Camera.main;
             var hits = new List<ARRaycastHit>();
             if (m_placeOnWall && cam != null)
@@ -601,7 +621,7 @@ namespace rt.xr.unity.app
                 foreach (var h in hits)
                 {
                     var plane = h.trackable as ARPlane;
-                    if (plane == null) continue;
+                    if (plane == null || m_oldPlanes.Contains(plane.trackableId)) continue;
                     if (ConfirmOnReticle(h.pose.position)) return true;
                     if (GLTFast.AnchorPlacement.TryPlace(plane, h.pose, true))
                     {
@@ -847,7 +867,7 @@ namespace rt.xr.unity.app
             {
                 if (plane == null) continue;
                 bool vertical = plane.alignment == PlaneAlignment.Vertical;
-                bool wanted = !placed && (vertical == m_placeOnWall);
+                bool wanted = !placed && (vertical == m_placeOnWall) && !m_oldPlanes.Contains(plane.trackableId);
                 if (plane.gameObject.activeSelf != wanted) plane.gameObject.SetActive(wanted);
                 if (!wanted) continue;
                 DrawSurface(plane, vertical);
@@ -912,8 +932,9 @@ namespace rt.xr.unity.app
             {
                 case ARSessionState.SessionTracking:
                     if (GLTFast.AnchorPlacement.TapToPlace && GLTFast.AnchorPlacement.HasPlaceable)
-                        if (GLTFast.AnchorPlacement.AnyAwaiting) text = "Tap a surface where the scene should go.";
-                        else if (m_scanAgain) text = "Scanning surfaces. Tap one to move the scene there.";
+                        if ((GLTFast.AnchorPlacement.AnyAwaiting || m_scanAgain) && FreshSurfaceCount(m_placeOnWall) == 0) text = m_placeOnWall ? "Move the phone slowly along the wall." : "Move the phone slowly over the floor.";
+                        else if (GLTFast.AnchorPlacement.AnyAwaiting) text = "Tap a green surface where the scene should go.";
+                        else if (m_scanAgain) text = "Tap a new green surface to move the scene there.";
                         else if (GLTFast.AnchorPlacement.Locked) text = "Scene fixed in place. Press Unlock to move it.";
                         else text = "Tap the blue circle again to fix the scene here, or tap elsewhere to move it. Pinch to resize, twist to turn.";
                     else

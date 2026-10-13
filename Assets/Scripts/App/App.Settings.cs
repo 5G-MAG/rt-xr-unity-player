@@ -53,6 +53,7 @@ namespace rt.xr.unity.app
             Toggle(player, "Light scenes that have no light", "Adds a soft light so such scenes are not dark.", "set.filllight", true);
             Toggle(player, "Start in the Walk camera", "Instead of Orbit.", "set.walk", false);
             Toggle(player, "Tap to place AR scenes", "Not part of the specification. On: choose the surface and the spot yourself, resize and turn the scene. Off: the scene is placed where its anchor says (the detected floor or plane).", "set.taptoplace2", true);
+            Toggle(player, "Scan new surfaces after Unlock", "Not part of the specification, only with tap to place. On: Unlock sets the known surfaces aside and offers only surfaces found afterwards. Off: Unlock keeps the known surfaces and adds new ones.", "set.unlockscan", true);
             Toggle(player, "Sit the scene on the surface", "Not part of the specification, only with tap to place. On: the scene stands on the spot you tap, ignoring the height its file gives it. Off: the file's own offset is kept.", "set.groundplace", false);
             Toggle(player, "Brighter video", "Not part of the specification. Off by default: the picture is shown as the video has it. On: twice as bright, for a dark video in a lit room.", "set.brightvideo2", false);
             Toggle(player, "Start media only when I press play", "Not part of the specification, which says a media with autoplay true starts by itself. On: videos and sounds wait for the play button.", "set.holdplay", true);
