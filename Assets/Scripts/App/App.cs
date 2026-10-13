@@ -292,7 +292,7 @@ namespace rt.xr.unity.app
             GLTFast.AnchorPlacement.PlaceOnAnySurface = PlayerPrefs.GetInt("set.anysurface", 0) == 1;
             GLTFast.AnchorPlacement.GroundOnPlacement = PlayerPrefs.GetInt("set.groundplace", 0) == 1;
             rt.xr.unity.MediaPlayer.HoldAutoplay = PlayerPrefs.GetInt("set.holdplay", 1) == 1 && !m_testSceneCam && !m_testAutoplay;
-            rt.xr.unity.VideoTexture.Gain = PlayerPrefs.GetInt("set.brightvideo", 1) == 1 ? 2f : 1f;
+            rt.xr.unity.VideoTexture.Gain = PlayerPrefs.GetInt("set.brightvideo2", 0) == 1 ? 2f : 1f;
             rt.xr.unity.MediaPlayer.ContentShown = false;
             rt.xr.unity.MediaPlayer.AwaitContentShown = !noAR && e.UsesAnchor && !m_testSceneCam;
             AudioListener.volume = rt.xr.unity.MediaPlayer.AwaitContentShown ? 0f : 1f;
