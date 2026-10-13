@@ -43,7 +43,8 @@ namespace rt.xr.unity
         // MAF buffer
         public readonly MediaBufferHandler BufferHandler;
         public readonly BufferInfoArray BufferInfo;
-        private bool useAccessorHeaders = true;
+        // the pipeline writes a timed accessor information header exactly when the scene signals one (BufferInfo.timedHeader)
+        private readonly bool useAccessorHeaders;
         private BufferInfoHeaderArray bufferHeaders = null;
 
         public readonly int ChannelCount;
@@ -65,10 +66,11 @@ namespace rt.xr.unity
             BufferInfo = bufferInfo;
             ChannelCount = BufferInfo.Count; 
             SampleRate = sampleRate;
+            useAccessorHeaders = BufferInfo.Count > 0 && BufferInfo[0].timedHeader;
 
             if (useAccessorHeaders)
             {
-                bufferHeaders = BufferInfoHeader.CreateAccessorsHeaders(handler.BufferInfo, true);
+                bufferHeaders = BufferInfoHeader.CreateAccessorsHeaders(handler.BufferInfo, handler.BufferInfo[0].immutable);
             }
 
             AudioSources = new List<SpatialAudioSource>();
