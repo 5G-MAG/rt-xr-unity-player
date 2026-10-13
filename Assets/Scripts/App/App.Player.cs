@@ -616,6 +616,9 @@ namespace rt.xr.unity.app
             }
             bool planeHit = rm.Raycast(screenPos, hits, TrackableType.PlaneWithinPolygon);
             Debug.Log("App: tap " + screenPos + " planes=" + hits.Count + (hits.Count > 0 && hits[0].trackable is ARPlane ? " first=" + ((ARPlane)hits[0].trackable).alignment : ""));
+            int oldHits = 0, freshHits = 0;
+            foreach (var h0 in hits) { var p0 = h0.trackable as ARPlane; if (p0 == null) continue; if (m_oldPlanes.Contains(p0.trackableId)) oldHits++; else freshHits++; }
+            Debug.Log("App: tap surfaces under the finger: fresh " + freshHits + ", set aside " + oldHits);
             if (planeHit)
             {
                 foreach (var h in hits)
@@ -656,7 +659,9 @@ namespace rt.xr.unity.app
                     return true;
                 }
             }
-            Toast("No surface there yet. Move the phone slowly so it can see the floor or the wall.", 3.5f);
+            if (freshHits == 0 && oldHits > 0) Toast("That was a surface from before Unlock. Tap a green surface.", 3.5f);
+            else if (freshHits > 0) Toast("The scene could not be placed on that surface. Tap another green surface.", 3.5f);
+            else Toast("No surface there yet. Move the phone slowly so it can see the floor or the wall.", 3.5f);
             return true;
         }
 
