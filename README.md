@@ -18,6 +18,7 @@
 
 <p align="center">
   <a href="https://www.5g-mag.com/reference-tools/xr/">Project page</a> &nbsp;&middot;&nbsp;
+  <a href="docs/xr-scene-player.md">Documentation</a> &nbsp;&middot;&nbsp;
   <a href="https://github.com/5G-MAG/rt-xr-unity-player/issues">Issues</a> &nbsp;&middot;&nbsp;
   <a href="https://www.5g-mag.com/contributing">Contributing</a>
 </p>
