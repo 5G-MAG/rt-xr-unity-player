@@ -70,7 +70,8 @@ public class PlayerApplication : MonoBehaviour
     }
 
     private void onGlTFLoadComplete(){
-        if (m_Viewer.PassThroughEnabled){
+        if (QuestRig.Active) return;     // the headset drives the camera
+        if (m_Viewer.ARCameraEnabled){
             disableCameraController();
         } else {
             enableCameraController();
