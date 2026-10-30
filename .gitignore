@@ -1,5 +1,5 @@
 AndroidStudio/
-
+.utmp/
 .idea
 .ignore
 .DS_Store
