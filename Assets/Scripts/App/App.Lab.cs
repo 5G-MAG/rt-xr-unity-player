@@ -43,8 +43,8 @@ namespace rt.xr.unity.app
             new Family { Id = "audio", Name = "Spatial audio", Icon = "volume", Color = Ui.Audio, Exts = new[] { "MPEG_audio_spatial" } },
             new Family { Id = "anchors", Name = "Anchors", Icon = "anchor", Color = Ui.Good, Exts = new[] { "MPEG_anchor" } },
             new Family { Id = "interactivity", Name = "Interactivity", Icon = "touch", Color = Ui.Warn, Exts = new[] { "MPEG_scene_interactivity", "MPEG_node_interactivity" } },
-            new Family { Id = "haptics", Name = "Haptics", Icon = "vibrate", Color = Ui.Bad, Exts = new[] { "MPEG_haptic" } },
-            new Family { Id = "lighting", Name = "Lighting", Icon = "light", Color = Ui.LightC, Exts = new[] { "KHR_lights_punctual", "MPEG_lights_texture_based" } },
+            new Family { Id = "haptics", Name = "Haptics", Icon = "vibrate", Color = Ui.Bad, Exts = new[] { "MPEG_haptic", "MPEG_haptic_material" } },
+            new Family { Id = "lighting", Name = "Lighting", Icon = "light", Color = Ui.LightC, Exts = new[] { "KHR_lights_punctual", "MPEG_lights_punctual", "MPEG_lights_texture_based" } },
             new Family { Id = "materials", Name = "Materials", Icon = "layers", Color = Ui.MaterialC, Exts = new[] { "KHR_materials_*" } },
             new Family { Id = "compression", Name = "Compression and transforms", Icon = "cube", Color = Ui.CompressC, Exts = new[] { "KHR_draco_mesh_compression", "KHR_texture_basisu", "KHR_mesh_quantization", "KHR_texture_transform" } },
         };
