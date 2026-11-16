@@ -438,7 +438,7 @@ namespace rt.xr.unity.app
                 if (!present) continue;
                 any = true;
                 bool off = m_off.Contains(f.Id);
-                bool effect = f.Id == "lighting" || f.Id == "audio" || f.Id == "interactivity" || f.Id == "materials" || f.Id == "video" || f.Id == "anchors";
+                bool effect = f.Id == "lighting" || f.Id == "audio" || f.Id == "interactivity" || f.Id == "video" || f.Id == "anchors";
                 string state = !effect ? "No visible effect" : (off ? "Switched off" : "On");
                 string fid = f.Id;
                 ToolRow(pad, f.Icon, f.Name, state, effect && off, f.Color, effect ? (Action)(() => { SwitchFamily(fid, !m_off.Contains(fid)); RebuildTools(); }) : null);
@@ -492,9 +492,6 @@ namespace rt.xr.unity.app
                     break;
                 case "interactivity":
                     foreach (var bc in FindObjectsOfType<GLTFast.BehaviorController>()) bc.enabled = !off;
-                    break;
-                case "materials":
-                    SwapMaterials(off);
                     break;
                 case "video":
                     foreach (var mp in FindObjectsOfType<MediaPlayer>()) { try { if (off) mp.Stop(); else mp.Play(); } catch { } }
