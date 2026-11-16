@@ -44,9 +44,7 @@ namespace rt.xr.unity.app
             new Family { Id = "anchors", Name = "Anchors", Icon = "anchor", Color = Ui.Good, Exts = new[] { "MPEG_anchor" } },
             new Family { Id = "interactivity", Name = "Interactivity", Icon = "touch", Color = Ui.Warn, Exts = new[] { "MPEG_scene_interactivity", "MPEG_node_interactivity" } },
             new Family { Id = "haptics", Name = "Haptics", Icon = "vibrate", Color = Ui.Bad, Exts = new[] { "MPEG_haptic", "MPEG_haptic_material" } },
-            new Family { Id = "lighting", Name = "Lighting", Icon = "light", Color = Ui.LightC, Exts = new[] { "KHR_lights_punctual", "MPEG_lights_punctual", "MPEG_lights_texture_based" } },
-            new Family { Id = "materials", Name = "Materials", Icon = "layers", Color = Ui.MaterialC, Exts = new[] { "KHR_materials_*" } },
-            new Family { Id = "compression", Name = "Compression and transforms", Icon = "cube", Color = Ui.CompressC, Exts = new[] { "KHR_draco_mesh_compression", "KHR_texture_basisu", "KHR_mesh_quantization", "KHR_texture_transform" } },
+            new Family { Id = "lighting", Name = "Lighting", Icon = "light", Color = Ui.LightC, Exts = new[] { "MPEG_lights_punctual", "MPEG_lights_texture_based" } },
         };
 
         public static Family FamilyOfExtension(string ext) { return Families.FirstOrDefault(f => f.Match(ext)); }
@@ -239,9 +237,6 @@ namespace rt.xr.unity.app
                     break;
                 case "lighting":
                     Tip(tools, "In a scene, switch lighting off in the lab tools to see the scene without its lights.");
-                    break;
-                case "materials":
-                    Tip(tools, "In a scene, switch materials off in the lab tools to see the geometry with one plain material.");
                     break;
                 case "haptics":
                     Tip(tools, "None of the scenes in the library lists a haptic extension. This button feels the phone's vibrator, so you know what a pulse is like on this device.");
