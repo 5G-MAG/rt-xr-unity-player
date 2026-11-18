@@ -343,25 +343,47 @@ namespace rt.xr.unity.app
             OpenScene(e, flat);
         }
 
+        // Play starts every clip of the scene together (Animation.Play() would start only the default clip of each Animation
+        // component, and glTFast puts all the clips of a scene on one component). Pause freezes them where they are; Play after
+        // the clips ended starts them again from the beginning.
         private void ToggleAnimation()
         {
             if (m_anims.Count == 0) return;
-            if (m_animPlaying)
+            if (m_animPlaying && AnimationRunning())
             {
-                foreach (var a in m_anims) foreach (AnimationState st in a) st.speed = 0f;
+                foreach (var a in m_anims) if (a != null) foreach (AnimationState st in a) st.speed = 0f;
                 m_animPlaying = false;
             }
             else
             {
                 foreach (var a in m_anims)
                 {
-                    foreach (AnimationState st in a) st.speed = 1f;
-                    if (!a.isPlaying) a.Play();
+                    if (a == null) continue;
+                    int layer = 0;
+                    foreach (AnimationState st in a)
+                    {
+                        st.speed = 1f;
+                        if (st.enabled) continue;   // paused: resumes where it is
+                        // one layer per clip, so that the clips play side by side instead of replacing one another
+                        st.layer = layer++;
+                        st.time = 0f;
+                        st.weight = 1f;
+                        st.enabled = true;
+                    }
                 }
                 m_animPlaying = true;
             }
-            if (m_animIcon != null) m_animIcon.sprite = Ui.Icon(m_animPlaying ? "pause" : "play");
+            SetAnimationIcon();
         }
+
+        // a clip that reached its end (wrap mode Once) is disabled by Unity
+        private bool AnimationRunning()
+        {
+            foreach (var a in m_anims) if (a != null) foreach (AnimationState st in a) if (st.enabled) return true;
+            return false;
+        }
+
+        private void SetAnimationIcon() { if (m_animIcon != null) m_animIcon.sprite = Ui.Icon(m_animPlaying ? "pause" : "play"); }
 
         private void BuildArCoach(Transform parent)
         {
@@ -508,6 +530,8 @@ namespace rt.xr.unity.app
         {
             if (m_screen != Screen_.Player) return;
             if (m_viewer != null) m_viewer.showLog = PlayerPrefs.GetInt("set.showlog", 0) == 1;
+            // the clips ended: the button offers play again
+            if (m_animPlaying && !AnimationRunning()) { m_animPlaying = false; SetAnimationIcon(); }
 
             // tap to show or hide the controls
             var touches = Input.touches;
