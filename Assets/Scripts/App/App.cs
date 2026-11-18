@@ -40,6 +40,7 @@ namespace rt.xr.unity.app
         }
 
         private SceneViewer m_viewer;
+        private PlayerApplication m_legacy;
         private Canvas m_canvas;
         private CanvasScaler m_scaler;
         private RectTransform m_root;
@@ -55,6 +56,8 @@ namespace rt.xr.unity.app
         private Rect m_lastSafe;
 
         public SceneViewer Viewer { get { return m_viewer; } }
+        // the playlist is configured on the stock PlayerApplication; without one, Catalog uses its default location
+        private string ConfigFileLocation { get { return m_legacy != null ? m_legacy.ConfigFileLocation : null; } }
         public SceneEntry Current { get { return m_current; } }
         public CamRig Rig { get { return m_rig; } }
         public RectTransform Root { get { return m_root; } }
@@ -78,8 +81,8 @@ namespace rt.xr.unity.app
             Screen.sleepTimeout = SleepTimeout.SystemSetting;
 
             m_viewer = FindObjectOfType<SceneViewer>();
-            var legacy = FindObjectOfType<PlayerApplication>();
-            if (legacy != null) legacy.enabled = false;      // the stock list and buttons are replaced by this interface
+            m_legacy = FindObjectOfType<PlayerApplication>();
+            if (m_legacy != null) m_legacy.enabled = false;      // the stock list and buttons are replaced by this interface
             // the stock EventSystem is a child of the stock canvas: take it out before the canvas is hidden
             var es = FindObjectOfType<UnityEngine.EventSystems.EventSystem>();
             if (es != null && es.transform.parent != null) es.transform.SetParent(null, false);
@@ -102,7 +105,7 @@ namespace rt.xr.unity.app
             BuildOpening();
             BuildDialogs();
             ShowLibrary();
-            StartCoroutine(Catalog.Load(m_viewer.ConfigFileLocation));
+            StartCoroutine(Catalog.Load(ConfigFileLocation));
             Catalog.Changed += OnCatalogChanged;
             StartCoroutine(AutoOpenRoutine());
         }
@@ -190,7 +193,7 @@ namespace rt.xr.unity.app
         {
             if (!focus || Catalog.Loading || Catalog.Entries.Count == 0) return;
             // scenes that could not be reached while the phone was asleep or off the network are tried again
-            if (Catalog.Entries.Any(e => e.PeekFailed)) StartCoroutine(Catalog.Load(m_viewer.ConfigFileLocation));
+            if (Catalog.Entries.Any(e => e.PeekFailed)) StartCoroutine(Catalog.Load(ConfigFileLocation));
         }
 
         private void OnDestroy()
