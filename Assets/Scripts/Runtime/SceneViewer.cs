@@ -187,6 +187,9 @@ namespace rt.xr.unity
             }
         }
 
+        // the objects that instantiating the current scene added under this transform
+        private readonly List<GameObject> m_sceneRoots = new List<GameObject>();
+
         // an exception while loading reports an error to the caller instead of leaving it waiting
         async public void LoadGltf(string filePath)
         {
@@ -220,7 +223,10 @@ namespace rt.xr.unity
                     // a headset session has no ARCore plane detection: MPEG_anchor nodes stay where the scene puts them
                     Debug.LogWarning("MPEG_anchor is not resolved on a headset");
                 }
+                var existing = new HashSet<Transform>();
+                foreach (Transform child in transform) existing.Add(child);
                 await mpegGltfImport.InstantiateMainSceneAsync(transform);
+                foreach (Transform child in transform) if (!existing.Contains(child)) m_sceneRoots.Add(child.gameObject);
 
                 // timed metadata for the MPEG scene extensions (animation timing, viewport, mesh linking, lights)
                 // Init on every load clears the buffer layouts cached for the previous scene
@@ -270,6 +276,11 @@ namespace rt.xr.unity
             }
 
             VirtualSceneGraph.ResetAll();
+
+            // the nodes of the scene: Dispose below destroys only the assets (meshes, materials, clips, textures), and the
+            // components left on the nodes (animations, lights, audio sources, triggers) would carry over to the next scene
+            foreach (var root in m_sceneRoots) if (root != null) Destroy(root);
+            m_sceneRoots.Clear();
 
             mpegGltfImport?.Dispose();
 
