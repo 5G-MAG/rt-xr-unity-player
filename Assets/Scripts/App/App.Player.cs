@@ -410,16 +410,66 @@ namespace rt.xr.unity.app
                 Ui.Size(m_arLockBtn.gameObject, -1, 100, 1);
                 var rs = Ui.Pill(placeRow, "Reset size", ResetArTransform, Ui.BtnStyle.Ghost);
                 Ui.Size(rs.gameObject, -1, 100, 1);
-                var modeRow = Ui.R("ModeRow", card.transform);
-                Ui.HBox(modeRow, 16, 0, TextAnchor.MiddleLeft);
-                Ui.Size(modeRow.gameObject, -1, 100, 1);
-                m_floorBtn = Ui.Pill(modeRow, "On the floor", () => SetSurfaceMode(false), Ui.BtnStyle.Ghost);
-                Ui.Size(m_floorBtn.gameObject, -1, 100, 1);
-                m_wallBtn = Ui.Pill(modeRow, "On a wall", () => SetSurfaceMode(true), Ui.BtnStyle.Ghost);
-                Ui.Size(m_wallBtn.gameObject, -1, 100, 1);
-                m_modeHelp = Ui.Label(card.transform, "", 28, Ui.Regular, Ui.Dim, TextAnchor.MiddleLeft, false);
-                SetSurfaceMode(false);
+                m_floorBtn = null; m_wallBtn = null;
+                if (GLTFast.AnchorPlacement.PlaceOnAnySurface)
+                {
+                    // not part of the specification: the user chooses the kind of surface
+                    var modeRow = Ui.R("ModeRow", card.transform);
+                    Ui.HBox(modeRow, 16, 0, TextAnchor.MiddleLeft);
+                    Ui.Size(modeRow.gameObject, -1, 100, 1);
+                    m_floorBtn = Ui.Pill(modeRow, "On the floor", () => SetSurfaceMode(false), Ui.BtnStyle.Ghost);
+                    Ui.Size(m_floorBtn.gameObject, -1, 100, 1);
+                    m_wallBtn = Ui.Pill(modeRow, "On a wall", () => SetSurfaceMode(true), Ui.BtnStyle.Ghost);
+                    Ui.Size(m_wallBtn.gameObject, -1, 100, 1);
+                }
+                m_modeHelp = Ui.Label(card.transform, "", 28, Ui.Regular, Ui.Dim, TextAnchor.UpperLeft, true);
+                m_shownSurface = null;
+                if (GLTFast.AnchorPlacement.PlaceOnAnySurface) SetSurfaceMode(GLTFast.AnchorPlacement.SurfaceIsWall(GLTFast.AnchorPlacement.NextSurface));
+                else FollowSceneSurface();
             }
+        }
+
+        // The anchor of the scene says which surface it goes on (TRACKABLE_FLOOR, or TRACKABLE_PLANE with its geometricConstraint): the
+        // placement follows it. With several anchors the next one still waiting decides, so the help changes once one is placed.
+        private GLTFast.PlacementSurface? m_shownSurface;
+        private void FollowSceneSurface()
+        {
+            if (GLTFast.AnchorPlacement.PlaceOnAnySurface || !GLTFast.AnchorPlacement.TapToPlace || !GLTFast.AnchorPlacement.HasPlaceable) return;
+            var s = GLTFast.AnchorPlacement.NextSurface;
+            m_placeOnWall = GLTFast.AnchorPlacement.SurfaceIsWall(s);
+            if (s == m_shownSurface && m_modeHelp != null && m_modeHelp.text.Length > 0) return;
+            m_shownSurface = s;
+            if (m_modeHelp != null) m_modeHelp.text = SurfaceHelp(s);
+        }
+
+        private static string SurfaceHelp(GLTFast.PlacementSurface? s)
+        {
+            switch (s)
+            {
+                case GLTFast.PlacementSurface.Vertical: return "The scene's anchor asks for a wall (vertical plane): tap a blue area. The scene hangs upright, facing you.";
+                case GLTFast.PlacementSurface.Horizontal: return "The scene's anchor asks for a horizontal plane: tap a green area, on the floor or a table.";
+                default: return "The scene's anchor asks for the floor: tap a green area on the floor.";
+            }
+        }
+
+        // What the scene is placed on, in the words of the status line.
+        private string SurfaceName(bool article)
+        {
+            if (GLTFast.AnchorPlacement.PlaceOnAnySurface) return m_placeOnWall ? (article ? "a wall" : "wall") : (article ? "the floor" : "floor");
+            switch (GLTFast.AnchorPlacement.NextSurface)
+            {
+                case GLTFast.PlacementSurface.Vertical: return article ? "a wall" : "wall";
+                case GLTFast.PlacementSurface.Horizontal: return article ? "a horizontal surface" : "horizontal";
+                default: return article ? "the floor" : "floor";
+            }
+        }
+
+        // True when a detected surface is offered for placing: of the kind the scene asks for, or of the kind the user chose.
+        private bool Offered(ARPlane plane)
+        {
+            if (plane == null) return false;
+            if (!GLTFast.AnchorPlacement.PlaceOnAnySurface) return GLTFast.AnchorPlacement.Accepts(plane);
+            return GLTFast.AnchorPlacement.IsUserSurface(plane) && (plane.alignment == PlaneAlignment.Vertical) == m_placeOnWall;
         }
 
         // In AR a placed scene faces the user, not a fixed direction: the fill light shines from the viewer's side, so the front of a surface
@@ -447,13 +497,13 @@ namespace rt.xr.unity.app
 
         // Surfaces known when the user pressed Unlock are not offered again: placing anew needs surfaces scanned since then.
         private readonly HashSet<UnityEngine.XR.ARSubsystems.TrackableId> m_oldPlanes = new HashSet<UnityEngine.XR.ARSubsystems.TrackableId>();
-        private int FreshSurfaceCount(bool vertical)
+        private int FreshSurfaceCount()
         {
             var pm = FindObjectOfType<ARPlaneManager>();
             if (pm == null) return 0;
             int n = 0;
             foreach (var plane in pm.trackables)
-                if (plane != null && !m_oldPlanes.Contains(plane.trackableId) && (plane.alignment == PlaneAlignment.Vertical) == vertical) n++;
+                if (plane != null && !m_oldPlanes.Contains(plane.trackableId) && Offered(plane)) n++;
             return n;
         }
 
@@ -474,8 +524,8 @@ namespace rt.xr.unity.app
             if (m_floorBtn != null) { var t = m_floorBtn.GetComponentInChildren<Text>(); if (t != null) t.color = wall ? Color.white : Ui.OnAccent; }
             if (m_wallBtn != null) { var t = m_wallBtn.GetComponentInChildren<Text>(); if (t != null) t.color = wall ? Ui.OnAccent : Color.white; }
             if (m_modeHelp != null) m_modeHelp.text = wall
-                ? "On a wall: tap a blue area. The scene hangs upright, facing you."
-                : "On the floor: tap a green area. The scene stands on the floor or a table.";
+                ? "On a wall (your choice, not the scene's): tap a blue area. The scene hangs upright, facing you."
+                : "On the floor (your choice, not the scene's): tap a green area. The scene stands on the floor or a table.";
         }
         private float m_userScale = 1f, m_userYaw = 0f;
         private bool m_gestActive;
@@ -570,6 +620,7 @@ namespace rt.xr.unity.app
             if (m_rig != null) m_rig.Enabled = !(m_detailsOpen || m_dlgOpen);
 
             if (Time.unscaledTime > m_mediaPoll) { m_mediaPoll = Time.unscaledTime + 0.25f; PollMedia(); }
+            FollowSceneSurface();
             if (m_arState != null) UpdateAr();
             UpdateArGestures();
             UpdateReticle();
@@ -631,8 +682,14 @@ namespace rt.xr.unity.app
             if (GLTFast.AnchorPlacement.Locked && !GLTFast.AnchorPlacement.AnyAwaiting) { Toast("The scene is fixed. Press Unlock to move it.", 2.5f); return true; }
             var rm = EnsureRaycastManager();
             if (rm == null) { Toast("This phone gave no surfaces to tap on.", 3f); return true; }
-            // nothing is placed before a surface has been found
-            if (!m_placeOnWall && FreshSurfaceCount(false) == 0) { Toast("Move the phone slowly over the floor first. Tap when green surfaces show.", 3.5f); return true; }
+            // nothing is placed before a surface has been found (a plain wall often has no plane: a wall can be placed on without one)
+            if (!m_placeOnWall && FreshSurfaceCount() == 0)
+            {
+                Toast(GLTFast.AnchorPlacement.NextSurface == GLTFast.PlacementSurface.Horizontal && !GLTFast.AnchorPlacement.PlaceOnAnySurface
+                    ? "Move the phone slowly over the floor or a table first. Tap when green surfaces show."
+                    : "Move the phone slowly over the floor first. Tap when green surfaces show.", 3.5f);
+                return true;
+            }
             var cam = Camera.main;
             var hits = new List<ARRaycastHit>();
             if (m_placeOnWall && cam != null)
@@ -641,15 +698,15 @@ namespace rt.xr.unity.app
             }
             bool planeHit = rm.Raycast(screenPos, hits, TrackableType.PlaneWithinPolygon);
             Debug.Log("App: tap " + screenPos + " planes=" + hits.Count + (hits.Count > 0 && hits[0].trackable is ARPlane ? " first=" + ((ARPlane)hits[0].trackable).alignment : ""));
-            int oldHits = 0, freshHits = 0;
-            foreach (var h0 in hits) { var p0 = h0.trackable as ARPlane; if (p0 == null) continue; if (m_oldPlanes.Contains(p0.trackableId)) oldHits++; else freshHits++; }
-            Debug.Log("App: tap surfaces under the finger: fresh " + freshHits + ", set aside " + oldHits);
+            int oldHits = 0, freshHits = 0, otherKind = 0;
+            foreach (var h0 in hits) { var p0 = h0.trackable as ARPlane; if (p0 == null) continue; if (m_oldPlanes.Contains(p0.trackableId)) oldHits++; else if (!Offered(p0)) otherKind++; else freshHits++; }
+            Debug.Log("App: tap surfaces under the finger: fresh " + freshHits + ", set aside " + oldHits + ", other kind " + otherKind + ", wanted " + SurfaceName(false));
             if (planeHit)
             {
                 foreach (var h in hits)
                 {
                     var plane = h.trackable as ARPlane;
-                    if (plane == null || m_oldPlanes.Contains(plane.trackableId)) continue;
+                    if (plane == null || m_oldPlanes.Contains(plane.trackableId) || !Offered(plane)) continue;
                     if (ConfirmOnReticle(h.pose.position)) return true;
                     if (GLTFast.AnchorPlacement.TryPlace(plane, h.pose, true))
                     {
@@ -662,12 +719,13 @@ namespace rt.xr.unity.app
                     }
                 }
             }
-            // No plane took the tap. Held upright the phone is looking at a wall, which often has no plane: place the scene on the wall.
-            if (LooksAtWall(cam))
+            // No plane took the tap. Held upright the phone is looking at a wall, which often has no plane: with the free choice of surface
+            // the scene goes on the wall. A scene whose anchor asks for the floor or a horizontal plane never does.
+            if (GLTFast.AnchorPlacement.PlaceOnAnySurface && LooksAtWall(cam))
             {
                 return PlaceOnWall(rm, screenPos, cam, hits);
             }
-            // No plane there (a plain wall often has none): use the surface the phone estimates from the feature points under the finger.
+            // No plane there: use the surface the phone estimates from the feature points under the finger, if it is of the kind wanted.
             hits.Clear();
             if (rm.Raycast(screenPos, hits, TrackableType.FeaturePoint))
             {
@@ -675,6 +733,11 @@ namespace rt.xr.unity.app
                 Vector3 n = h.pose.up;
                 bool wall = Mathf.Abs(Vector3.Dot(n, Vector3.up)) < 0.5f;
                 Debug.Log("App: tap feature point normal=" + n.ToString("0.00") + " wall=" + wall);
+                if (wall && !GLTFast.AnchorPlacement.PlaceOnAnySurface)
+                {
+                    Toast("That spot looks like a wall; this scene's anchor asks for " + SurfaceName(true) + ". Tap a green surface.", 3.5f);
+                    return true;
+                }
                 if (ConfirmOnReticle(h.pose.position)) return true;
                 if (GLTFast.AnchorPlacement.TryPlacePose(h.pose, wall, true))
                 {
@@ -686,7 +749,8 @@ namespace rt.xr.unity.app
             }
             if (freshHits == 0 && oldHits > 0) Toast("That was a surface from before Unlock. Tap a green surface.", 3.5f);
             else if (freshHits > 0) Toast("The scene could not be placed on that surface. Tap another green surface.", 3.5f);
-            else Toast("No surface there yet. Move the phone slowly so it can see the floor or the wall.", 3.5f);
+            else if (otherKind > 0) Toast("This scene's anchor asks for " + SurfaceName(true) + ". Tap a " + (m_placeOnWall ? "blue" : "green") + " surface.", 3.5f);
+            else Toast("No surface there yet. Move the phone slowly so it can see " + SurfaceName(true) + ".", 3.5f);
             return true;
         }
 
@@ -897,7 +961,7 @@ namespace rt.xr.unity.app
             {
                 if (plane == null) continue;
                 bool vertical = plane.alignment == PlaneAlignment.Vertical;
-                bool wanted = !placed && (vertical == m_placeOnWall) && !m_oldPlanes.Contains(plane.trackableId);
+                bool wanted = !placed && Offered(plane) && !m_oldPlanes.Contains(plane.trackableId);
                 if (plane.gameObject.activeSelf != wanted) plane.gameObject.SetActive(wanted);
                 if (!wanted) continue;
                 DrawSurface(plane, vertical);
@@ -962,13 +1026,13 @@ namespace rt.xr.unity.app
             {
                 case ARSessionState.SessionTracking:
                     if (GLTFast.AnchorPlacement.TapToPlace && GLTFast.AnchorPlacement.HasPlaceable)
-                        if ((GLTFast.AnchorPlacement.AnyAwaiting || m_scanAgain) && FreshSurfaceCount(m_placeOnWall) == 0) text = m_placeOnWall ? "Move the phone slowly along the wall." : "Move the phone slowly over the floor.";
-                        else if (GLTFast.AnchorPlacement.AnyAwaiting) text = "Tap a green surface where the scene should go.";
-                        else if (m_scanAgain) text = "Tap a new green surface to move the scene there.";
+                        if ((GLTFast.AnchorPlacement.AnyAwaiting || m_scanAgain) && FreshSurfaceCount() == 0) text = m_placeOnWall ? "This scene goes on a wall. Move the phone slowly along it, or tap the wall." : "This scene goes on " + SurfaceName(true) + ". Move the phone slowly over it.";
+                        else if (GLTFast.AnchorPlacement.AnyAwaiting) text = m_placeOnWall ? "Tap the wall where the scene should go." : "Tap a green surface where the scene should go.";
+                        else if (m_scanAgain) text = m_placeOnWall ? "Tap the wall to move the scene there." : "Tap a new green surface to move the scene there.";
                         else if (GLTFast.AnchorPlacement.Locked) text = "Scene fixed in place. Press Unlock to move it.";
                         else text = "Tap the blue circle again to fix the scene here, or tap elsewhere to move it. Pinch to resize, twist to turn.";
                     else
-                        text = m_arPlaced ? "Scene placed on the floor. Look around to find it." : "Tracking. Move around to place the scene.";
+                        text = m_arPlaced ? "Scene placed on " + SurfaceName(true) + ". Look around to find it." : "Tracking. Move around to place the scene.";
                     if (m_arTrackingSince < 0) m_arTrackingSince = Time.unscaledTime;
                     break;
                 case ARSessionState.SessionInitializing: text = "Move your phone slowly so it can see the room."; m_arTrackingSince = -1; break;
@@ -1000,7 +1064,7 @@ namespace rt.xr.unity.app
                 AudioListener.volume = 1f;
                 Debug.Log("App: content shown");
             }
-            if (m_arPlaced && st == ARSessionState.SessionTracking) text = "Scene placed on the floor. Look around to find it.";
+            if (m_arPlaced && st == ARSessionState.SessionTracking) text = "Scene placed on " + SurfaceName(true) + ". Look around to find it.";
             if (st != m_arLastState) { m_arLastState = st; Debug.Log("App: AR session state " + st); }
             m_arState.text = text;
             m_arState.color = st == ARSessionState.Unsupported ? Ui.Warn : Ui.Dim;

@@ -71,7 +71,7 @@ namespace rt.xr.unity.app
                 if (mwText != null) mwText.text = MarkerWidthLabel();
             });
             Ui.Label(player, "Real width of the marker image you point the camera at, so AR can place content on it. Tap to change. Scene: the size the scene file gives.", 26, Ui.Regular, Ui.Dim, TextAnchor.UpperLeft, true);
-            Toggle(player, "Place on any surface", "Not part of the specification. On: floor, table or wall, whatever you tap. Off: only the surface the scene asks for.", "set.anysurface", false);
+            Toggle(player, "Place on any surface", "Not part of the specification, only with tap to place. On: buttons let you choose floor or wall, whatever the scene asks for. Off: the scene goes on the surface its anchor names (the floor, a horizontal or a vertical plane).", "set.anysurface", false);
             Toggle(player, "Anchor to the detected surface", "Off: a free-standing anchor at the spot you tap. On: the anchor follows the surface as it is refined.", "set.planeanchor", false);
             Toggle(player, "Turn placed scenes toward me", "Not part of the specification: the scene keeps the orientation its file gives.", "set.faceuser", false);
 
