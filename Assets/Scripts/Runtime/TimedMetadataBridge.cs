@@ -78,7 +78,7 @@ namespace rt.xr.unity
 
             foreach (int accessorIndex in MpegTimedAccessors.GetWanted())
             {
-                if (warned.Add("seen/" + accessorIndex)) Debug.Log("XRTEST timed accessor wanted: " + accessorIndex);
+                if (warned.Add("seen/" + accessorIndex) && GLTFast.MpegDiagnostics.Enabled) Debug.Log("XRTEST timed accessor wanted: " + accessorIndex);
                 try
                 {
                     Pump(accessorIndex, root, players);
@@ -155,7 +155,7 @@ namespace rt.xr.unity
                     Warn("updatemode/" + media, "scene update media " + media + ": update_mode of the GLTFPatchConfigBox cannot be read from the sample entry (ISO/IEC 14496-12 was not available), update_mode 0 is used for patch samples");
                     updateMode = 0;
                 }
-                Debug.Log("XRTEST scene update enqueued media=" + media + " t=" + p.time.ToString("0.00") + " sync=" + p.sync + " bytes=" + p.payload.Length + " clock=" + mp.CurrentTime.ToString("0.00"));
+                if (GLTFast.MpegDiagnostics.Enabled) Debug.Log("XRTEST scene update enqueued media=" + media + " t=" + p.time.ToString("0.00") + " sync=" + p.sync + " bytes=" + p.payload.Length + " clock=" + mp.CurrentTime.ToString("0.00"));
                 MpegSceneUpdates.Enqueue(media, -1, p.time, p.sync, p.payload, updateMode);
             }
         }
@@ -254,7 +254,7 @@ namespace rt.xr.unity
             {
                 var sample = queue[0];
                 queue.RemoveAt(0);
-                Debug.Log("XRTEST timed publish accessor " + accessorIndex + " t=" + sample.time.ToString("0.00") + " bytes=" + sample.bytes.Length + " count=" + sample.count + " clock=" + mp.CurrentTime.ToString("0.00"));
+                if (GLTFast.MpegDiagnostics.Enabled) Debug.Log("XRTEST timed publish accessor " + accessorIndex + " t=" + sample.time.ToString("0.00") + " bytes=" + sample.bytes.Length + " count=" + sample.count + " clock=" + mp.CurrentTime.ToString("0.00"));
                 MpegTimedAccessors.Publish(accessorIndex, sample.time, sample.bytes, sample.count);
             }
         }

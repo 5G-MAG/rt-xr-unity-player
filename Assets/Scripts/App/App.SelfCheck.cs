@@ -30,7 +30,12 @@ namespace rt.xr.unity.app
 
         public void RunAllScenes()
         {
-            if (m_busy || m_batch || Catalog.Entries.Count == 0) { Toast("Nothing to check yet."); return; }
+            if (m_busy || m_batch || Catalog.Entries.Count == 0)
+            {
+                Toast("Nothing to check yet.");
+                if (GLTFast.MpegDiagnostics.Enabled) Debug.Log("XRTEST check done opened=0 skipped=0 failed=0 reason=notstarted");
+                return;
+            }
             StartCoroutine(RunAllRoutine());
         }
 
@@ -72,6 +77,27 @@ namespace rt.xr.unity.app
             }
             m_batch = false;
             ShowCheckReport();
+            if (GLTFast.MpegDiagnostics.Enabled)
+            {
+                // test runs (docs/testing.md): one line per scene, then the file that holds the report
+                foreach (var r in m_checkRows) Debug.Log("XRTEST check " + CheckStatus(r) + " " + CheckRowText(r));
+                Debug.Log("XRTEST check done opened=" + m_checkRows.Count(r => r.Opened) + " skipped=" + m_checkRows.Count(r => r.Skipped) + " failed=" + m_checkRows.Count(r => !r.Opened && !r.Skipped) + " file=" + CheckReportPath);
+            }
+        }
+
+        private static string CheckReportPath { get { return System.IO.Path.Combine(Application.persistentDataPath, "scene-check.txt"); } }
+
+        private static string CheckStatus(CheckRow r) { return r.Opened ? "OK" : (r.Skipped ? "SKIP" : "FAIL"); }
+
+        // the scene and what was observed, after the status
+        private static string CheckRowText(CheckRow r)
+        {
+            var sb = new StringBuilder(r.Entry.Uri);
+            if (r.Opened) sb.Append(" (" + r.Seconds.ToString("0.0") + " s)");
+            if (r.Unsupported.Count > 0) sb.Append(" unsupported: " + string.Join(", ", r.Unsupported));
+            if (r.Missing.Count > 0) sb.Append(" media missing: " + string.Join(", ", r.Missing));
+            if (!r.Opened) sb.Append(" " + r.Failure);
+            return sb.ToString();
         }
 
         private string CheckReportText()
@@ -79,21 +105,13 @@ namespace rt.xr.unity.app
             var sb = new StringBuilder();
             sb.AppendLine(ProductName + " " + Application.version + " scene check on " + SystemInfo.deviceModel);
             sb.AppendLine(m_checkRows.Count(r => r.Opened) + " of " + m_checkRows.Count(r => !r.Skipped) + " scenes opened as a flat preview, " + m_checkRows.Count(r => r.Skipped) + " skipped.");
-            foreach (var r in m_checkRows)
-            {
-                sb.Append((r.Opened ? "OK   " : (r.Skipped ? "SKIP " : "FAIL ")) + r.Entry.Uri);
-                if (r.Opened) sb.Append(" (" + r.Seconds.ToString("0.0") + " s)");
-                if (r.Unsupported.Count > 0) sb.Append(" unsupported: " + string.Join(", ", r.Unsupported));
-                if (r.Missing.Count > 0) sb.Append(" media missing: " + string.Join(", ", r.Missing));
-                if (!r.Opened) sb.Append(" " + r.Failure);
-                sb.AppendLine();
-            }
+            foreach (var r in m_checkRows) sb.AppendLine(CheckStatus(r).PadRight(5) + CheckRowText(r));
             return sb.ToString();
         }
 
         private void ShowCheckReport()
         {
-            try { System.IO.File.WriteAllText(System.IO.Path.Combine(Application.persistentDataPath, "scene-check.txt"), CheckReportText()); } catch { }
+            try { System.IO.File.WriteAllText(CheckReportPath, CheckReportText()); } catch { }
             m_detEntry = null;
             m_detailsOpen = true;
             Ui.Show(m_detGroup, true);
