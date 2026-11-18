@@ -107,25 +107,69 @@ namespace rt.xr.unity.app
             StartCoroutine(AutoOpenRoutine());
         }
 
-        // test aid: a file named autoopen.txt in the app's data folder names a scene (a part of its file name) to open by itself,
-        // optionally followed by |flat to open it as a flat preview
+        // Test runs, for a test harness that drives the app over adb (see docs/testing.md). The command comes from the intent
+        // extra "xrtest" (adb shell am start ... --es xrtest "...") or from a file named autoopen.txt in the app's data folder:
+        // "<part of a scene file name>|flag|flag..." or @check, @lab, @settings. A test run turns the XRTEST diagnostics on
+        // (GLTFast.MpegDiagnostics); outside test runs they are off and cost nothing.
         private IEnumerator AutoOpenRoutine()
         {
-            string file = System.IO.Path.Combine(Application.persistentDataPath, "autoopen.txt");
             float t = 0f;
             while (t < 60f && (Catalog.Loading || Catalog.Entries.Count == 0 || Catalog.PendingPeeks > 0)) { t += Time.unscaledDeltaTime; yield return null; }
-            if (!System.IO.File.Exists(file)) yield break;
-            string[] parts = System.IO.File.ReadAllText(file).Trim().Split('|');
-            System.IO.File.Delete(file);
-            string flags = parts.Length > 1 ? string.Join("|", parts, 1, parts.Length - 1) : "";
+            string source = "intent";
+            string command = ReadIntentCommand();
+            if (string.IsNullOrEmpty(command))
+            {
+                string file = System.IO.Path.Combine(Application.persistentDataPath, "autoopen.txt");
+                if (!System.IO.File.Exists(file)) yield break;
+                command = System.IO.File.ReadAllText(file);
+                System.IO.File.Delete(file);
+                source = "autoopen";
+            }
+            yield return RunTestCommand(command.Trim(), source);
+        }
+
+        // The "xrtest" extra of the intent that started the activity, removed once read so that it does not run again.
+        private static string ReadIntentCommand()
+        {
+#if UNITY_ANDROID && !UNITY_EDITOR
+            try
+            {
+                using (var player = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+                using (var activity = player.GetStatic<AndroidJavaObject>("currentActivity"))
+                using (var intent = activity.Call<AndroidJavaObject>("getIntent"))
+                {
+                    if (intent == null) return null;
+                    string command = intent.Call<string>("getStringExtra", "xrtest");
+                    if (command != null) intent.Call("removeExtra", "xrtest");
+                    return command;
+                }
+            }
+            catch (Exception e) { Debug.LogWarning("xrtest: the intent of the activity could not be read: " + e.Message); }
+#endif
+            return null;
+        }
+
+        private IEnumerator RunTestCommand(string command, string source)
+        {
+            GLTFast.MpegDiagnostics.Enabled = true;
+            Debug.Log("XRTEST run start source=" + source + " command=" + command + " app=" + Application.version + " device=" + SystemInfo.deviceModel);
+            string[] parts = command.Split('|');
+            string target = parts[0].Trim();
+            var flags = parts.Skip(1).Select(f => f.Trim().ToLowerInvariant()).Where(f => f.Length > 0).ToList();
+            m_testUntil = DefaultTestUntil;
+            foreach (var f in flags)
+            {
+                float s;
+                if (f.StartsWith("until=") && float.TryParse(f.Substring(6), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out s) && s > 0f) m_testUntil = s;
+            }
             if (flags.Contains("landscape")) Screen.orientation = ScreenOrientation.LandscapeLeft;
             if (flags.Contains("portrait")) Screen.orientation = ScreenOrientation.Portrait;
             yield return new WaitForSecondsRealtime(0.5f);
-            if (parts[0].Trim() == "@check") { RunAllScenes(); yield break; }
-            if (parts[0].Trim() == "@lab") { ShowLab(); yield break; }
-            if (parts[0].Trim() == "@settings") { ShowSettings(); yield break; }
-            var e = Catalog.Entries.FirstOrDefault(x => x.FileName.ToLowerInvariant().Contains(parts[0].Trim().ToLowerInvariant()));
-            if (e == null) { Debug.Log("autoopen: no scene matches " + parts[0]); yield break; }
+            if (target == "@check") { RunAllScenes(); yield break; }
+            if (target == "@lab") { ShowLab(); Debug.Log("XRTEST run done screen=lab reason=shown"); yield break; }
+            if (target == "@settings") { ShowSettings(); Debug.Log("XRTEST run done screen=settings reason=shown"); yield break; }
+            var e = Catalog.Entries.FirstOrDefault(x => x.FileName.ToLowerInvariant().Contains(target.ToLowerInvariant()));
+            if (e == null) { Debug.Log("XRTEST run done scene=none reason=nomatch match=" + target); yield break; }
             m_testSceneCam = flags.Contains("scenecam");
             m_testAutoplay = flags.Contains("autoplay");
             rt.xr.unity.TimedObjectGate.Enabled = !flags.Contains("nogate");
@@ -133,6 +177,9 @@ namespace rt.xr.unity.app
             OpenScene(e, flags.Contains("flat"));
         }
 
+        // test aid (flag until=<s>): the scene state is logged until this many seconds after the scene opened
+        private const float DefaultTestUntil = 90f;
+        private float m_testUntil = DefaultTestUntil;
         // test aid (flag scenecam): the interactivity test scenes assume the camera node of the scene from the first frame
         private bool m_testSceneCam;
         private bool m_testAutoplay;   // test aid: media start by themselves

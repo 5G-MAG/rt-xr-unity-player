@@ -93,27 +93,38 @@ namespace rt.xr.unity.app
 
         // ------------------------------------------------------------------ player hooks
 
-        // Test aid: the state of the scene's nodes a few seconds after it opened, one line per node, so runs can be compared without a screenshot.
         // test aid: three pixels of a texture, read back from the GPU
+        // The texture is downsampled to a small render target first: reading back a full-size copy holds two copies of the texture
+        // (CPU and GPU) per renderer until the end of the frame, gigabytes for the 8K textures of some scenes.
+        private const int SampleTexSize = 64;
+        private static Texture2D s_sampleTex;
+
         private static string SampleTex(Texture t)
         {
             if (t == null) return "null";
-            var rt = RenderTexture.GetTemporary(t.width, t.height, 0, RenderTextureFormat.ARGB32);
+            var rt = RenderTexture.GetTemporary(SampleTexSize, SampleTexSize, 0, RenderTextureFormat.ARGB32);
             Graphics.Blit(t, rt);
             var prev = RenderTexture.active; RenderTexture.active = rt;
-            var tmp = new Texture2D(t.width, t.height, TextureFormat.RGBA32, false);
-            tmp.ReadPixels(new Rect(0, 0, t.width, t.height), 0, 0); tmp.Apply();
+            if (s_sampleTex == null) s_sampleTex = new Texture2D(SampleTexSize, SampleTexSize, TextureFormat.RGBA32, false);
+            s_sampleTex.ReadPixels(new Rect(0, 0, SampleTexSize, SampleTexSize), 0, 0, false);
             RenderTexture.active = prev; RenderTexture.ReleaseTemporary(rt);
-            string o = tmp.GetPixel(t.width / 2, t.height / 2) + " " + tmp.GetPixel(t.width / 4, t.height / 4) + " " + tmp.GetPixel(3 * t.width / 4, 3 * t.height / 4);
-            Destroy(tmp);
-            return o;
+            const int n = SampleTexSize;
+            return s_sampleTex.GetPixel(n / 2, n / 2) + " " + s_sampleTex.GetPixel(n / 4, n / 4) + " " + s_sampleTex.GetPixel(3 * n / 4, 3 * n / 4);
         }
+
+        // Test aid, test runs only (docs/testing.md): the state of the scene's nodes a few seconds after it opened, one line per
+        // node, so runs can be compared without a screenshot. Ends with "XRTEST run done", when the last state is logged or when
+        // the player is left.
+        private static readonly float[] StateTimes = { 3f, 5f, 8f, 11f, 20f, 30f, 45f, 60f, 90f };
+        private Coroutine m_stateLog;
+        private string m_stateScene;
 
         private IEnumerator LogSceneState(SceneEntry e)
         {
             float waited = 0f;
-            foreach (float at in new[] { 3f, 5f, 8f, 11f, 20f, 30f, 45f, 60f, 90f })
+            foreach (float at in StateTimes)
             {
+                if (at > m_testUntil) break;
                 yield return new WaitForSecondsRealtime(at - waited);
                 waited = at;
                 var sb = new System.Text.StringBuilder("XRTEST state t=" + at + " " + e.FileName);
@@ -132,6 +143,8 @@ namespace rt.xr.unity.app
                 foreach (var ru in FindObjectsOfType<GLTFast.MpegReverbUnit>()) sb.Append(" | reverb " + ru.Id + " peak=" + ru.Peak.ToString("0.0000"));
                 Debug.Log(sb.ToString());
             }
+            m_stateLog = null;
+            Debug.Log("XRTEST run done scene=" + e.FileName + " reason=complete");
         }
 
         private void OnPlayerEntered(SceneEntry e)
@@ -144,9 +157,15 @@ namespace rt.xr.unity.app
             foreach (var b in FindObjectsOfType<GLTFast.Behavior>())
             {
                 var bb = b;
-                try { bb.AddGameEngineAction(() => { Debug.Log("XRTEST fired t=" + Time.timeSinceLevelLoad.ToString("0.0") + " " + DescribeBehaviour(bb)); m_eventQueue.Enqueue(Time.unscaledTime.ToString("0.0") + "|" + bb.gameObject.name + "|" + DescribeBehaviour(bb)); }); } catch { }
+                try { bb.AddGameEngineAction(() => { if (GLTFast.MpegDiagnostics.Enabled) Debug.Log("XRTEST fired t=" + Time.timeSinceLevelLoad.ToString("0.0") + " " + DescribeBehaviour(bb)); m_eventQueue.Enqueue(Time.unscaledTime.ToString("0.0") + "|" + bb.gameObject.name + "|" + DescribeBehaviour(bb)); }); } catch { }
             }
-            StartCoroutine(LogSceneState(e));
+            // test runs only, and not for the scenes of the scene check, which are open about a second each
+            if (GLTFast.MpegDiagnostics.Enabled && !m_batch)
+            {
+                if (m_stateLog != null) { StopCoroutine(m_stateLog); Debug.Log("XRTEST run done scene=" + m_stateScene + " reason=left"); }
+                m_stateScene = e.FileName;
+                m_stateLog = StartCoroutine(LogSceneState(e));
+            }
             if (m_newStamp != null)
             {
                 Toast("New stamp: " + m_newStamp.Name, 3.2f);
@@ -156,6 +175,12 @@ namespace rt.xr.unity.app
 
         private void OnPlayerLeft()
         {
+            if (m_stateLog != null)
+            {
+                StopCoroutine(m_stateLog);
+                m_stateLog = null;
+                Debug.Log("XRTEST run done scene=" + m_stateScene + " reason=left");
+            }
             LensOff();
             CloseTools();
             ClearVolumes();

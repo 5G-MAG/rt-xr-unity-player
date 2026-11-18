@@ -62,9 +62,10 @@ viewer. The extension lens is for the phone screen and is not available in the h
 
 ## Test aids
 
-A file named `autoopen.txt` in the app's data folder (next to `Paths`) names a scene, by a part of its file name, to open by itself when the app
-starts. After a `|`, `flat` opens it as a flat preview and `landscape` or `portrait` sets the orientation. `@check`, `@lab` and `@settings`
-open the scene check, the Lab and Settings.
+A test run opens a scene, or runs the scene check, by itself when the app starts, and writes `XRTEST` lines to the device log. It is
+started with the intent extra `xrtest` or with a file named `autoopen.txt` in the app's data folder (next to `Paths`). The command names
+a scene by a part of its file name, or `@check`, `@lab` or `@settings`, followed by flags such as `flat`, `autoplay` or `until=<s>`.
+Outside test runs the `XRTEST` diagnostics are off. [testing.md](testing.md) describes the commands, the flags and the log lines.
 
 ## Known limits
 

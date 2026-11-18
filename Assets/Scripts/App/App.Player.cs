@@ -175,7 +175,7 @@ namespace rt.xr.unity.app
             // Table 4, controls: "Specifies that media controls should be displayed (such as a play/pause button etc)." Default false: the
             // controls are shown for a scene that has a media with controls true, or when the setting asks for them in every scene.
             m_mediaControls = PlayerPrefs.GetInt("set.alwayscontrols", 1) == 1 || (medias != null && medias.Any(m => m != null && m.controls));
-            Debug.Log("XRTEST media controls shown=" + (players.Count > 0 && m_mediaControls) + " media=" + players.Count + " controlsFlag=" + (medias != null && medias.Any(m => m != null && m.controls)));
+            if (GLTFast.MpegDiagnostics.Enabled) Debug.Log("XRTEST media controls shown=" + (players.Count > 0 && m_mediaControls) + " media=" + players.Count + " controlsFlag=" + (medias != null && medias.Any(m => m != null && m.controls)));
             if (players.Count > 0 && m_mediaControls)
             {
                 var card = Ui.Box(pad, new Color(0.08f, 0.08f, 0.08f, 0.82f), 32f, "Media");
