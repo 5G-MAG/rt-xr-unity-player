@@ -69,10 +69,6 @@ namespace rt.xr.unity
             return cam;
         }
 
-        // the file that lists the glTF documents the player shows (default: Paths in the persistent data path of the app)
-        [SerializeField] private string m_configFileLocation;
-        public string ConfigFileLocation { get { return m_configFileLocation; } }
-
         // the on-screen log of the player (LogHandler), which the app hides behind its own screens
         public bool showLog
         {

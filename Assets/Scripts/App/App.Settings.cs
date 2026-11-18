@@ -107,7 +107,7 @@ namespace rt.xr.unity.app
                 if (v.Length == 0) return;
                 Catalog.AddSource(v); m_sourceInput.text = "";
                 Toast("Source added. Reloading.");
-                StartCoroutine(Catalog.Load(m_viewer.ConfigFileLocation));
+                StartCoroutine(Catalog.Load(ConfigFileLocation));
                 RefreshSettings();
             }, Ui.BtnStyle.Primary, "link");
             Ui.Size(add.gameObject, -1, 104, 1);
@@ -117,18 +117,18 @@ namespace rt.xr.unity.app
                 if (!(v.StartsWith("http://") || v.StartsWith("https://") || v.StartsWith("file://"))) { Toast("The clipboard has no address."); return; }
                 Catalog.AddSource(v);
                 Toast("Source added. Reloading.");
-                StartCoroutine(Catalog.Load(m_viewer.ConfigFileLocation));
+                StartCoroutine(Catalog.Load(ConfigFileLocation));
                 RefreshSettings();
             }, Ui.BtnStyle.Ghost, "copy");
             Ui.Size(paste.gameObject, -1, 104, 1);
             var row2 = Ui.R("SourceButtons", src);
             Ui.HBox(row2, 16, 0, TextAnchor.MiddleLeft);
             Ui.Size(row2.gameObject, -1, 100, 1);
-            var reload = Ui.Pill(row2, "Reload scenes", () => { StartCoroutine(Catalog.Load(m_viewer.ConfigFileLocation)); Toast("Reloading"); }, Ui.BtnStyle.Ghost, "refresh");
+            var reload = Ui.Pill(row2, "Reload scenes", () => { StartCoroutine(Catalog.Load(ConfigFileLocation)); Toast("Reloading"); }, Ui.BtnStyle.Ghost, "refresh");
             Ui.Size(reload.gameObject, -1, 100, 1);
             if (extra.Length > 0)
             {
-                var clear = Ui.Pill(row2, "Remove added sources", () => ShowConfirm("Remove added sources?", "The list file stays; only sources added here are removed.", "Remove", () => { Catalog.ClearSources(); StartCoroutine(Catalog.Load(m_viewer.ConfigFileLocation)); RefreshSettings(); }), Ui.BtnStyle.Danger, "trash");
+                var clear = Ui.Pill(row2, "Remove added sources", () => ShowConfirm("Remove added sources?", "The list file stays; only sources added here are removed.", "Remove", () => { Catalog.ClearSources(); StartCoroutine(Catalog.Load(ConfigFileLocation)); RefreshSettings(); }), Ui.BtnStyle.Danger, "trash");
                 Ui.Size(clear.gameObject, -1, 100, 1);
             }
 

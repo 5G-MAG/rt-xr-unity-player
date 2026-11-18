@@ -26,8 +26,21 @@ public class PlayerApplication : MonoBehaviour
     [SerializeField] private SceneViewer m_Viewer;
     [SerializeField] private GameObject m_BackBtn;
     [SerializeField] private TMPro.TMP_Dropdown m_CameraControlDropdown;
+    [Tooltip("Editor only: playlist to load instead of <persistentDataPath>/Paths")]
     [SerializeField] private string m_configFileLocation ;
     [SerializeField] private LogHandler m_logHandler;
+
+    // the playlist: Paths in the persistent data path of the app, or, in the editor only, m_configFileLocation when it is set
+    public string ConfigFileLocation
+    {
+        get
+        {
+#if UNITY_EDITOR
+            if(!string.IsNullOrEmpty(m_configFileLocation)) return m_configFileLocation;
+#endif
+            return Path.Combine(Application.persistentDataPath, "Paths");
+        }
+    }
 
     void Start()
     {
@@ -121,14 +134,7 @@ public class PlayerApplication : MonoBehaviour
 
     private string locatePlaylist()
     {
-        string playlistURI = "";
-        
-        if(m_configFileLocation == "")
-        {
-            playlistURI = Path.Combine(Application.persistentDataPath, "Paths");
-        } else {
-            playlistURI = m_configFileLocation;
-        }
+        string playlistURI = ConfigFileLocation;
 
         Debug.Log("\n\n\n\n\n");
         Debug.Log("Loading xr player config file: "+playlistURI);
