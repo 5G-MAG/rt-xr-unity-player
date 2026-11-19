@@ -28,7 +28,7 @@ public class LogHandler : MonoBehaviour
         }
 
         void Update(){
-            if (Input.GetKeyDown(KeyCode.L))
+            if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.lKey.wasPressedThisFrame)
             {
                 if(showLog){
                     showLog = false;

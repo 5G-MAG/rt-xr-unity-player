@@ -170,7 +170,7 @@ namespace rt.xr.unity.app
             if (ar) BuildArCoach(pad);
 
             // media: one row per item, with play, pause and sound
-            var players = FindObjectsOfType<MediaPlayer>().Where(p => p != null && p.HasPipeline).ToList();
+            var players = FindObjectsByType<MediaPlayer>(FindObjectsSortMode.InstanceID).Where(p => p != null && p.HasPipeline).ToList();
             var medias = SafeMedias();
             // Table 4, controls: "Specifies that media controls should be displayed (such as a play/pause button etc)." Default false: the
             // controls are shown for a scene that has a media with controls true, or when the setting asks for them in every scene.
@@ -498,7 +498,7 @@ namespace rt.xr.unity.app
         private readonly HashSet<UnityEngine.XR.ARSubsystems.TrackableId> m_oldPlanes = new HashSet<UnityEngine.XR.ARSubsystems.TrackableId>();
         private int FreshSurfaceCount()
         {
-            var pm = FindObjectOfType<ARPlaneManager>();
+            var pm = FindFirstObjectByType<ARPlaneManager>();
             if (pm == null) return 0;
             int n = 0;
             foreach (var plane in pm.trackables)
@@ -540,7 +540,7 @@ namespace rt.xr.unity.app
             {
                 HideReticle(); m_scanAgain = true; m_noSurfaceSince = -1f; m_noSurfaceHintShown = false;
                 // new surfaces must be scanned: the ones known now are set aside
-                var pmU = PlayerPrefs.GetInt("set.unlockscan", 1) == 1 ? FindObjectOfType<ARPlaneManager>() : null;
+                var pmU = PlayerPrefs.GetInt("set.unlockscan", 1) == 1 ? FindFirstObjectByType<ARPlaneManager>() : null;
                 if (pmU != null) foreach (var pl in pmU.trackables) if (pl != null) m_oldPlanes.Add(pl.trackableId);
             }   // unlocked: the surfaces are scanned and drawn again until the scene is placed
             Toast(GLTFast.AnchorPlacement.Locked ? "Locked. The scene stays where it is." : "Unlocked. Move the phone to scan the surfaces, then tap where the scene should go.", 3.5f);
@@ -556,8 +556,8 @@ namespace rt.xr.unity.app
         private void UpdateArGestures()
         {
             if (!GLTFast.AnchorPlacement.TapToPlace || !GLTFast.AnchorPlacement.HasPlaceable || !m_viewer.ARCameraEnabled) return;
-            if (GLTFast.AnchorPlacement.AnyAwaiting || GLTFast.AnchorPlacement.Locked || Input.touchCount != 2) { m_gestActive = false; return; }
-            var a = Input.GetTouch(0); var b = Input.GetTouch(1);
+            if (GLTFast.AnchorPlacement.AnyAwaiting || GLTFast.AnchorPlacement.Locked || TouchInput.Count != 2) { m_gestActive = false; return; }
+            var a = TouchInput.Get(0); var b = TouchInput.Get(1);
             Vector2 d = b.position - a.position;
             float dist = d.magnitude;
             float ang = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
@@ -583,7 +583,7 @@ namespace rt.xr.unity.app
             if (m_animPlaying && !AnimationRunning()) { m_animPlaying = false; SetAnimationIcon(); }
 
             // tap to show or hide the controls
-            var touches = Input.touches;
+            var touches = TouchInput.All;
             if (!m_detailsOpen && !m_dlgOpen)
             {
                 foreach (var t in touches)
@@ -591,11 +591,11 @@ namespace rt.xr.unity.app
                     if (t.phase == TouchPhase.Began && m_tapFinger < 0)
                     {
                         m_tapFinger = t.fingerId; m_tapStart = t.position; m_tapTime = Time.unscaledTime;
-                        m_tapOverUi = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(t.fingerId);
+                        m_tapOverUi = TouchInput.OverUi(t.position);
                     }
                     else if (t.fingerId == m_tapFinger && (t.phase == TouchPhase.Ended || t.phase == TouchPhase.Canceled))
                     {
-                        bool tap = t.phase == TouchPhase.Ended && !m_tapOverUi && Time.unscaledTime - m_tapTime < 0.35f && (t.position - m_tapStart).magnitude < 24f && Input.touchCount <= 1;
+                        bool tap = t.phase == TouchPhase.Ended && !m_tapOverUi && Time.unscaledTime - m_tapTime < 0.35f && (t.position - m_tapStart).magnitude < 24f && TouchInput.Count <= 1;
                         m_tapFinger = -1;
                         if (tap)
                         {
@@ -613,7 +613,7 @@ namespace rt.xr.unity.app
             if (m_xr) { m_hudVisible = true; m_hudLast = Time.unscaledTime; }
             if (m_toolsOpen || m_detailsOpen || m_dlgOpen) m_hudLast = Time.unscaledTime;
             if (m_hudVisible && PlayerPrefs.GetInt("set.autohide", 1) == 1 && Time.unscaledTime - m_hudLast > 7f && !m_viewer.ARCameraEnabled) m_hudVisible = false;
-            if (Input.touchCount > 0 && m_hudVisible) m_hudLast = Time.unscaledTime;
+            if (TouchInput.Count > 0 && m_hudVisible) m_hudLast = Time.unscaledTime;
             if (m_cleanShot) { m_hudVisible = false; if (m_statsRoot != null) m_statsRoot.gameObject.SetActive(false); }
             Ui.Fade(m_hudGroup, m_hudVisible ? 1f : 0f);
             if (m_rig != null) m_rig.Enabled = !(m_detailsOpen || m_dlgOpen);
@@ -664,9 +664,9 @@ namespace rt.xr.unity.app
         // The AR session of the viewer detects planes but has no raycast component: add one to the XR Origin so taps can hit them.
         private ARRaycastManager EnsureRaycastManager()
         {
-            var rm = FindObjectOfType<ARRaycastManager>();
+            var rm = FindFirstObjectByType<ARRaycastManager>();
             if (rm != null) return rm;
-            var origin = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
+            var origin = FindFirstObjectByType<Unity.XR.CoreUtils.XROrigin>();
             if (origin == null) return null;
             rm = origin.gameObject.AddComponent<ARRaycastManager>();
             Debug.Log("App: raycast manager added to the XR Origin");
@@ -807,7 +807,7 @@ namespace rt.xr.unity.app
             foreach (var mp in m_mediaAll)
                 if (mp != null) foreach (var tex in mp.VideoTargetTextures) targets.Add(tex);
             if (targets.Count == 0) return;
-            foreach (var r in FindObjectsOfType<Renderer>())
+            foreach (var r in FindObjectsByType<Renderer>(FindObjectsSortMode.None))
             {
                 if (r == null || !r.enabled || r.gameObject == m_playOverlay) continue;
                 var m = r.sharedMaterial;
@@ -953,7 +953,7 @@ namespace rt.xr.unity.app
         private void UpdatePlaneVisibility()
         {
             if (!GLTFast.AnchorPlacement.TapToPlace || !GLTFast.AnchorPlacement.HasPlaceable) return;
-            var pm = FindObjectOfType<ARPlaneManager>();
+            var pm = FindFirstObjectByType<ARPlaneManager>();
             if (pm == null) return;
             bool placed = !GLTFast.AnchorPlacement.AnyAwaiting && !m_scanAgain;
             foreach (var plane in pm.trackables)
@@ -1045,9 +1045,9 @@ namespace rt.xr.unity.app
             if (st == ARSessionState.SessionTracking && Time.unscaledTime > m_arNextProbe)
             {
                 m_arNextProbe = Time.unscaledTime + 1f;
-                var pmg = FindObjectOfType<ARPlaneManager>();
+                var pmg = FindFirstObjectByType<ARPlaneManager>();
                 if (pmg != null) { int act = 0, tot = 0; foreach (var pl in pmg.trackables) { tot++; if (pl.gameObject.activeSelf) act++; } Debug.Log("App: planes " + act + " of " + tot + " active, awaiting=" + GLTFast.AnchorPlacement.AnyAwaiting + " scanAgain=" + m_scanAgain + " prefab=" + (pmg.planePrefab != null)); }
-                foreach (var a in FindObjectsOfType<UnityEngine.XR.ARFoundation.ARAnchor>())
+                foreach (var a in FindObjectsByType<UnityEngine.XR.ARFoundation.ARAnchor>(FindObjectsSortMode.None))
                 {
                     if (a.transform.childCount > 0) m_arPlaced = true;
                     // measurement of the anchor: where it is and how well it is tracked
@@ -1149,7 +1149,7 @@ namespace rt.xr.unity.app
             long tris = 0;
             foreach (var mf in m_viewer.GetComponentsInChildren<MeshFilter>()) if (mf.sharedMesh != null) tris += mf.sharedMesh.triangles.Length / 3;
             sb.AppendLine(Ui.Plural(rend.Length, "renderer", "renderers") + ", " + tris.ToString("N0") + " triangles");
-            sb.AppendLine(Ui.Plural(FindObjectsOfType<Light>().Length, "light", "lights") + ", " + Ui.Plural(FindObjectsOfType<MediaPlayer>().Length, "media item", "media items"));
+            sb.AppendLine(Ui.Plural(FindObjectsByType<Light>(FindObjectsSortMode.None).Length, "light", "lights") + ", " + Ui.Plural(FindObjectsByType<MediaPlayer>(FindObjectsSortMode.None).Length, "media item", "media items"));
             sb.AppendLine("Memory " + (UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong() / 1048576) + " MB");
             sb.Append("Opened in " + m_loadSeconds.ToString("0.0") + " s");
             m_statsText.text = sb.ToString();

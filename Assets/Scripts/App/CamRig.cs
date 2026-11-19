@@ -118,13 +118,13 @@ namespace rt.xr.unity.app
 
         private bool OverUi(Touch t)
         {
-            return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(t.fingerId);
+            return TouchInput.OverUi(t.position);
         }
 
         private void LateUpdate()
         {
             if (m_cam == null || !Enabled) return;
-            var touches = Input.touches;
+            var touches = TouchInput.All;
             for (int i = 0; i < touches.Length; i++)
             {
                 var t = touches[i];

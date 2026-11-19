@@ -32,10 +32,10 @@ namespace rt.xr.unity.app
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Boot()
         {
-            if (FindObjectOfType<SceneViewer>() == null) return;
+            if (FindFirstObjectByType<SceneViewer>() == null) return;
             // the Meta Quest scene runs its own application
-            if (FindObjectOfType<RtXrQuestApplication>() != null) return;
-            if (FindObjectOfType<App>() != null) return;
+            if (FindFirstObjectByType<RtXrQuestApplication>() != null) return;
+            if (FindFirstObjectByType<App>() != null) return;
             new GameObject("XrApp").AddComponent<App>();
         }
 
@@ -80,13 +80,13 @@ namespace rt.xr.unity.app
             Screen.autorotateToPortraitUpsideDown = false;
             Screen.sleepTimeout = SleepTimeout.SystemSetting;
 
-            m_viewer = FindObjectOfType<SceneViewer>();
-            m_legacy = FindObjectOfType<PlayerApplication>();
+            m_viewer = FindFirstObjectByType<SceneViewer>();
+            m_legacy = FindFirstObjectByType<PlayerApplication>();
             if (m_legacy != null) m_legacy.enabled = false;      // the stock list and buttons are replaced by this interface
             // the stock EventSystem is a child of the stock canvas: take it out before the canvas is hidden
-            var es = FindObjectOfType<UnityEngine.EventSystems.EventSystem>();
+            var es = FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>();
             if (es != null && es.transform.parent != null) es.transform.SetParent(null, false);
-            foreach (var c in FindObjectsOfType<Canvas>()) if (c.renderMode == RenderMode.ScreenSpaceOverlay) c.gameObject.SetActive(false);
+            foreach (var c in FindObjectsByType<Canvas>(FindObjectsSortMode.None)) if (c.renderMode == RenderMode.ScreenSpaceOverlay) c.gameObject.SetActive(false);
             m_viewer.showLog = false;
             m_viewer.onGlTFLoadComplete = () => { m_loadDone = true; };
             m_viewer.onGlTFLoadError = () => { m_loadFailed = true; };
@@ -251,7 +251,7 @@ namespace rt.xr.unity.app
             UpdateLab();
             UpdatePlayground();
             UpdateToast();
-            if (Input.GetKeyDown(KeyCode.Escape)) OnBack();
+            if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame) OnBack();      // also the Android back button
         }
 
         // ------------------------------------------------------------------ navigation
@@ -403,26 +403,26 @@ namespace rt.xr.unity.app
         {
             UnityEngine.XR.ARFoundation.ARPlaneManager pm = null;
             float t = 0f;
-            while (pm == null && t < 20f) { pm = FindObjectOfType<UnityEngine.XR.ARFoundation.ARPlaneManager>(); t += Time.unscaledDeltaTime; yield return null; }
+            while (pm == null && t < 20f) { pm = FindFirstObjectByType<UnityEngine.XR.ARFoundation.ARPlaneManager>(); t += Time.unscaledDeltaTime; yield return null; }
             if (pm == null) { Debug.Log("App: no plane manager in the AR session"); yield break; }
             if (GLTFast.AnchorPlacement.TapToPlace) EnsureRaycastManager();
             Debug.Log("App: plane manager found, classification supported=" + (pm.descriptor != null && pm.descriptor.supportsClassification) + " mode=" + pm.requestedDetectionMode);
-            pm.planesChanged += a =>
+            pm.trackablesChanged.AddListener(a =>
             {
-                foreach (var p in a.added) Debug.Log("App: plane added " + p.trackableId + " " + p.alignment + " " + p.classification + " size " + p.size.x.ToString("0.00") + "x" + p.size.y.ToString("0.00"));
-                foreach (var p in a.updated) if (p.classification != UnityEngine.XR.ARSubsystems.PlaneClassification.None && !m_planeLogged.Contains(p.trackableId.ToString() + p.classification)) { m_planeLogged.Add(p.trackableId.ToString() + p.classification); Debug.Log("App: plane updated " + p.trackableId + " " + p.alignment + " " + p.classification); }
-            };
+                foreach (var p in a.added) Debug.Log("App: plane added " + p.trackableId + " " + p.alignment + " " + p.classifications + " size " + p.size.x.ToString("0.00") + "x" + p.size.y.ToString("0.00"));
+                foreach (var p in a.updated) if (p.classifications != UnityEngine.XR.ARSubsystems.PlaneClassifications.None && !m_planeLogged.Contains(p.trackableId.ToString() + p.classifications)) { m_planeLogged.Add(p.trackableId.ToString() + p.classifications); Debug.Log("App: plane updated " + p.trackableId + " " + p.alignment + " " + p.classifications); }
+            });
         }
         private readonly HashSet<string> m_planeLogged = new HashSet<string>();
 
         public Camera UseArCamera()
         {
             Camera ar = null;
-            var origin = FindObjectOfType<Unity.XR.CoreUtils.XROrigin>();
+            var origin = FindFirstObjectByType<Unity.XR.CoreUtils.XROrigin>();
             if (origin != null) ar = origin.Camera;
-            if (ar == null) foreach (var c in FindObjectsOfType<Camera>()) if (c.GetComponent<UnityEngine.XR.ARFoundation.ARCameraBackground>() != null) { ar = c; break; }
+            if (ar == null) foreach (var c in FindObjectsByType<Camera>(FindObjectsSortMode.None)) if (c.GetComponent<UnityEngine.XR.ARFoundation.ARCameraBackground>() != null) { ar = c; break; }
             if (ar == null) return null;
-            foreach (var c in FindObjectsOfType<Camera>()) if (c != ar) { c.enabled = false; if (c.CompareTag("MainCamera")) c.tag = "Untagged"; }
+            foreach (var c in FindObjectsByType<Camera>(FindObjectsSortMode.None)) if (c != ar) { c.enabled = false; if (c.CompareTag("MainCamera")) c.tag = "Untagged"; }
             ar.enabled = true; ar.tag = "MainCamera";
             Debug.Log("App: AR camera " + ar.name + " clear=" + ar.clearFlags + " depth=" + ar.depth);
             return ar;
@@ -430,7 +430,7 @@ namespace rt.xr.unity.app
 
         private void PostLoad(SceneEntry e)
         {
-            Debug.Log("App: opened " + e.FileName + " ar=" + m_viewer.ARCameraEnabled + " usesAnchors=" + m_viewer.SceneUsesAnchors + " preview=" + m_viewer.PreviewWithoutAR + " cameras=" + FindObjectsOfType<Camera>().Length);
+            Debug.Log("App: opened " + e.FileName + " ar=" + m_viewer.ARCameraEnabled + " usesAnchors=" + m_viewer.SceneUsesAnchors + " preview=" + m_viewer.PreviewWithoutAR + " cameras=" + FindObjectsByType<Camera>(FindObjectsSortMode.None).Length);
             if (m_viewer.ARCameraEnabled)
             {
                 UseArCamera();
@@ -484,7 +484,7 @@ namespace rt.xr.unity.app
         private void EnsureLight()
         {
             bool any = false;
-            foreach (var l in FindObjectsOfType<Light>()) if (l.enabled && l.gameObject.name != "FillLight") { any = true; break; }
+            foreach (var l in FindObjectsByType<Light>(FindObjectsSortMode.None)) if (l.enabled && l.gameObject.name != "FillLight") { any = true; break; }
             var old = GameObject.Find("FillLight");
             if (old != null) Destroy(old);
             m_filled = false;
@@ -523,7 +523,7 @@ namespace rt.xr.unity.app
                 s_studio.Apply();
             }
             RenderSettings.defaultReflectionMode = UnityEngine.Rendering.DefaultReflectionMode.Custom;
-            RenderSettings.customReflection = s_studio;
+            RenderSettings.customReflectionTexture = s_studio;
             RenderSettings.reflectionIntensity = 1f;
         }
         public bool SceneHadNoLights { get { return m_filled; } }

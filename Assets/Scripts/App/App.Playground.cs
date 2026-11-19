@@ -267,7 +267,7 @@ namespace rt.xr.unity.app
         {
             if (!m_pgOpen || Time.unscaledTime < m_pgNext) return;
             m_pgNext = Time.unscaledTime + 0.4f;
-            var pm = FindObjectOfType<ARPlaneManager>();
+            var pm = FindFirstObjectByType<ARPlaneManager>();
             string planes = pm != null ? ", " + Ui.Plural(pm.trackables.count, "surface", "surfaces") + " found" : "";
             if (m_pgPlaced.Count == 0) m_pgState.text = ARSession.state + planes;
         }
