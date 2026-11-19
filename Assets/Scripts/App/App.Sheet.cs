@@ -358,6 +358,22 @@ namespace rt.xr.unity.app
             Ui.Show(m_dlgGroup, true);
         }
 
+        // A message the user only needs to read: one button closes it.
+        public void ShowNotice(string title, string text)
+        {
+            ClearDialog();
+            var c = m_dlgCard;
+            Ui.IconImage(c, "info", Ui.Accent, 84);
+            Ui.Label(c, title, 54, Ui.Bold, Color.white, TextAnchor.UpperLeft, true);
+            Ui.Label(c, text, 32, Ui.Regular, Ui.Dim, TextAnchor.UpperLeft, true);
+            var acts = Ui.R("Actions", c);
+            Ui.HBox(acts, 16, 0, TextAnchor.MiddleLeft);
+            Ui.Size(acts.gameObject, -1, 104);
+            Ui.Pill(acts, "OK", CloseDialogs, Ui.BtnStyle.Primary);
+            m_dlgOpen = true;
+            Ui.Show(m_dlgGroup, true);
+        }
+
         public void ShowConfirm(string title, string text, string ok, Action onOk)
         {
             ClearDialog();
