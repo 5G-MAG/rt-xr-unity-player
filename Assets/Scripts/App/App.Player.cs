@@ -172,9 +172,7 @@ namespace rt.xr.unity.app
             // media: one row per item, with play, pause and sound
             var players = FindObjectsByType<MediaPlayer>(FindObjectsSortMode.InstanceID).Where(p => p != null && p.HasPipeline).ToList();
             var medias = SafeMedias();
-            // Table 4, controls: "Specifies that media controls should be displayed (such as a play/pause button etc)." Default false: the
-            // controls are shown for a scene that has a media with controls true, or when the setting asks for them in every scene.
-            m_mediaControls = PlayerPrefs.GetInt("set.alwayscontrols", 1) == 1 || (medias != null && medias.Any(m => m != null && m.controls));
+            m_mediaControls = MediaControlsShown();
             if (GLTFast.MpegDiagnostics.Enabled) Debug.Log("XRTEST media controls shown=" + (players.Count > 0 && m_mediaControls) + " media=" + players.Count + " controlsFlag=" + (medias != null && medias.Any(m => m != null && m.controls)));
             if (players.Count > 0 && m_mediaControls)
             {
