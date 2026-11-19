@@ -397,9 +397,8 @@ namespace rt.xr.unity.app
             m_arState = Ui.Label(card.transform, "Starting the camera", 32, Ui.Regular, Ui.Dim, TextAnchor.UpperLeft, true);
             var uses = m_current != null ? m_current.Names.Where(n => n.StartsWith("TRACKABLE")).Select(Humanize).ToList() : new List<string>();
             if (uses.Count > 0) Ui.Label(card.transform, "Uses: " + string.Join(", ", uses), 28, Ui.Regular, Ui.Dim, TextAnchor.UpperLeft, true);
-            var pv = Ui.Pill(card.transform, "Preview without AR", () => { var e = m_current; LeavePlayer(); OpenScene(e, true); }, Ui.BtnStyle.Ghost, "eye");
-            Ui.Size(pv.gameObject, -1, 100, 1);
             m_arTrackingSince = -1f; m_arPlaced = false; m_oldPlanes.Clear();
+            m_arProblemShown = false; m_noSurfaceSince = -1f; m_noSurfaceHintShown = false;
             m_userScale = 1f; m_userYaw = 0f; m_gestActive = false; m_placeOnWall = false; m_scanAgain = false;
             if (GLTFast.AnchorPlacement.TapToPlace && GLTFast.AnchorPlacement.HasPlaceable)
             {
@@ -539,7 +538,7 @@ namespace rt.xr.unity.app
             if (GLTFast.AnchorPlacement.Locked) { HideReticle(); m_scanAgain = false; }
             else
             {
-                HideReticle(); m_scanAgain = true;
+                HideReticle(); m_scanAgain = true; m_noSurfaceSince = -1f; m_noSurfaceHintShown = false;
                 // new surfaces must be scanned: the ones known now are set aside
                 var pmU = PlayerPrefs.GetInt("set.unlockscan", 1) == 1 ? FindObjectOfType<ARPlaneManager>() : null;
                 if (pmU != null) foreach (var pl in pmU.trackables) if (pl != null) m_oldPlanes.Add(pl.trackableId);
@@ -1036,8 +1035,8 @@ namespace rt.xr.unity.app
                     if (m_arTrackingSince < 0) m_arTrackingSince = Time.unscaledTime;
                     break;
                 case ARSessionState.SessionInitializing: text = "Move your phone slowly so it can see the room."; m_arTrackingSince = -1; break;
-                case ARSessionState.Unsupported: text = "This phone does not support AR. Use the flat preview."; break;
-                case ARSessionState.NeedsInstall: text = "AR services need to be installed or updated."; break;
+                case ARSessionState.Unsupported: text = "This phone does not support AR: the scene cannot be placed in the room."; break;
+                case ARSessionState.NeedsInstall: text = "Google Play Services for AR must be installed or updated."; break;
                 case ARSessionState.CheckingAvailability: text = "Checking AR support."; break;
                 case ARSessionState.Installing: text = "Installing AR services."; break;
                 case ARSessionState.Ready: text = "Starting the camera."; break;
@@ -1066,8 +1065,78 @@ namespace rt.xr.unity.app
             }
             if (m_arPlaced && st == ARSessionState.SessionTracking) text = "Scene placed on " + SurfaceName(true) + ". Look around to find it.";
             if (st != m_arLastState) { m_arLastState = st; Debug.Log("App: AR session state " + st); }
+            bool cameraOff = !CameraAllowed();
+            if (cameraOff) text = "Camera access is off: AR needs it to see the room.";
+            bool noSurface = UpdateNoSurface(st);
+            if (noSurface) text = "No " + SurfaceName(false) + " surface found yet. " + text;
             m_arState.text = text;
-            m_arState.color = st == ARSessionState.Unsupported ? Ui.Warn : Ui.Dim;
+            m_arState.color = st == ARSessionState.Unsupported || st == ARSessionState.NeedsInstall || cameraOff || noSurface ? Ui.Warn : Ui.Dim;
+            ReportArProblem(st, cameraOff);
+        }
+
+        private bool m_arProblemShown;
+        private float m_noSurfaceSince = -1f;
+        private bool m_noSurfaceHintShown;
+        private const float NoSurfaceHintAfter = 15f;
+
+        private static bool CameraAllowed()
+        {
+#if UNITY_ANDROID && !UNITY_EDITOR
+            return UnityEngine.Android.Permission.HasUserAuthorizedPermission(UnityEngine.Android.Permission.Camera);
+#else
+            return true;
+#endif
+        }
+
+        // AR cannot run on this phone as it is: say why once, with what to do about it. The dialog can be closed; the status line keeps
+        // the reason.
+        private void ReportArProblem(ARSessionState st, bool cameraOff)
+        {
+            if (m_arProblemShown || m_dlgOpen) return;
+            string title = null, detail = null;
+            if (st == ARSessionState.Unsupported)
+            {
+                title = "AR is not supported";
+                detail = "This phone does not support ARCore, which the scene needs to be placed in the room. Scenes without an anchor still open as usual.";
+            }
+            else if (st == ARSessionState.NeedsInstall)
+            {
+                title = "AR needs to be set up";
+                detail = "Install or update Google Play Services for AR from the Play Store, then press Retry.";
+            }
+            else if (cameraOff)
+            {
+                title = "Camera access is off";
+                detail = "AR needs the camera to see the room. Allow camera access for this app in the phone's settings (Apps, this app, Permissions), then press Retry.";
+            }
+            if (title == null) return;
+            m_arProblemShown = true;
+            Debug.Log("App: AR problem: " + title);
+            var e = m_current;
+            ShowError(title, detail, st == ARSessionState.Unsupported || e == null ? (Action)null : () => { LeavePlayer(); OpenScene(e); });
+        }
+
+        // True while the scene waits for a surface and none of the kind it needs has been found for a while. The status line then turns to
+        // the warning colour, and once per placement a dialog gives tips for scanning.
+        private bool UpdateNoSurface(ARSessionState st)
+        {
+            bool waiting = st == ARSessionState.SessionTracking && GLTFast.AnchorPlacement.TapToPlace && GLTFast.AnchorPlacement.HasPlaceable
+                && (GLTFast.AnchorPlacement.AnyAwaiting || m_scanAgain) && FreshSurfaceCount() == 0;
+            if (!waiting) { m_noSurfaceSince = -1f; return false; }
+            if (m_noSurfaceSince < 0f) m_noSurfaceSince = Time.unscaledTime;
+            if (Time.unscaledTime - m_noSurfaceSince < NoSurfaceHintAfter) return false;
+            if (!m_noSurfaceHintShown && !m_dlgOpen)
+            {
+                m_noSurfaceHintShown = true;
+                Debug.Log("App: no surface after " + NoSurfaceHintAfter + " s, wanted " + SurfaceName(false));
+                string tips = "The scene's anchor asks for " + SurfaceName(true) + ". To find one:\n"
+                    + "\u2022 Turn on the lights: AR needs a well lit room.\n"
+                    + "\u2022 Point the camera at a surface with some texture; a plain white wall or a shiny floor is hard to see.\n"
+                    + "\u2022 Move the phone slowly from side to side, about a metre from the surface.";
+                if (m_placeOnWall) tips += "\n\u2022 You can also tap the wall directly: the scene is placed there even without a detected surface.";
+                ShowNotice("No surface found yet", tips);
+            }
+            return true;
         }
 
         private void UpdateStats()
