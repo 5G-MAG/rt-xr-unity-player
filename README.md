@@ -119,6 +119,22 @@ runtime.
 4. Select the device on which the application will be installed
 5. Build & Run
 
+### Command-line build (Android phone)
+
+`tools/build-android.sh` builds the phone app (the `MobileXR` scene, ARCore) without opening the editor, and can install and
+start it over adb. Close the Unity editor first: batch mode cannot use a project that is open.
+
+```sh
+tools/build-android.sh                 # build Build/mobilexr/rt-xr-unity-player.apk
+tools/build-android.sh --run           # build, install on the connected device and start the app
+tools/build-android.sh --no-build --run -s <serial>   # install and start the existing APK on one device
+```
+
+Other options: `--dev` for a development build, `--output <apk>` for another path. The script finds the Unity version named in
+`ProjectSettings/ProjectVersion.txt` in the Unity Hub folder (macOS or Linux); set `UNITY` to use another editor executable. The
+Unity log is written to `Build/build-android.log`. The Meta Quest 3 build is not covered: it needs other XR and graphics settings
+(see [DEVICES.md](DEVICES.md)).
+
 ## Running
 
 ### Upload content to an Android device and configure the player
