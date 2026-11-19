@@ -344,7 +344,7 @@ namespace rt.xr.unity.app
             GLTFast.AnchorPlacement.AnchorToPlane = PlayerPrefs.GetInt("set.planeanchor", 0) == 1;
             GLTFast.AnchorPlacement.PlaceOnAnySurface = PlayerPrefs.GetInt("set.anysurface", 0) == 1;
             GLTFast.AnchorPlacement.GroundOnPlacement = PlayerPrefs.GetInt("set.groundplace", 0) == 1;
-            GLTFast.MediaPlayer.HoldAutoplay = PlayerPrefs.GetInt("set.holdplay", 1) == 1 && !m_testSceneCam && !m_testAutoplay;
+            GLTFast.MediaPlayer.HoldAutoplay = PlayerPrefs.GetInt("set.holdplay", 0) == 1 && !m_testSceneCam && !m_testAutoplay;
             GLTFast.VideoTexture.Gain = PlayerPrefs.GetInt("set.brightvideo2", 0) == 1 ? 2f : 1f;
             GLTFast.MediaPlayer.ContentShown = false;
             GLTFast.MediaPlayer.AwaitContentShown = !noAR && e.UsesAnchor && !m_testSceneCam;
@@ -370,6 +370,8 @@ namespace rt.xr.unity.app
             }
             m_loadSeconds = Time.realtimeSinceStartup - t0;
             SetStep(2, StepState.Ok, m_loadSeconds.ToString("0.0") + " s");
+            // holding autoplay needs the play button to release it: without media controls, autoplay follows the specification
+            if (!MediaControlsShown()) GLTFast.MediaPlayer.HoldAutoplay = false;
             PostLoad(e);
             float shown = Time.realtimeSinceStartup - t0;
             if (shown < 0.9f) yield return new WaitForSecondsRealtime(0.9f - shown);
@@ -600,6 +602,15 @@ namespace rt.xr.unity.app
             string s = Regex.Replace(raw, "^(TRIGGER|ACTION|TRACKABLE)_", "");
             s = s.Replace('_', ' ').ToLowerInvariant();
             return char.ToUpper(s[0]) + s.Substring(1);
+        }
+
+        // Table 4, controls: "Specifies that media controls should be displayed (such as a play/pause button etc)." Default false: the
+        // controls are shown for a scene that has a media with controls true, or when the setting asks for them in every scene.
+        public bool MediaControlsShown()
+        {
+            if (PlayerPrefs.GetInt("set.alwayscontrols", 0) == 1) return true;
+            var medias = SafeMedias();
+            return medias != null && medias.Any(m => m != null && m.controls);
         }
 
         public GLTFast.Schema.Media[] SafeMedias()
