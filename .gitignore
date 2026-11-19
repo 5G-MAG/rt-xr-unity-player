@@ -12,6 +12,9 @@ Assets/Resources/MetaXR*
 Assets/Plugins/
 Assets/Plugins/Android/
 Assets/Plugins/SteamAudio/
+# Unity writes scene backups here after a crash
+/[Aa]ssets/_Recovery/
+/[Aa]ssets/_Recovery.meta
 
 # This .gitignore file should be placed at the root of your Unity project directory
 #
