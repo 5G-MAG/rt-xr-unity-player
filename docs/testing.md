@@ -13,6 +13,8 @@ those lines and the work behind them are switched off, so the app does not pay f
 
 The scenes a run can open are the ones listed in `Paths` (see [xr-scene-player.md](xr-scene-player.md)).
 
+To build and install the app from the command line first, run `tools/build-android.sh --run` (see the README, *Command-line build*).
+
 ## Starting a run
 
 A run takes a **command** (described below). There are two ways to give it.
