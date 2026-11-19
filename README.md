@@ -89,8 +89,8 @@ installs the package if necessary. Google maintains a
 
 #### Spatial audio
 
-Spatial audio needs an audio spatializer plugin. Without one, audio plays but is not spatialised.
-See the [audio spatializer documentation](./docs/audio-spatializer.md).
+Spatial audio needs an audio spatializer SDK, which is not part of this repository and must be installed in the Unity project. The project settings select [Steam Audio](https://github.com/ValveSoftware/steam-audio/releases). Without an SDK, audio plays but is not spatialised.
+See the [audio spatializer documentation](./docs/audio-spatializer.md) for the installation steps.
 
 ### Compiling
 
