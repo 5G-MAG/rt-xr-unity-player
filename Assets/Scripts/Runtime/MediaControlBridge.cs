@@ -16,7 +16,7 @@ namespace rt.xr.unity
 
         static void Apply(int mediaIndex, MediaControl control)
         {
-            var viewer = Object.FindObjectOfType<SceneViewer>();
+            var viewer = Object.FindFirstObjectByType<SceneViewer>();
             var players = viewer != null ? viewer.MediaPlayers : null;
             if (players == null || mediaIndex < 0 || mediaIndex >= players.Count || players[mediaIndex] == null)
             {

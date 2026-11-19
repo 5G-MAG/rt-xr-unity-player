@@ -130,17 +130,17 @@ namespace rt.xr.unity.app
                 var sb = new System.Text.StringBuilder("XRTEST state t=" + at + " " + e.FileName);
                 var cam = m_viewer != null ? m_viewer.GetMainCamera() : null;
                 if (cam != null) sb.Append(" cam=" + cam.transform.position.ToString("0.0"));
-                foreach (var r in FindObjectsOfType<Renderer>())
+                foreach (var r in FindObjectsByType<Renderer>(FindObjectsSortMode.None))
                 {
                     if (r == null || !GLTFast.VirtualSceneGraph.IsNodeGameObject(r.gameObject)) continue;
                     sb.Append(" | " + r.gameObject.name + "<" + r.GetType().Name + ">" + (r.enabled && r.gameObject.activeInHierarchy ? (r.forceRenderingOff ? " gated " : " on ") : " off ") + r.transform.position.ToString("0.00") + " rot=" + r.transform.eulerAngles.ToString("0") + " b=" + r.bounds.center.ToString("0.00") + " size=" + r.bounds.size.ToString("0.0") + " vis=" + r.isVisible + " layer=" + r.gameObject.layer + " mat=" + (r.sharedMaterial != null ? r.sharedMaterial.shader.name : "none") + (r.sharedMaterial != null && r.sharedMaterial.HasProperty("baseColorTexture") ? " tex=" + (r.sharedMaterial.GetTexture("baseColorTexture") != null ? r.sharedMaterial.GetTexture("baseColorTexture").width + "x" + r.sharedMaterial.GetTexture("baseColorTexture").height : "null") : "") + " mainTex=" + (r.sharedMaterial != null && r.sharedMaterial.mainTexture != null ? r.sharedMaterial.mainTexture.width + "x" + r.sharedMaterial.mainTexture.height : "null") + " baseColor=" + (r.sharedMaterial != null && r.sharedMaterial.HasProperty("baseColorFactor") ? r.sharedMaterial.GetColor("baseColorFactor").ToString() : "?") + " texpix=" + SampleTex(r.sharedMaterial != null ? r.sharedMaterial.mainTexture : null));
                 }
-                foreach (var mp in FindObjectsOfType<GLTFast.MediaPlayer>())
+                foreach (var mp in FindObjectsByType<GLTFast.MediaPlayer>(FindObjectsSortMode.None))
                     sb.Append(" | media " + mp.name + " pipeline=" + mp.HasPipeline + " started=" + mp.Started + " t=" + mp.CurrentTime.ToString("0.0") + " err=" + mp.Error + " auto=" + mp.autoPlay + " fin=" + mp.Finished + " pipe=" + mp.DebugState);
-                foreach (var a in FindObjectsOfType<AudioSource>())
+                foreach (var a in FindObjectsByType<AudioSource>(FindObjectsSortMode.None))
                     sb.Append(" | audio " + a.gameObject.name + " playing=" + a.isPlaying + " vol=" + a.volume.ToString("0.00") + " 3d=" + a.spatialBlend.ToString("0.0") + (a.GetComponent<GLTFast.SpatialAudioSource>() != null ? " gain=" + a.GetComponent<GLTFast.SpatialAudioSource>().CurrentDistanceGain.ToString("0.000") + " dist=" + (cam != null ? Vector3.Distance(cam.transform.position, a.transform.position).ToString("0.00") : "?") : ""));
-                foreach (var tg in FindObjectsOfType<rt.xr.unity.TimedObjectGate>()) sb.Append(" | timedObjects=" + tg.Count + " waiting=" + tg.Waiting);
-                foreach (var ru in FindObjectsOfType<GLTFast.MpegReverbUnit>()) sb.Append(" | reverb " + ru.Id + " peak=" + ru.Peak.ToString("0.0000"));
+                foreach (var tg in FindObjectsByType<rt.xr.unity.TimedObjectGate>(FindObjectsSortMode.None)) sb.Append(" | timedObjects=" + tg.Count + " waiting=" + tg.Waiting);
+                foreach (var ru in FindObjectsByType<GLTFast.MpegReverbUnit>(FindObjectsSortMode.None)) sb.Append(" | reverb " + ru.Id + " peak=" + ru.Peak.ToString("0.0000"));
                 Debug.Log(sb.ToString());
             }
             m_stateLog = null;
@@ -154,7 +154,7 @@ namespace rt.xr.unity.app
             m_eventsOn = false; m_pipeOn = false; m_volumesOn = false;
             if (m_eventsRoot != null) m_eventsRoot.gameObject.SetActive(false);
             if (m_pipeRoot != null) m_pipeRoot.gameObject.SetActive(false);
-            foreach (var b in FindObjectsOfType<GLTFast.Behavior>())
+            foreach (var b in FindObjectsByType<GLTFast.Behavior>(FindObjectsSortMode.None))
             {
                 var bb = b;
                 try { bb.AddGameEngineAction(() => { if (GLTFast.MpegDiagnostics.Enabled) Debug.Log("XRTEST fired t=" + Time.timeSinceLevelLoad.ToString("0.0") + " " + DescribeBehaviour(bb)); m_eventQueue.Enqueue(Time.unscaledTime.ToString("0.0") + "|" + bb.gameObject.name + "|" + DescribeBehaviour(bb)); }); } catch { }
@@ -450,7 +450,7 @@ namespace rt.xr.unity.app
             bool hasInter = m_current != null && m_current.UsesInteractivity;
             ToolRow(pad, "bolt", "Interactivity monitor", hasInter ? (m_eventsOn ? "On" : "Off") : "No interactivity", m_eventsOn, Ui.Warn, hasInter ? (Action)(() => { m_eventsOn = !m_eventsOn; EnsureEvents(); RebuildTools(); }) : null);
             ToolRow(pad, "target", "Ranges and positions", m_volumesOn ? "On" : "Off", m_volumesOn, Ui.Warn, () => { ToggleVolumes(); RebuildTools(); });
-            bool hasMedia = FindObjectsOfType<MediaPlayer>().Length > 0;
+            bool hasMedia = FindObjectsByType<MediaPlayer>(FindObjectsSortMode.None).Length > 0;
             ToolRow(pad, "wave", "Media pipeline", hasMedia ? (m_pipeOn ? "On" : "Off") : "No media", m_pipeOn, Ui.Accent, hasMedia ? (Action)(() => { m_pipeOn = !m_pipeOn; EnsurePipe(); RebuildTools(); }) : null);
             ToolRow(pad, "tree", "Scene tree", "Parts the loader created", false, Ui.Dim, () => { CloseTools(); ShowDetails(m_current, true); });
 
@@ -509,17 +509,17 @@ namespace rt.xr.unity.app
             switch (id)
             {
                 case "lighting":
-                    foreach (var l in FindObjectsOfType<Light>()) if (l.gameObject.name != "FillLight") l.enabled = !off;
+                    foreach (var l in FindObjectsByType<Light>(FindObjectsSortMode.None)) if (l.gameObject.name != "FillLight") l.enabled = !off;
                     if (off && !m_filled) EnsureFillForLab();
                     break;
                 case "audio":
                     foreach (var a in m_viewer.GetComponentsInChildren<AudioSource>(true)) a.spatialBlend = off ? 0f : 1f;
                     break;
                 case "interactivity":
-                    foreach (var bc in FindObjectsOfType<GLTFast.BehaviorController>()) bc.enabled = !off;
+                    foreach (var bc in FindObjectsByType<GLTFast.BehaviorController>(FindObjectsSortMode.None)) bc.enabled = !off;
                     break;
                 case "video":
-                    foreach (var mp in FindObjectsOfType<MediaPlayer>()) { try { if (off) mp.Stop(); else mp.Play(); } catch { } }
+                    foreach (var mp in FindObjectsByType<MediaPlayer>(FindObjectsSortMode.None)) { try { if (off) mp.Stop(); else mp.Play(); } catch { } }
                     break;
                 case "anchors":
                     var e = m_current;
@@ -602,23 +602,23 @@ namespace rt.xr.unity.app
             m_vizRoot = new GameObject("LabViz");
             m_volumesOn = true;
             int made = 0;
-            foreach (var p in FindObjectsOfType<GLTFast.ProximityNodeTrigger>())
+            foreach (var p in FindObjectsByType<GLTFast.ProximityNodeTrigger>(FindObjectsSortMode.None))
             {
                 float lo = ReadFloat(p, "m_LowerDistance"), hi = ReadFloat(p, "m_UpperDistance");
                 if (hi > 0.0001f && hi < 1000f) { Rings(p.transform.position, hi, Ui.Warn); made++; }
                 if (lo > 0.0001f && lo < hi) { Rings(p.transform.position, lo, Ui.Warn); }
             }
-            foreach (var t in FindObjectsOfType<GLTFast.CollisionNodeTrigger>())
+            foreach (var t in FindObjectsByType<GLTFast.CollisionNodeTrigger>(FindObjectsSortMode.None))
             {
                 var col = t.GetComponent<Collider>();
                 if (col != null) { WireBox(col.bounds, Ui.Bad); made++; }
             }
-            foreach (var v in FindObjectsOfType<GLTFast.VisibilityNodeTrigger>())
+            foreach (var v in FindObjectsByType<GLTFast.VisibilityNodeTrigger>(FindObjectsSortMode.None))
             {
                 var r = v.GetComponent<Renderer>();
                 if (r != null) { WireBox(r.bounds, Ui.Accent); made++; }
             }
-            foreach (var u in FindObjectsOfType<GLTFast.UserInputNodeTrigger>())
+            foreach (var u in FindObjectsByType<GLTFast.UserInputNodeTrigger>(FindObjectsSortMode.None))
             {
                 var r = u.GetComponentInChildren<Renderer>();
                 if (r != null) { WireBox(r.bounds, Ui.Good); made++; }
@@ -627,7 +627,7 @@ namespace rt.xr.unity.app
             {
                 Rings(a.transform.position, Mathf.Clamp(a.minDistance, 0.05f, 30f), Ui.Audio); made++;
             }
-            foreach (var l in FindObjectsOfType<Light>())
+            foreach (var l in FindObjectsByType<Light>(FindObjectsSortMode.None))
             {
                 if (l.gameObject.name == "FillLight") continue;
                 if (l.type == LightType.Directional) { var lr = NewLine(Ui.LightC, 2, VizWidth()); var o = rt.xr.Utils.ComputeBounds(m_viewer.gameObject).center; lr.SetPosition(0, o - l.transform.forward * 1.5f); lr.SetPosition(1, o); }
@@ -705,7 +705,7 @@ namespace rt.xr.unity.app
             Ui.Label(m_pipeRoot, "Media pipeline", 28, Ui.Bold, Ui.Accent, TextAnchor.MiddleLeft, false);
             var medias = SafeMedias();
             int idx = 0;
-            foreach (var mp in FindObjectsOfType<MediaPlayer>())
+            foreach (var mp in FindObjectsByType<MediaPlayer>(FindObjectsSortMode.None))
             {
                 string name = (m_current != null && idx < m_current.Media.Count) ? Uri.UnescapeDataString(m_current.Media[idx].Uri.Substring(m_current.Media[idx].Uri.LastIndexOf('/') + 1)) : "Media " + (idx + 1);
                 idx++;

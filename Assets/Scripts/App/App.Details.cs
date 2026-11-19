@@ -197,7 +197,7 @@ namespace rt.xr.unity.app
         private void BuildLiveDetails()
         {
             // behaviours the loader created for this scene
-            var behaviours = FindObjectsOfType<GLTFast.Behavior>().ToList();
+            var behaviours = FindObjectsByType<GLTFast.Behavior>(FindObjectsSortMode.InstanceID).ToList();
             if (behaviours.Count > 0)
             {
                 var b = Section("Behaviours", Ui.Plural(behaviours.Count, "behaviour", "behaviours") + " created from the scene's interactivity data.");

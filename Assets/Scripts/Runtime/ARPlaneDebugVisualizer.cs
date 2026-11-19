@@ -71,7 +71,7 @@ namespace UnityEngine.XR.ARFoundation
         StringBuilder m_TypesBuilder = new();
         StringBuilder m_ValuesBuilder = new();
         TrackableId m_TrackableId;
-        PlaneClassification m_Classification;
+        PlaneClassifications m_Classification;
         PlaneAlignment m_Alignment;
         TrackingState m_TrackingState;
 
@@ -118,13 +118,13 @@ namespace UnityEngine.XR.ARFoundation
             m_DebugLabelOffset.LookAt(m_MainCameraTransform.transform);
 
             if (m_ARPlane.trackableId == m_TrackableId &&
-                m_ARPlane.classification == m_Classification &&
+                m_ARPlane.classifications == m_Classification &&
                 m_ARPlane.alignment == m_Alignment &&
                 m_ARPlane.trackingState == m_TrackingState)
                 return;
 
             m_TrackableId = m_ARPlane.trackableId;
-            m_Classification = m_ARPlane.classification;
+            m_Classification = m_ARPlane.classifications;
             m_Alignment = m_ARPlane.alignment;
             m_TrackingState = m_ARPlane.trackingState;
 

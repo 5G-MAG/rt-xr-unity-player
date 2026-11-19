@@ -29,9 +29,9 @@ namespace rt.xr.unity
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
         {
-            if (FindObjectOfType<SceneViewer>() == null) return;
+            if (FindFirstObjectByType<SceneViewer>() == null) return;
             // the Meta Quest scene runs its own application
-            if (FindObjectOfType<RtXrQuestApplication>() != null) return;
+            if (FindFirstObjectByType<RtXrQuestApplication>() != null) return;
             new GameObject("QuestRig").AddComponent<QuestRig>();
         }
 
@@ -49,7 +49,7 @@ namespace rt.xr.unity
             // the headset's session only becomes active once it is worn, which may be after the app has started
             while (!XRSettings.isDeviceActive) yield return new WaitForSeconds(0.5f);
             Active = true;
-            var viewer = FindObjectOfType<SceneViewer>();
+            var viewer = FindFirstObjectByType<SceneViewer>();
             m_cam = viewer.GetMainCamera();
             m_rig = new GameObject("XRRig").transform;
             m_cam.transform.SetParent(m_rig, false);
@@ -63,7 +63,11 @@ namespace rt.xr.unity
             foreach (var s in subsystems) s.TrySetTrackingOriginMode(TrackingOriginModeFlags.Floor);
 
             Instance = this;
-            Debug.Log($"QuestRig: device={XRSettings.loadedDeviceName} eye={XRSettings.eyeTextureWidth}x{XRSettings.eyeTextureHeight} refresh={XRDevice.refreshRate}");
+            float refresh = 0f;
+            var displays = new List<XRDisplaySubsystem>();
+            SubsystemManager.GetSubsystems(displays);
+            if (displays.Count > 0) displays[0].TryGetDisplayRefreshRate(out refresh);
+            Debug.Log($"QuestRig: device={XRSettings.loadedDeviceName} eye={XRSettings.eyeTextureWidth}x{XRSettings.eyeTextureHeight} refresh={refresh}");
         }
 
         // Left stick walks in the direction the head faces, right stick turns in steps.
