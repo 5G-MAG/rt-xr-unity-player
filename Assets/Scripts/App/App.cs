@@ -344,6 +344,7 @@ namespace rt.xr.unity.app
             GLTFast.AnchorPlacement.AnchorToPlane = PlayerPrefs.GetInt("set.planeanchor", 0) == 1;
             GLTFast.AnchorPlacement.PlaceOnAnySurface = PlayerPrefs.GetInt("set.anysurface", 0) == 1;
             GLTFast.AnchorPlacement.GroundOnPlacement = PlayerPrefs.GetInt("set.groundplace", 0) == 1;
+            m_surfaceTint = PlayerPrefs.GetInt("set.surfacetint", 0) == 1;
             GLTFast.MediaPlayer.HoldAutoplay = PlayerPrefs.GetInt("set.holdplay", 0) == 1 && !m_testSceneCam && !m_testAutoplay;
             GLTFast.VideoTexture.Gain = PlayerPrefs.GetInt("set.brightvideo2", 0) == 1 ? 2f : 1f;
             GLTFast.MediaPlayer.ContentShown = false;
