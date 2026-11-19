@@ -443,9 +443,9 @@ namespace rt.xr.unity.app
         {
             switch (s)
             {
-                case GLTFast.PlacementSurface.Vertical: return "The scene's anchor asks for a wall (vertical plane): tap a blue area. The scene hangs upright, facing you.";
-                case GLTFast.PlacementSurface.Horizontal: return "The scene's anchor asks for a horizontal plane: tap a green area, on the floor or a table.";
-                default: return "The scene's anchor asks for the floor: tap a green area on the floor.";
+                case GLTFast.PlacementSurface.Vertical: return "The scene's anchor asks for a wall (vertical plane): tap a dotted area. The scene hangs upright, facing you.";
+                case GLTFast.PlacementSurface.Horizontal: return "The scene's anchor asks for a horizontal plane: tap a dotted area, on the floor or a table.";
+                default: return "The scene's anchor asks for the floor: tap a dotted area on the floor.";
             }
         }
 
@@ -512,7 +512,7 @@ namespace rt.xr.unity.app
         private Button m_floorBtn;
         private Text m_modeHelp;
         // Floor: the scene stands on a horizontal surface (floor, table). Wall: it hangs upright on a vertical surface. The detected
-        // surfaces are drawn green (horizontal) and blue (vertical), and only the kind that matches the choice is drawn.
+        // surfaces are drawn with a dotted pattern, and only the kind that matches the choice is drawn.
         private void SetSurfaceMode(bool wall)
         {
             m_placeOnWall = wall;
@@ -521,8 +521,8 @@ namespace rt.xr.unity.app
             if (m_floorBtn != null) { var t = m_floorBtn.GetComponentInChildren<Text>(); if (t != null) t.color = wall ? Color.white : Ui.OnAccent; }
             if (m_wallBtn != null) { var t = m_wallBtn.GetComponentInChildren<Text>(); if (t != null) t.color = wall ? Ui.OnAccent : Color.white; }
             if (m_modeHelp != null) m_modeHelp.text = wall
-                ? "On a wall (your choice, not the scene's): tap a blue area. The scene hangs upright, facing you."
-                : "On the floor (your choice, not the scene's): tap a green area. The scene stands on the floor or a table.";
+                ? "On a wall (your choice, not the scene's): tap a dotted area. The scene hangs upright, facing you."
+                : "On the floor (your choice, not the scene's): tap a dotted area. The scene stands on the floor or a table.";
         }
         private float m_userScale = 1f, m_userYaw = 0f;
         private bool m_gestActive;
@@ -707,8 +707,8 @@ namespace rt.xr.unity.app
             if (!m_placeOnWall && FreshSurfaceCount() == 0)
             {
                 Toast(GLTFast.AnchorPlacement.NextSurface == GLTFast.PlacementSurface.Horizontal && !GLTFast.AnchorPlacement.PlaceOnAnySurface
-                    ? "Move the phone slowly over the floor or a table first. Tap when green surfaces show."
-                    : "Move the phone slowly over the floor first. Tap when green surfaces show.", 3.5f);
+                    ? "Move the phone slowly over the floor or a table first. Tap when dotted surfaces show."
+                    : "Move the phone slowly over the floor first. Tap when dotted surfaces show.", 3.5f);
                 return true;
             }
             var cam = Camera.main;
@@ -756,7 +756,7 @@ namespace rt.xr.unity.app
                 Debug.Log("App: tap feature point normal=" + n.ToString("0.00") + " wall=" + wall);
                 if (wall && !GLTFast.AnchorPlacement.PlaceOnAnySurface)
                 {
-                    Toast("That spot looks like a wall; this scene's anchor asks for " + SurfaceName(true) + ". Tap a green surface.", 3.5f);
+                    Toast("That spot looks like a wall; this scene's anchor asks for " + SurfaceName(true) + ". Tap a dotted surface.", 3.5f);
                     return true;
                 }
                 if (ConfirmOnReticle(h.pose.position)) return true;
@@ -768,9 +768,9 @@ namespace rt.xr.unity.app
                     return true;
                 }
             }
-            if (freshHits == 0 && oldHits > 0) Toast("That was a surface from before Unlock. Tap a green surface.", 3.5f);
-            else if (freshHits > 0) Toast("The scene could not be placed on that surface. Tap another green surface.", 3.5f);
-            else if (otherKind > 0) Toast("This scene's anchor asks for " + SurfaceName(true) + ". Tap a " + (m_placeOnWall ? "blue" : "green") + " surface.", 3.5f);
+            if (freshHits == 0 && oldHits > 0) Toast("That was a surface from before Unlock. Tap a dotted surface.", 3.5f);
+            else if (freshHits > 0) Toast("The scene could not be placed on that surface. Tap another dotted surface.", 3.5f);
+            else if (otherKind > 0) Toast("This scene's anchor asks for " + SurfaceName(true) + ". Tap a dotted surface.", 3.5f);
             else Toast("No surface there yet. Move the phone slowly so it can see " + SurfaceName(true) + ".", 3.5f);
             return true;
         }
@@ -994,15 +994,19 @@ namespace rt.xr.unity.app
             }
         }
 
-        // Each detected surface is drawn by the app itself: a translucent flat mesh over its boundary, green for horizontal and blue for
-        // vertical surfaces (the prefab's own drawing was not visible on the test phone).
+        // Each detected surface is drawn by the plane prefab's dotted pattern. With the "Tint detected surfaces" setting, the app adds a
+        // light shade under the dots: a flat mesh over the boundary, green for horizontal and blue for vertical surfaces.
         private readonly Dictionary<ARPlane, GameObject> m_surfaceViz = new Dictionary<ARPlane, GameObject>();
         private readonly Dictionary<ARPlane, int> m_surfaceVizCount = new Dictionary<ARPlane, int>();
+        private bool m_surfaceTint;
         private void DrawSurface(ARPlane plane, bool vertical)
         {
-            var pmr = plane.GetComponent<MeshRenderer>();
-            if (pmr != null) pmr.enabled = false;
             GameObject viz;
+            if (!m_surfaceTint)
+            {
+                if (m_surfaceViz.TryGetValue(plane, out viz) && viz != null) viz.SetActive(false);
+                return;
+            }
             if (!m_surfaceViz.TryGetValue(plane, out viz) || viz == null)
             {
                 viz = new GameObject("SurfaceViz");
@@ -1011,7 +1015,8 @@ namespace rt.xr.unity.app
                 viz.AddComponent<MeshFilter>();
                 var mr2 = viz.AddComponent<MeshRenderer>();
                 if (s_planeMat == null) { var sh = Shader.Find("Sprites/Default") ?? Shader.Find("UI/Default"); if (sh != null) s_planeMat = new Material(sh); }
-                var mat = new Material(s_planeMat) { color = vertical ? new Color(0.25f, 0.6f, 1f, 0.45f) : new Color(0.2f, 0.85f, 0.45f, 0.45f) };
+                var mat = new Material(s_planeMat) { color = vertical ? new Color(0.25f, 0.6f, 1f, 0.15f) : new Color(0.2f, 0.85f, 0.45f, 0.15f) };
+                mat.renderQueue = 2990;   // under the dotted pattern of the plane prefab (Transparent, 3000)
                 mr2.sharedMaterial = mat;
                 mr2.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 mr2.receiveShadows = false;
@@ -1048,8 +1053,8 @@ namespace rt.xr.unity.app
                 case ARSessionState.SessionTracking:
                     if (GLTFast.AnchorPlacement.TapToPlace && GLTFast.AnchorPlacement.HasPlaceable)
                         if ((GLTFast.AnchorPlacement.AnyAwaiting || m_scanAgain) && FreshSurfaceCount() == 0) text = m_placeOnWall ? "This scene goes on a wall. Move the phone slowly along it, or tap the wall." : "This scene goes on " + SurfaceName(true) + ". Move the phone slowly over it.";
-                        else if (GLTFast.AnchorPlacement.AnyAwaiting) text = m_placeOnWall ? "Tap the wall where the scene should go." : "Tap a green surface where the scene should go.";
-                        else if (m_scanAgain) text = m_placeOnWall ? "Tap the wall to move the scene there." : "Tap a new green surface to move the scene there.";
+                        else if (GLTFast.AnchorPlacement.AnyAwaiting) text = m_placeOnWall ? "Tap the wall where the scene should go." : "Tap a dotted surface where the scene should go.";
+                        else if (m_scanAgain) text = m_placeOnWall ? "Tap the wall to move the scene there." : "Tap a new dotted surface to move the scene there.";
                         else if (GLTFast.AnchorPlacement.Locked) text = "Scene fixed in place. Press Unlock to move it.";
                         else text = "Tap the blue circle again to fix the scene here, or tap elsewhere to move it. Pinch to resize, twist to turn.";
                     else
