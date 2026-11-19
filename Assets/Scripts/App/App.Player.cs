@@ -552,11 +552,35 @@ namespace rt.xr.unity.app
             GLTFast.AnchorPlacement.SetUserTransform(1f, 0f);
         }
 
+        // diagnostics, at the end of a two-finger gesture: what the gesture asked for and what the placed scene's objects show
+        private void LogArGesture()
+        {
+            var sb = new System.Text.StringBuilder("App: AR gesture end scale=" + m_userScale.ToString("0.00") + " yaw=" + m_userYaw.ToString("0.0")
+                + " placement scale=" + GLTFast.AnchorPlacement.UserScale.ToString("0.00") + " yaw=" + GLTFast.AnchorPlacement.UserYaw.ToString("0.0"));
+            var holder = GameObject.Find("MpegAnchoredScene");
+            if (holder == null) sb.Append(" holder=none");
+            else
+            {
+                sb.Append(" holder scale=" + holder.transform.localScale.x.ToString("0.00") + " rot=" + holder.transform.eulerAngles.ToString("0") + " children=" + holder.transform.childCount);
+                for (int i = 0; i < holder.transform.childCount && i < 4; i++)
+                {
+                    var c = holder.transform.GetChild(i);
+                    sb.Append(" | " + c.name + " localRot=" + c.localEulerAngles.ToString("0") + " active=" + c.gameObject.activeInHierarchy);
+                }
+            }
+            Debug.Log(sb.ToString());
+        }
+
         // Two fingers on a placed scene: pinch resizes it, twisting turns it about the vertical axis.
         private void UpdateArGestures()
         {
             if (!GLTFast.AnchorPlacement.TapToPlace || !GLTFast.AnchorPlacement.HasPlaceable || !m_viewer.ARCameraEnabled) return;
-            if (GLTFast.AnchorPlacement.AnyAwaiting || GLTFast.AnchorPlacement.Locked || TouchInput.Count != 2) { m_gestActive = false; return; }
+            if (GLTFast.AnchorPlacement.AnyAwaiting || GLTFast.AnchorPlacement.Locked || TouchInput.Count != 2)
+            {
+                if (m_gestActive) LogArGesture();
+                m_gestActive = false;
+                return;
+            }
             var a = TouchInput.Get(0); var b = TouchInput.Get(1);
             Vector2 d = b.position - a.position;
             float dist = d.magnitude;

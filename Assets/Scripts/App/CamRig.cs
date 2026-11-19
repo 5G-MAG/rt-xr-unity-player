@@ -30,7 +30,6 @@ namespace rt.xr.unity.app
         private Bounds m_bounds;
         private Vector3 m_target;
         private float m_dist, m_yaw, m_pitch, m_minDist, m_maxDist;
-        private float m_eye = 1.6f;
         private readonly Dictionary<int, bool> m_onUi = new Dictionary<int, bool>();
         private float m_walkSpeed = 1.5f;
         private Vector2 m_stickOrigin; private int m_stickFinger = -1;
@@ -40,7 +39,6 @@ namespace rt.xr.unity.app
             m_cam = cam; m_bounds = bounds; m_sceneCam = sceneCam;
             float size = Mathf.Max(0.05f, bounds.size.magnitude);
             m_walkSpeed = Mathf.Clamp(size * 0.25f, 0.5f, 6f);
-            m_eye = Mathf.Clamp(bounds.min.y + 1.6f, bounds.min.y + 0.1f, bounds.max.y + 2f);
             FitOrbit();
             SetMode(Mode.Orbit);
         }
@@ -87,25 +85,27 @@ namespace rt.xr.unity.app
         public void SetMode(Mode mode)
         {
             if (mode == Mode.Scene && m_sceneCam == null) mode = Mode.Orbit;
+            bool fromOrbitOrWalk = CurrentMode != Mode.Scene;
             CurrentMode = mode;
             if (m_cam == null) return;
-            if (mode == Mode.Orbit) { ApplyOrbit(); }
-            else if (mode == Mode.Walk)
-            {
-                Vector3 p = m_cam.transform.position;
-                Vector3 fwd = m_cam.transform.forward;
-                m_yaw = Mathf.Atan2(fwd.x, fwd.z) * Mathf.Rad2Deg; m_pitch = 0f;
-                // start at the scene's own camera if it has one, else where the orbit camera is, lowered to eye height
-                if (m_sceneCam != null) { p = m_sceneCam.transform.position; fwd = m_sceneCam.transform.forward; m_yaw = Mathf.Atan2(fwd.x, fwd.z) * Mathf.Rad2Deg; }
-                else p.y = m_eye;
-                m_cam.transform.position = p;
-                m_cam.transform.rotation = Quaternion.Euler(0, m_yaw, 0);
-            }
+            // Orbit and Walk only change how the touches move the camera: switching between them leaves the camera where it is
+            // (leaving the scene's camera for Orbit goes back to the orbit view; for Walk, the walk starts where the scene's camera was)
+            if (mode == Mode.Walk || (mode == Mode.Orbit && fromOrbitOrWalk)) TakeCurrentView();
+            else if (mode == Mode.Orbit) ApplyOrbit();
             else if (mode == Mode.Scene)
             {
                 m_cam.transform.SetPositionAndRotation(m_sceneCam.transform.position, m_sceneCam.transform.rotation);
                 m_cam.fieldOfView = m_sceneCam.fieldOfView;
             }
+        }
+
+        // the orbit and walk angles of the camera as it is now; the orbit goes round the point m_dist in front of it
+        private void TakeCurrentView()
+        {
+            Vector3 fwd = m_cam.transform.forward;
+            m_yaw = Mathf.Atan2(fwd.x, fwd.z) * Mathf.Rad2Deg;
+            m_pitch = Mathf.Clamp(Mathf.Asin(Mathf.Clamp(-fwd.y, -1f, 1f)) * Mathf.Rad2Deg, -85f, 85f);
+            m_target = m_cam.transform.position + fwd * m_dist;
         }
 
         private void ApplyOrbit()
