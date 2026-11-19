@@ -35,14 +35,11 @@ public class AppIconSetup : IPreprocessBuildWithReport
     {
         var background = Load("icon_background");
         var foreground = Load("icon_foreground");
-        var legacy = Load("icon_legacy");
-        var round = Load("icon_round");
-        if (background == null || foreground == null || legacy == null || round == null) { Debug.LogWarning("AppIconSetup: icon pictures not found"); return; }
+        if (background == null || foreground == null) { Debug.LogWarning("AppIconSetup: icon pictures not found"); return; }
         PlayerSettings.productName = "XR Scene Player";
         var target = NamedBuildTarget.Android;
+        // the minimum Android version (API 29) always shows the adaptive icon: the round and legacy icons were for Android 7 and older
         Set(target, AndroidPlatformIconKind.Adaptive, background, foreground);
-        Set(target, AndroidPlatformIconKind.Round, round);
-        Set(target, AndroidPlatformIconKind.Legacy, legacy);
         AssetDatabase.SaveAssets();
         Debug.Log("AppIconSetup: launcher icon set");
     }

@@ -64,9 +64,9 @@ public class FirstPersonCameraController : MonoBehaviour
 
     private void HandleMovement()
     {
-        if (Input.touchSupported && (Input.touchCount > 1)){
-            Touch tZero = Input.GetTouch(0);
-            Touch tOne = Input.GetTouch(1);
+        if (rt.xr.unity.TouchInput.Count > 1){
+            UnityEngine.Touch tZero = rt.xr.unity.TouchInput.Get(0);
+            UnityEngine.Touch tOne = rt.xr.unity.TouchInput.Get(1);
             Vector2 tZeroPrevious = tZero.position - tZero.deltaPosition;
             Vector2 tOnePrevious = tOne.position - tOne.deltaPosition;
             float oldTouchDistance = Vector2.Distance(tZeroPrevious, tOnePrevious);
