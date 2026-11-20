@@ -175,6 +175,10 @@ namespace rt.xr.unity.app
             if (e == null) { Debug.Log("XRTEST run done scene=none reason=nomatch match=" + target); yield break; }
             m_testSceneCam = flags.Contains("scenecam");
             m_testAutoplay = flags.Contains("autoplay");
+            m_testAudioReader = null;
+            if (flags.Contains("audio=filter")) m_testAudioReader = GLTFast.MediaPlayer.AudioReaderMode.Filter;
+            if (flags.Contains("audio=clip")) m_testAudioReader = GLTFast.MediaPlayer.AudioReaderMode.Clip;
+            if (flags.Contains("audio=resample")) m_testAudioReader = GLTFast.MediaPlayer.AudioReaderMode.FilterResampled;
             rt.xr.unity.TimedObjectGate.Enabled = !flags.Contains("nogate");
             m_cleanShot = flags.Contains("clean");
             OpenScene(e, flags.Contains("flat"));
@@ -186,6 +190,8 @@ namespace rt.xr.unity.app
         // test aid (flag scenecam): the interactivity test scenes assume the camera node of the scene from the first frame
         private bool m_testSceneCam;
         private bool m_testAutoplay;   // test aid: media start by themselves
+        // test aid (flag audio=filter|clip|resample): the audio reader mode, instead of the setting
+        private GLTFast.MediaPlayer.AudioReaderMode? m_testAudioReader;
         // test aid (flag clean): no controls and no statistics on the screen, for the thumbnails of the catalog
         private bool m_cleanShot;
 
@@ -347,6 +353,7 @@ namespace rt.xr.unity.app
             m_surfaceTint = PlayerPrefs.GetInt("set.surfacetint", 0) == 1;
             GLTFast.MediaPlayer.HoldAutoplay = PlayerPrefs.GetInt("set.holdplay", 0) == 1 && !m_testSceneCam && !m_testAutoplay;
             GLTFast.VideoTexture.Gain = PlayerPrefs.GetInt("set.brightvideo2", 0) == 1 ? 2f : 1f;
+            GLTFast.MediaPlayer.AudioReader = m_testAudioReader ?? (GLTFast.MediaPlayer.AudioReaderMode)StoredAudioReader();
             GLTFast.MediaPlayer.ContentShown = false;
             GLTFast.MediaPlayer.AwaitContentShown = !noAR && e.UsesAnchor && !m_testSceneCam;
             AudioListener.volume = GLTFast.MediaPlayer.AwaitContentShown ? 0f : 1f;

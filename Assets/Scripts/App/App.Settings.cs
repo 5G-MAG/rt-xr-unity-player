@@ -59,6 +59,15 @@ namespace rt.xr.unity.app
             Toggle(player, "Brighter video", "Not part of the specification. Off by default: the picture is shown as the video has it. On: twice as bright, for a dark video in a lit room.", "set.brightvideo2", false);
             Toggle(player, "Start media only when I press play", "Not part of the specification, which says a media with autoplay true starts by itself. On: videos and sounds wait for the play button, only in scenes that show media controls.", "set.holdplay", false);
             Toggle(player, "Show media controls in every scene", "Off by default: as the specification asks, controls are shown only when a media has controls true. On: they are shown in every scene that has media.", "set.alwayscontrols", false);
+            var ar = Ui.Pill(player, AudioReaderLabel(), null, Ui.BtnStyle.Ghost, null, 32, 96);
+            var arText = ar.GetComponentInChildren<Text>();
+            ar.onClick.AddListener(() =>
+            {
+                int count = System.Enum.GetValues(typeof(GLTFast.MediaPlayer.AudioReaderMode)).Length;
+                PlayerPrefs.SetInt("set.audioreader", (StoredAudioReader() + 1) % count); PlayerPrefs.Save();
+                if (arText != null) arText.text = AudioReaderLabel();
+            });
+            Ui.Label(player, "For developers, applies to the next scene you open. The media pipeline brings the sound to the scene's targetSampleRate, as the specification asks; then the player (Player, the default) or Unity's audio clip (Clip) converts it to the output rate of the device. Pipeline: not part of the specification, the media pipeline converts the sound straight to the output rate of the device. Tap to change.", 26, Ui.Regular, Ui.Dim, TextAnchor.UpperLeft, true);
             Toggle(player, "Show the log on the screen", "For developers: prints the app's log over the scene.", "set.showlog", false);
             Toggle(player, "Hide the marker picture in marker scenes", "Some marker scenes also draw the marker image as content. On: it is not drawn, so only the real marker and the content anchored to it show.", "set.hidemarkerpicture", true);
             var mw = Ui.Pill(player, MarkerWidthLabel(), null, Ui.BtnStyle.Ghost, null, 32, 96);
@@ -165,6 +174,24 @@ namespace rt.xr.unity.app
         {
             float cm = PlayerPrefs.GetFloat("set.markerwidthcm", 0f);
             return "Marker width: " + (cm > 0f ? cm.ToString("0") + " cm" : "Scene");
+        }
+
+        // set.audioreader: the index of GLTFast.MediaPlayer.AudioReaderMode
+        private static int StoredAudioReader()
+        {
+            int count = System.Enum.GetValues(typeof(GLTFast.MediaPlayer.AudioReaderMode)).Length;
+            int v = PlayerPrefs.GetInt("set.audioreader", 0);
+            return v >= 0 && v < count ? v : 0;
+        }
+
+        private static string AudioReaderLabel()
+        {
+            switch ((GLTFast.MediaPlayer.AudioReaderMode)StoredAudioReader())
+            {
+                case GLTFast.MediaPlayer.AudioReaderMode.Clip: return "Audio rate conversion: Clip";
+                case GLTFast.MediaPlayer.AudioReaderMode.Filter: return "Audio rate conversion: Pipeline";
+                default: return "Audio rate conversion: Player";
+            }
         }
 
         private RectTransform Section2(string title, string note = null)
